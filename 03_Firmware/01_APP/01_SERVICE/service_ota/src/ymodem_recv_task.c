@@ -101,6 +101,7 @@ void ymodem_recv_task(void *argument)
             DEBUG_OUT(e, YMODEM_LOG_TAG,
                       "Ymodem_Receive returned %d, OTA staging aborted",
                       (int)rx_result);
+            (void)osal_event_group_set_bits(g_ota_evgrp, UPGRADE_EVENT_OTA_START);
             continue;
         }
 

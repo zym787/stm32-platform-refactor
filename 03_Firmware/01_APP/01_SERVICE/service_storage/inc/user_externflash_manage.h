@@ -6,9 +6,14 @@
  *
  * @author Ethan-Hang
  *
- * @brief APP-layer storage manager: blocking read/write helpers backed by the
- *        externflash wrapper, plus the storage manager task entry and the
- *        first-boot asset bootstrap.
+ * @brief Service-layer storage manager: blocking read/write helpers backed
+ *        by the externflash wrapper, plus the storage manager task entry
+ *        and the first-boot LVGL asset bootstrap declaration.
+ *
+ *        Lives under 01_SERVICE/service_storage/ so both 01_APP (LVGL
+ *        sub-region reads/writes) and 01_SERVICE/service_ota (Ymodem
+ *        staging into the OTA sub-region) can call into the same blocking
+ *        facade over the async BSP externflash wrapper.
  *
  * Architecture:
  *

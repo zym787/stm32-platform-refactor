@@ -56,19 +56,6 @@ int8_t ota_flag_read(ota_flag_t *out);
 * */
 int8_t ota_flag_write(const ota_flag_t *in);
 
-/**
-* @brief Refresh the IWDG counter (raw register write, no HAL module needed).
-*
-* @param[in]  : None.
-* @param[out] : None.
-* @return     : None.
-*
-* @note STM32F411 IWDG cannot be disabled once started; once the bootloader
-*       has enabled it via ota_watchdog_start, the APP MUST refresh it on
-*       a regular cadence (≤ reload window) forever, regardless of whether
-*       the current boot is a post-OTA verification or a normal boot path.
-* */
-void ota_iwdg_refresh(void);
 //******************************* Functions *********************************//
 
 #endif /* __UPGRADE_SERVICE_H__ */

@@ -44,6 +44,8 @@
                 "${workspaceFolder}/02_MCU_Platform/MCU_Core_GPIO/inc",
                 "${workspaceFolder}/02_MCU_Platform/MCU_Core_Systick/inc",
                 "${workspaceFolder}/02_MCU_Platform/MCU_Core_DWT/inc",
+                "${workspaceFolder}/02_MCU_Platform/MCU_Core_Watchdog/inc",
+                "${workspaceFolder}/02_MCU_Platform/MCU_Core_IFlash/inc",
                 "${workspaceFolder}/02_Middleware_Platform/EasyLogger/plugins/file",
                 "${workspaceFolder}/02_Middleware_Platform/EasyLogger/plugins/flash",
                 "${workspaceFolder}/02_BSP_Platform/Bsp_Drivers/aht21/driver/inc",
@@ -83,10 +85,10 @@
                 "${workspaceFolder}/01_APP/User_Init",
                 "${workspaceFolder}/01_APP/User_Isr_handlers/inc",
                 "${workspaceFolder}/01_APP/User_Task_Config/inc",
-                "${workspaceFolder}/01_APP/User_Sensor/storage/inc",
                 "${workspaceFolder}/03_Config/inc",
                 "${workspaceFolder}/02_Middleware_Platform/heart_rate_algo/inc",
                 "${workspaceFolder}/02_Middleware_Platform/Ymodem/inc",
+                "${workspaceFolder}/01_SERVICE/service_storage/inc",
                 "${workspaceFolder}/01_SERVICE/service_ota/inc"
             ],
             "defines": [

@@ -43,6 +43,14 @@
 #define CFG_OTA_FLAG_ADDRESS  (0x08008000UL)
 
 /**
+ * @brief Internal-Flash sector index holding the OTA flag (F411 Sector 2).
+ *        Decoupled from the HAL's FLASH_SECTOR_2 macro so cfg_ota.h does not
+ *        drag stm32f4xx_hal.h into every consumer; mcu_iflash_erase_sector()
+ *        takes the raw sector number.
+ */
+#define CFG_OTA_FLAG_SECTOR   (2U)
+
+/**
  * @brief Magic value at the struct head. Distinguishes a real flag from a
  *        freshly-erased sector (which reads back as 0xFFFFFFFF) and from a
  *        zero-initialised BSS region.

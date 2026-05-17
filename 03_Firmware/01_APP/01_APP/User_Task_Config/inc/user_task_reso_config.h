@@ -26,19 +26,19 @@
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
-#define PRI_EMERGENCY     (configMAX_PRIORITIES - 1)
-#define PRI_HARD_REALTIME (PRI_EMERGENCY - 4)
-#define PRI_SOFT_REALTIME (PRI_HARD_REALTIME - 5)
-#define PRI_NORMAL        (PRI_SOFT_REALTIME - 7)
-#define PRI_BACKGROUND    (1)
+#define PRI_EMERGENCY                   (configMAX_PRIORITIES - 1)
+#define PRI_HARD_REALTIME               (PRI_EMERGENCY - 4)
+#define PRI_SOFT_REALTIME               (PRI_HARD_REALTIME - 5)
+#define PRI_NORMAL                      (PRI_SOFT_REALTIME - 7)
+#define PRI_BACKGROUND                  (1)
 //******************************** Defines **********************************//
 
 //******************************* Declaring *********************************//
 /* ========== Production tasks ========== */
 
 /* --- Motion (MPU6050) --- */
-#define USER_TASK_MPU6050_HANDLER       1
-#define USER_TASK_UNPACK_TASK           1
+#define USER_TASK_MPU6050_HANDLER       0
+#define USER_TASK_UNPACK_TASK           0
 
 /* --- Temp / Humidity (AHT21) --- */
 #define USER_TASK_TEMP_HUMI_HANDLER     1
@@ -46,10 +46,10 @@
 #define USER_TASK_TEMP_HUMI_TEST_B      1
 
 /* --- Audio (WT588) --- */
-#define USER_TASK_WT588_HANDLER         1
+#define USER_TASK_WT588_HANDLER         0
 
 /* --- Display (LVGL / ST7789) --- */
-#define USER_LVGL_TEST_TASK             1
+#define USER_LVGL_TEST_TASK             0
 
 /* --- Storage (W25Q64) --- */
 /* W25Q64_HANDLER + STORAGE_MANAGER are mandatory for the OTA path:
@@ -65,7 +65,7 @@
 #define USER_TASK_EM7028_HEART_RATE     1
 
 /* --- System --- */
-#define USER_TASK_TASK_HIGHER_WATER     1
+#define USER_TASK_TASK_HIGHER_WATER     0
 
 /* --- OTA (01_SERVICE/upgrade) --- */
 /* IWDG feeder runs on EVERY boot because F411 IWDG can't be disabled once
@@ -91,7 +91,7 @@
 
 typedef enum
 {
-    /* --- Production --- */
+/* --- Production --- */
 #if USER_TASK_MPU6050_HANDLER
     USER_TASK_MPU6050_HANDLER_IDX = 0,
 #endif
@@ -140,7 +140,7 @@ typedef enum
 #if USER_TASK_OTA_UART_LISTENER
     USER_TASK_OTA_UART_LISTENER_IDX,
 #endif
-    /* --- Test / debug --- */
+/* --- Test / debug --- */
 #if USER_TASK_WT588_TEST
     USER_TASK_WT588_TEST_IDX,
 #endif
@@ -167,12 +167,12 @@ typedef enum
 
 typedef struct
 {
-    const char        *      task_name;
-    osal_task_entry_t     func_pointer;
-    size_t                 stack_depth;
-    uint32_t                  priority;
-    osal_task_handle_t     task_handle;
-    void              *       argument;
+    const char        *task_name;
+    osal_task_entry_t  func_pointer;
+    size_t             stack_depth;
+    uint32_t           priority;
+    osal_task_handle_t task_handle;
+    void              *argument;
 } usertaskcfg_t;
 
 //******************************* Declaring *********************************//

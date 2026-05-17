@@ -153,29 +153,47 @@ static uint32_t Str2Int(uint8_t *inputstr, int32_t *intnum)
 static int32_t Receive_Byte(uint8_t *c, uint16_t length, uint32_t timeout)
 {
     HAL_StatusTypeDef hal_ret;
-    osal_base_type_t  retval = OSAL_FALSE;
+    int32_t           retval;
 
-    /* Make sure UART RX DMA is in IDLE mode so RxEvent callback can report
-     * actual frame length. */
-    hal_ret                  = HAL_UARTEx_ReceiveToIdle_DMA(&huart1, c, length);
-    if (hal_ret != HAL_OK)
+    /**
+    * If the user handler pre-armed DMA on the next buffer already, skip the
+    * re-arm — the fresh buffer is already receiving bytes and we just need
+    * to wait for the IDLE callback to push the frame length into the queue.
+    *
+    * Without pre-arm the window between "last packet's IDLE fires" and
+    * "next Receive_Byte arms DMA" is ~2 ms (FreeRTOS scheduling + queue-
+    * send + sema-take + swap-buffer + Send_Byte ACK). F411 USART has only
+    * RDR for a single byte of buffering — if the sender fires the next
+    * packet on ACK receipt, the leading bytes hit an unarmed DMA and
+    * overrun RDR, forcing a NAK retransmission on every single packet.
+    **/
+    if (huart1.RxState != HAL_UART_STATE_BUSY_RX)
     {
-        HAL_UART_DMAStop(&huart1);
         hal_ret = HAL_UARTEx_ReceiveToIdle_DMA(&huart1, c, length);
         if (hal_ret != HAL_OK)
         {
-            return YMODEM_PKT_TIMEOUT;
+            HAL_UART_DMAStop(&huart1);
+            hal_ret = HAL_UARTEx_ReceiveToIdle_DMA(&huart1, c, length);
+            if (hal_ret != HAL_OK)
+            {
+                return YMODEM_PKT_TIMEOUT;
+            }
         }
+        __HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT);
     }
-    __HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT);
 
+    /* osal_queue_receive returns OSAL_SUCCESS (=0) on data arrival and a
+       non-zero error code (OSAL_QUEUE_TIMEOUT / OSAL_INVALID_POINTER /
+       OSAL_ERR_IN_ISR) on failure — NOT a TRUE/FALSE boolean. Comparing
+       against OSAL_FALSE (also 0) inverts the semantics and silently
+       discards every successful DMA-idle frame. */
     retval = osal_queue_receive(Q_YmodemReclength, &s_u16_YmodRecLength,
                                 OS_MS_TO_TICKS(timeout));
-    if (OSAL_FALSE == retval)
+    if (retval != OSAL_SUCCESS)
     {
-        return YMODEM_PKT_TIMEOUT; /* Timeout */
+        return YMODEM_PKT_TIMEOUT;
     }
-    return YMODEM_PKT_SUCCESS;     /* Byte received */
+    return YMODEM_PKT_SUCCESS;
 }
 
 /**
@@ -220,6 +238,15 @@ static void Ymodem_File_Info_User_Handler(Ymodem_RxContext_t *ctx)
     {
         ctx->packet_data = ctx->buf[0];
     }
+
+    /**
+    * Pre-arm DMA on the fresh buffer. The sender will fire the next
+    * packet on ACK receipt, and the main loop still has Send_Byte(ACK)
+    * ahead of it — without this pre-arm the leading bytes overrun RDR.
+    * Receive_Byte() detects RxState == BUSY and skips its own arm.
+    **/
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart1, ctx->packet_data, 1030);
+    __HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT);
 }
 
 /**
@@ -252,6 +279,13 @@ static void Ymodem_File_Data_User_Handler(Ymodem_RxContext_t *ctx)
     {
         ctx->packet_data = ctx->buf[0];
     }
+
+    /**
+    * Pre-arm DMA on the fresh buffer — same reasoning as
+    * Ymodem_File_Info_User_Handler above.
+    **/
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart1, ctx->packet_data, 1030);
+    __HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT);
 }
 
 /**

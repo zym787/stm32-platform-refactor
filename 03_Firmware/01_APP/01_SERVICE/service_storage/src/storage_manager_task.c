@@ -8,9 +8,12 @@
  *
  * @author Ethan-Hang
  *
- * @brief APP-layer storage manager.  Provides blocking Read_LvglData /
- *        Write_LvglData APIs to other tasks while internally driving the
- *        externflash wrapper through its async + callback API.
+ * @brief Service-layer storage manager.  Provides blocking Read_LvglData /
+ *        Write_LvglData (and Read_/Write_OtaData) APIs to other tasks while
+ *        internally driving the externflash wrapper through its async +
+ *        callback API. Lives under 01_SERVICE/service_storage/ to keep the
+ *        layering clean: APP (LVGL) and 01_SERVICE/service_ota share this
+ *        facade rather than reaching into one another.
  *
  * Processing flow:
  *   - Caller takes s_caller_mutex, publishes the request into s_pending,

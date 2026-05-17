@@ -3,7 +3,7 @@
  *
  * @par dependencies
  * - osal_wrapper_adapter.h
- * - upgrade_service.h
+ * - watchdog_port.h  (MCU port — single mcu_watchdog_refresh() call)
  *
  * @author Ethan-Hang
  *
@@ -19,7 +19,10 @@
  *        Bootloader-side reload is ~6 s (prescaler 64, reload 3000). We feed
  *        every 500 ms — 12× safety margin against scheduler hiccups.
  *
- * @version V1.0 2026-05-14
+ *        IWDG register access lives in the MCU port (watchdog_port.c); this
+ *        file owns only the cadence and the task wrapper.
+ *
+ * @version V1.1 2026-05-17
  *
  * @note 1 tab == 4 spaces!
  *****************************************************************************/
@@ -28,7 +31,7 @@
 #include "osal_wrapper_adapter.h"
 #include "os_freertos.h"
 
-#include "upgrade_service.h"
+#include "watchdog_port.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
@@ -48,7 +51,7 @@ void iwdg_feeder_task(void *argument)
     **/
     for (;;)
     {
-        ota_iwdg_refresh();
+        mcu_watchdog_refresh();
         osal_task_delay(OS_MS_TO_TICKS(IWDG_FEEDER_PERIOD_MS));
     }
 }

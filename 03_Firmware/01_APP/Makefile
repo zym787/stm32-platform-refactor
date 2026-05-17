@@ -134,6 +134,8 @@ Core/Src/spi.c \
 02_MCU_Platform/MCU_Core_GPIO/src/gpio_port.c \
 02_MCU_Platform/MCU_Core_Systick/src/systick_port.c \
 02_MCU_Platform/MCU_Core_DWT/src/dwt_port.c \
+02_MCU_Platform/MCU_Core_Watchdog/src/watchdog_port.c \
+02_MCU_Platform/MCU_Core_IFlash/src/iflash_port.c \
 02_BSP_Platform/Bsp_Drivers/aht21/driver/src/bsp_aht21_driver.c \
 02_BSP_Platform/Bsp_Drivers/aht21/handler/src/bsp_temp_humi_xxx_handler.c \
 02_BSP_Platform/Bsp_Drivers/mpu6050/driver/src/bsp_mpuxxxx_driver.c \
@@ -205,8 +207,8 @@ Core/Src/spi.c \
 01_APP/User_Sensor/storage/src/w25q64_mock_test_task.c \
 01_APP/User_Sensor/storage/src/w25q64_handler_mock_test_task.c \
 01_APP/User_Sensor/storage/src/w25q64_hal_test_task.c \
-01_APP/User_Sensor/storage/src/storage_manager_task.c \
 01_APP/User_Sensor/storage/src/storage_assets.c \
+01_SERVICE/service_storage/src/storage_manager_task.c \
 01_SERVICE/service_ota/src/upgrade_service.c \
 01_SERVICE/service_ota/src/iwdg_feeder_task.c \
 01_SERVICE/service_ota/src/firmware_upgrade_task.c \
@@ -335,7 +337,9 @@ C_INCLUDES_MCU = \
 -I02_MCU_Platform/MCU_Core_SPI/spi_port/inc \
 -I02_MCU_Platform/MCU_Core_GPIO/inc \
 -I02_MCU_Platform/MCU_Core_Systick/inc \
--I02_MCU_Platform/MCU_Core_DWT/inc
+-I02_MCU_Platform/MCU_Core_DWT/inc \
+-I02_MCU_Platform/MCU_Core_Watchdog/inc \
+-I02_MCU_Platform/MCU_Core_IFlash/inc
 
 # 02_Middleware_Platform
 C_INCLUDES_MW = \
@@ -408,11 +412,11 @@ C_INCLUDES_APP = \
 -I01_APP/User_Init/Platform_IO_Register/inc \
 -I01_APP/User_Task_Config/inc \
 -I01_APP/User_Isr_handlers/inc \
--I01_APP/User_Sensor/mpu6050/inc \
--I01_APP/User_Sensor/storage/inc
+-I01_APP/User_Sensor/mpu6050/inc
 
-# 01_SERVICE — business-agnostic services (OTA, future FOTA/provisioning/etc)
+# 01_SERVICE — business-agnostic services (OTA, storage facade, future FOTA/etc)
 C_INCLUDES_SERVICE = \
+-I01_SERVICE/service_storage/inc \
 -I01_SERVICE/service_ota/inc
 
 # 03_Config

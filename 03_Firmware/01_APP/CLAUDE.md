@@ -38,7 +38,7 @@ ARM CMSIS / 硬件        ← 寄存器级
 |---|---|
 | `02_OS_Platform/` | 对 FreeRTOS 的 OSAL 封装。`OS_Wrapper/inc/` 是公开 API；`OS_Implementation/` 包含 FreeRTOS 映射实现。替换 `OS_Implementation` 即可切换 RTOS。 |
 | `02_BSP_Platform/` | 使用适配器模式的传感器/外设驱动（详见下文）。 |
-| `02_MCU_Platform/` | 芯片级 I2C/SPI 总线驱动。管理总线级互斥锁（`CORE_I2C_BUS_MUTEX_TIMEOUT_MS = 8ms`）。同时支持硬件 I2C（HAL）和软件 I2C 位操作（SCL=PB14，SDA=PB15）。 |
+| `02_MCU_Platform/` | 芯片级 port 层：`MCU_Core_IIC/SPI/GPIO/Systick/DWT` 总线与时钟、`MCU_Core_Watchdog/`（`mcu_watchdog_refresh()`）、`MCU_Core_IFlash/`（`mcu_iflash_erase_sector + program_words`，函数体内 `__disable_irq()` 包裹整段防 F411 单 bank flash 取指死锁）。所有寄存器级触碰都收在此层，service / APP 不直接调 HAL。同时支持硬件 I2C（HAL）和软件 I2C 位操作（SCL=PB14，SDA=PB15）。 |
 | `02_Middleware_Platform/` | EasyLogger（异步日志），LetterShell（嵌入式 CLI），LVGL v8.3（GUI 库）。 |
 
 ### BSP 适配器模式（`02_BSP_Platform/`）
@@ -76,7 +76,14 @@ Wrapper API 风格按设备类型选择：
 
 ### 服务层（`01_SERVICE/`）
 
-业务无关 service 抽象，与 `01_APP/` 平级。目前唯一子模块 `01_SERVICE/upgrade/` 承载 OTA 升级链路（详见 "OTA 升级链路" 节）。后续 FOTA、配网、电池策略等 service 都进这一层。
+业务无关 service 抽象，与 `01_APP/` 平级。Service 只能向下调 `02_*_Platform` / `04_Common_Utils` / `03_Config`，**禁止反向依赖 `01_APP/` 任何代码**。
+
+| 子模块 | 职责 |
+|---|---|
+| `service_storage/` | 异步 BSP externflash 上的阻塞门面：`Read_/Write_LvglData`、`Read_/Write_OtaData` + `storage_manager_task`。APP（LVGL 资源）与 `service_ota`（Ymodem staging）共享同一条单消费者队列。 |
+| `service_ota/` | OTA 升级链路（详见 "OTA 升级链路" 节）。`ota_flag_read/write` 经 `MCU_Core_IFlash` 写内部 Flash；`iwdg_feeder_task` 经 `MCU_Core_Watchdog` 喂狗。 |
+
+后续 FOTA、配网、电池策略等 service 都进这一层。
 
 ### OSAL 层（`02_OS_Platform/`）
 
@@ -216,7 +223,7 @@ JLink 设备 `STM32F411CE_W25Q64` 注册在 `%APPDATA%\SEGGER\JLinkDevices\ST\ST
 
 PC → UART1 → APP（Ymodem 收 + 写 W25Q64 OTA 分区）→ NVIC_SystemReset → Bootloader（AES-256-CBC 解密 + BLOCK_1→BLOCK_2→内部 Flash + 回滚兜底）。**触发不走 shell**，靠 UART 魔术字 `0x11 22 33`（启动）/ `0x77 88 99`（应用）。
 
-### 链路任务（`01_SERVICE/upgrade/`）
+### 链路任务（`01_SERVICE/service_ota/`）
 
 | 任务 | 优先级 | 职责 |
 |---|---|---|
@@ -280,7 +287,7 @@ APP `user_init` 看到 `0x33` 或 `0x44` 都 auto-confirm 写 `0x00`；若 IWDG 
 
 - **W25Q64 Page Program 跨 page 回卷**：`bsp_w25q64_driver.c::w25q64_write_data_erase` 必须按 256 B page 边界拆 chunk，erase 仍 per-sector (4 KB)。否则单个 Page Program 跨 page 时 W25Q64 地址回卷到 page 起点 → 后续字节覆盖前面字节
 - **APP `Write_OtaData` 每次 erase 整 sector**：sub-sector 写入会抹掉同 sector 之前的数据。`firmware_upgrade_task.c` 用 4 KB `s_sector_buf[]` 攒满再写，ymodem_recv_task 调 `firmware_upgrade_flush_staged()` 冲尾段
-- **`ota_flag_write` 必须 `__disable_irq()` 包裹**：F411 单 bank flash erase 阻塞 ~1 s，期间 ISR 在 flash 取指会死锁
+- **内部 Flash 操作必须关中断**：F411 单 bank flash erase 阻塞 ~1 s，期间 ISR 在 flash 取指会死锁。`MCU_Core_IFlash/iflash_port.c` 已经在 `mcu_iflash_erase_sector` / `mcu_iflash_program_words` 函数体内用 `__disable_irq()` + 出口恢复 PRIMASK 兜住，service 层调用方不用再手动关
 - **UART1 polled HAL 会饿死 PRI_BACKGROUND**：listener 必须走中断/DMA 模式，否则 `iwdg_feeder` 抢不到 CPU → IWDG fire 整机 reset
 
 ## 新增外设驱动步骤

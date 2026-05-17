@@ -1,10 +1,11 @@
 
 
-OpenDocument="startup_stm32f411xe.s", FilePath="/home/xch/stm32-platform-refactor/03_Firmware/00_Bootloader/startup_stm32f411xe.s", Line=38
-OpenDocument="main.c", FilePath="/home/xch/stm32-platform-refactor/03_Firmware/00_Bootloader/Core/Src/main.c", Line=73
+
+Breakpoint=/home/xch/stm32-platform-refactor/03_Firmware/00_Bootloader/Core/Src/main.c:113, State=BP_STATE_ON
+OpenDocument="main.c", FilePath="/home/xch/stm32-platform-refactor/03_Firmware/00_Bootloader/Core/Src/main.c", Line=133
 OpenToolbar="Debug", Floating=0, x=0, y=0
-OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=1, w=487, h=474, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
-OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=0, w=487, h=252, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=1, w=487, h=469, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
+OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=0, w=487, h=257, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
 OpenWindow="Memory 1", DockArea=BOTTOM, x=1, y=0, w=1064, h=323, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, EditorAddress=0x2001DC60
 OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=1, w=340, h=368, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
 OpenWindow="Functions", DockArea=LEFT, x=0, y=0, w=340, h=358, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
