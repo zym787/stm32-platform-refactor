@@ -14,21 +14,13 @@ env:
   MEM_REPORT_FAIL_ABOVE: "0.95"
 
 jobs:
-  build:
-    # -Og  : default, debug-friendly, also the source of uploaded artifacts.
-    # -Os  : production size-optimized. Must always fit; hard-fail on regression.
-    # -O3  : aggressive optimization. Surfaces UB / strict-aliasing / volatile
-    #        violations the other levels miss. Hard-fail.
-    # -O0  : debug/no-opt. Largest binary; only level that can plausibly overflow
-    #        Flash with this codebase. Soft-fail (continue-on-error) so it stays
-    #        purely diagnostic.
-    name: Build (${{ matrix.opt }})
+  build-bootloader:
+    name: Bootloader (${{ matrix.opt }})
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.opt == '-O0' }}
     strategy:
       fail-fast: false
       matrix:
-        opt: ['-Og', '-Os', '-O3', '-O0']
+        opt: ['-Og', '-Os']
 
     steps:
       - name: Checkout repository
@@ -73,13 +65,6 @@ jobs:
             MEM_REPORT_FAIL_ABOVE=${{ env.MEM_REPORT_FAIL_ABOVE }} \
             -j$(nproc)
 
-      - name: Build APP (OPT=${{ matrix.opt }})
-        run: |
-          make -C ${{ env.APP_DIR }} \
-            OPT=${{ matrix.opt }} \
-            MEM_REPORT_FAIL_ABOVE=${{ env.MEM_REPORT_FAIL_ABOVE }} \
-            -j$(nproc)
-
       - name: Upload Bootloader artifacts
         if: matrix.opt == '-Og'
         uses: actions/upload-artifact@v4
@@ -91,6 +76,61 @@ jobs:
             ${{ env.BOOTLOADER_DIR }}/build/bootloader.bin
             ${{ env.BOOTLOADER_DIR }}/build/bootloader.map
           retention-days: 30
+
+  build-app:
+    # -Og  : default, debug-friendly, also the source of uploaded artifacts.
+    # -Os  : production size-optimized. Must always fit; hard-fail on regression.
+    # -O3  : aggressive optimization. Surfaces UB / strict-aliasing / volatile
+    #        violations the other levels miss. Hard-fail.
+    name: APP (${{ matrix.opt }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        opt: ['-Og', '-Os', '-O3']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Cache ARM GCC toolchain
+        id: cache-toolchain
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TOOLCHAIN_DIR }}
+          key: arm-none-eabi-${{ env.TOOLCHAIN_VERSION }}-linux-x86_64
+
+      - name: Download ARM GCC toolchain
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ${{ env.TOOLCHAIN_DIR }}
+          TARBALL="arm-gnu-toolchain-${{ env.TOOLCHAIN_VERSION }}-x86_64-arm-none-eabi.tar.xz"
+          URL="https://developer.arm.com/-/media/Files/downloads/gnu/${{ env.TOOLCHAIN_VERSION }}/binrel/${TARBALL}"
+          echo "Downloading: $URL"
+          curl -L --retry 3 -o /tmp/toolchain.tar.xz "$URL"
+          tar -xf /tmp/toolchain.tar.xz --strip-components=1 -C ${{ env.TOOLCHAIN_DIR }}
+          rm /tmp/toolchain.tar.xz
+
+      - name: Add toolchain to PATH
+        run: |
+          echo "${{ env.TOOLCHAIN_DIR }}/bin" >> $GITHUB_PATH
+
+      - name: Verify toolchain
+        run: arm-none-eabi-gcc --version
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Build APP (OPT=${{ matrix.opt }})
+        run: |
+          make -C ${{ env.APP_DIR }} \
+            OPT=${{ matrix.opt }} \
+            MEM_REPORT_FAIL_ABOVE=${{ env.MEM_REPORT_FAIL_ABOVE }} \
+            -j$(nproc)
 
       - name: Upload APP artifacts
         if: matrix.opt == '-Og'
