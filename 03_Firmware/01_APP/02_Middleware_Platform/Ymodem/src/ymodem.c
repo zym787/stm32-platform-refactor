@@ -5,9 +5,8 @@
  * - string.h
  * - usart.h
  * - main.h
- * - FreeRTOS.h
- * - queue.h
- * - semphr.h
+ * - osal_wrapper_adapter.h
+ * - os_freertos.h
  * - Debug.h
  *
  * @author Ethan-Hang
@@ -32,9 +31,9 @@
 #include "usart.h"
 #include "main.h"
 
-#include "FreeRTOS.h"
-#include "queue.h"
-#include "semphr.h"
+#include "osal_wrapper_adapter.h"
+#include "osal_error.h"
+#include "os_freertos.h"
 
 #include "ymodem.h"
 #include "Debug.h"
@@ -43,9 +42,9 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 uint8_t                  file_name[FILE_NAME_LENGTH];
-extern QueueHandle_t     Q_YmodemReclength;
-extern QueueHandle_t     Queue_AppDataBuffer;
-extern SemaphoreHandle_t Semaphore_ExtFlashState;
+extern osal_queue_handle_t Q_YmodemReclength;
+extern osal_queue_handle_t Queue_AppDataBuffer;
+extern osal_sema_handle_t  Semaphore_ExtFlashState;
 static uint16_t          s_u16_YmodRecLength;
 
 
@@ -154,7 +153,7 @@ static uint32_t Str2Int(uint8_t *inputstr, int32_t *intnum)
 static int32_t Receive_Byte(uint8_t *c, uint16_t length, uint32_t timeout)
 {
     HAL_StatusTypeDef hal_ret;
-    BaseType_t        retval = pdFALSE;
+    osal_base_type_t  retval = OSAL_FALSE;
 
     /* Make sure UART RX DMA is in IDLE mode so RxEvent callback can report
      * actual frame length. */
@@ -170,9 +169,9 @@ static int32_t Receive_Byte(uint8_t *c, uint16_t length, uint32_t timeout)
     }
     __HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT);
 
-    retval = xQueueReceive(Q_YmodemReclength, &s_u16_YmodRecLength,
-                           pdMS_TO_TICKS(timeout));
-    if (pdFALSE == retval)
+    retval = osal_queue_receive(Q_YmodemReclength, &s_u16_YmodRecLength,
+                                OS_MS_TO_TICKS(timeout));
+    if (OSAL_FALSE == retval)
     {
         return YMODEM_PKT_TIMEOUT; /* Timeout */
     }
@@ -199,14 +198,14 @@ static uint32_t Send_Byte(uint8_t c)
  */
 static void Ymodem_File_Info_User_Handler(Ymodem_RxContext_t *ctx)
 {
-    if (xQueueSendToBack(Queue_AppDataBuffer, &ctx, portMAX_DELAY) != pdPASS)
+    if (osal_queue_send(Queue_AppDataBuffer, &ctx, OSAL_MAX_DELAY) != OSAL_SUCCESS)
     {
         DEBUG_OUT(e, YMODEM_LOG_TAG, "Failed to send file data to queue");
         return;
     }
 
     /* Wait until download task consumes the FILE_INFO message. */
-    if (xSemaphoreTake(Semaphore_ExtFlashState, portMAX_DELAY) != pdTRUE)
+    if (osal_sema_take(Semaphore_ExtFlashState, OSAL_MAX_DELAY) != OSAL_SUCCESS)
     {
         DEBUG_OUT(e, YMODEM_LOG_TAG,
                   "Failed to sync file info with download task");
@@ -230,7 +229,7 @@ static void Ymodem_File_Info_User_Handler(Ymodem_RxContext_t *ctx)
  */
 static void Ymodem_File_Data_User_Handler(Ymodem_RxContext_t *ctx)
 {
-    if (xQueueSendToBack(Queue_AppDataBuffer, &ctx, portMAX_DELAY) != pdPASS)
+    if (osal_queue_send(Queue_AppDataBuffer, &ctx, OSAL_MAX_DELAY) != OSAL_SUCCESS)
     {
         DEBUG_OUT(e, YMODEM_LOG_TAG, "Failed to send file info to queue");
         return;
@@ -238,7 +237,7 @@ static void Ymodem_File_Data_User_Handler(Ymodem_RxContext_t *ctx)
 
     /* Wait until download task writes this packet into W25Q before reusing
      * context buffers. */
-    if (xSemaphoreTake(Semaphore_ExtFlashState, portMAX_DELAY) != pdTRUE)
+    if (osal_sema_take(Semaphore_ExtFlashState, OSAL_MAX_DELAY) != OSAL_SUCCESS)
     {
         DEBUG_OUT(e, YMODEM_LOG_TAG,
                   "Failed to sync file data with download task");

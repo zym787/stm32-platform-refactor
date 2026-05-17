@@ -109,21 +109,6 @@ static void ota_watchdog_start(void)
     ota_watchdog_feed();
 }
 
-/**
- * @brief
- * Trigger software reset by NVIC.
- *
- * @param[in] : None.
- *
- * @param[out] : None.
- *
- * @return
- * None.
- * */
-static void soft_reset(void)
-{
-    __NVIC_SystemReset();
-}
 
 /**
  * @brief

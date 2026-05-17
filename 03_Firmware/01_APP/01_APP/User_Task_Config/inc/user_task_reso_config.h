@@ -34,9 +34,11 @@
 //******************************** Defines **********************************//
 
 //******************************* Declaring *********************************//
+/* ========== Production tasks ========== */
+
 /* --- Motion (MPU6050) --- */
-#define USER_TASK_MPU6050_HANDLER       0
-#define USER_TASK_UNPACK_TASK           0
+#define USER_TASK_MPU6050_HANDLER       1
+#define USER_TASK_UNPACK_TASK           1
 
 /* --- Temp / Humidity (AHT21) --- */
 #define USER_TASK_TEMP_HUMI_HANDLER     1
@@ -44,8 +46,7 @@
 #define USER_TASK_TEMP_HUMI_TEST_B      1
 
 /* --- Audio (WT588) --- */
-#define USER_TASK_WT588_HANDLER         0
-#define USER_TASK_WT588_TEST            0
+#define USER_TASK_WT588_HANDLER         1
 
 /* --- Display (LVGL / ST7789) --- */
 #define USER_LVGL_TEST_TASK             1
@@ -57,22 +58,14 @@
    actual SPI page-program. With either disabled, Write_OtaData blocks
    forever on s_done_sem and Ymodem stalls at the first data packet. */
 #define USER_TASK_W25Q64_HANDLER        1
-#define USER_TASK_W25Q64_HAL_TEST       0
-#define USER_TASK_W25Q64_MOCK           0
 #define USER_TASK_STORAGE_MANAGER       1
 
 /* --- Heart Rate (EM7028) --- */
 #define USER_TASK_EM7028_HANDLER        1
-/* IIC_HAL_TEST, JSCOPE_CAPTURE, and HEART_RATE all consume the handler
- * frame queue (single-consumer queue) -- enable at most one at a time. */
-#define USER_TASK_EM7028_IIC_HAL_TEST   0
-#define USER_TASK_EM7028_HAL_TEST       0
-#define USER_TASK_EM7028_HANDLER_MOCK   0
-#define USER_TASK_EM7028_JSCOPE_CAPTURE 0
 #define USER_TASK_EM7028_HEART_RATE     1
 
 /* --- System --- */
-#define USER_TASK_TASK_HIGHER_WATER     0
+#define USER_TASK_TASK_HIGHER_WATER     1
 
 /* --- OTA (01_SERVICE/upgrade) --- */
 /* IWDG feeder runs on EVERY boot because F411 IWDG can't be disabled once
@@ -84,8 +77,21 @@
 #define USER_TASK_YMODEM_RECV           1
 #define USER_TASK_OTA_UART_LISTENER     1
 
+/* ========== Test / debug tasks (disabled by default) ========== */
+
+#define USER_TASK_WT588_TEST            0
+#define USER_TASK_W25Q64_MOCK           0
+#define USER_TASK_W25Q64_HAL_TEST       0
+#define USER_TASK_EM7028_HAL_TEST       0
+/* IIC_HAL_TEST, JSCOPE_CAPTURE, and HEART_RATE all consume the handler
+ * frame queue (single-consumer queue) -- enable at most one at a time. */
+#define USER_TASK_EM7028_IIC_HAL_TEST   0
+#define USER_TASK_EM7028_HANDLER_MOCK   0
+#define USER_TASK_EM7028_JSCOPE_CAPTURE 0
+
 typedef enum
 {
+    /* --- Production --- */
 #if USER_TASK_MPU6050_HANDLER
     USER_TASK_MPU6050_HANDLER_IDX = 0,
 #endif
@@ -95,32 +101,20 @@ typedef enum
 #if USER_TASK_TEMP_HUMI_HANDLER
     USER_TASK_TEMP_HUMI_HANDLER_IDX,
 #endif
-#if USER_TASK_WT588_HANDLER
-    USER_TASK_WT588_HANDLER_IDX,
-#endif
-#if USER_TASK_TASK_HIGHER_WATER
-    USER_TASK_TASK_HIGHER_WATER_IDX,
-#endif
 #if USER_TASK_TEMP_HUMI_TEST_A
     USER_TASK_TEMP_HUMI_TEST_A_IDX,
 #endif
 #if USER_TASK_TEMP_HUMI_TEST_B
     USER_TASK_TEMP_HUMI_TEST_B_IDX,
 #endif
-#if USER_TASK_WT588_TEST
-    USER_TASK_WT588_TEST_IDX,
+#if USER_TASK_WT588_HANDLER
+    USER_TASK_WT588_HANDLER_IDX,
 #endif
 #if USER_LVGL_TEST_TASK
     USER_LVGL_TEST_TASK_IDX,
 #endif
-#if USER_TASK_W25Q64_MOCK
-    USER_TASK_W25Q64_MOCK_IDX,
-#endif
 #if USER_TASK_W25Q64_HANDLER
     USER_TASK_W25Q64_HANDLER_IDX,
-#endif
-#if USER_TASK_W25Q64_HAL_TEST
-    USER_TASK_W25Q64_HAL_TEST_IDX,
 #endif
 #if USER_TASK_STORAGE_MANAGER
     USER_TASK_STORAGE_MANAGER_IDX,
@@ -128,20 +122,11 @@ typedef enum
 #if USER_TASK_EM7028_HANDLER
     USER_TASK_EM7028_HANDLER_IDX,
 #endif
-#if USER_TASK_EM7028_IIC_HAL_TEST
-    USER_TASK_EM7028_IIC_HAL_TEST_IDX,
-#endif
-#if USER_TASK_EM7028_HAL_TEST
-    USER_TASK_EM7028_HAL_TEST_IDX,
-#endif
-#if USER_TASK_EM7028_HANDLER_MOCK
-    USER_TASK_EM7028_HANDLER_MOCK_IDX,
-#endif
-#if USER_TASK_EM7028_JSCOPE_CAPTURE
-    USER_TASK_EM7028_JSCOPE_CAPTURE_IDX,
-#endif
 #if USER_TASK_EM7028_HEART_RATE
     USER_TASK_EM7028_HEART_RATE_IDX,
+#endif
+#if USER_TASK_TASK_HIGHER_WATER
+    USER_TASK_TASK_HIGHER_WATER_IDX,
 #endif
 #if USER_TASK_IWDG_FEEDER
     USER_TASK_IWDG_FEEDER_IDX,
@@ -154,6 +139,28 @@ typedef enum
 #endif
 #if USER_TASK_OTA_UART_LISTENER
     USER_TASK_OTA_UART_LISTENER_IDX,
+#endif
+    /* --- Test / debug --- */
+#if USER_TASK_WT588_TEST
+    USER_TASK_WT588_TEST_IDX,
+#endif
+#if USER_TASK_W25Q64_MOCK
+    USER_TASK_W25Q64_MOCK_IDX,
+#endif
+#if USER_TASK_W25Q64_HAL_TEST
+    USER_TASK_W25Q64_HAL_TEST_IDX,
+#endif
+#if USER_TASK_EM7028_HAL_TEST
+    USER_TASK_EM7028_HAL_TEST_IDX,
+#endif
+#if USER_TASK_EM7028_IIC_HAL_TEST
+    USER_TASK_EM7028_IIC_HAL_TEST_IDX,
+#endif
+#if USER_TASK_EM7028_HANDLER_MOCK
+    USER_TASK_EM7028_HANDLER_MOCK_IDX,
+#endif
+#if USER_TASK_EM7028_JSCOPE_CAPTURE
+    USER_TASK_EM7028_JSCOPE_CAPTURE_IDX,
 #endif
     USER_TASK_NUM
 } usertaskid_t;

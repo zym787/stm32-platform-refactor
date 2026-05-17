@@ -4,7 +4,7 @@
  * @par dependencies
  * - firmware_upgrade.h
  * - usart.h, stm32f4xx_hal.h
- * - FreeRTOS.h, event_groups.h
+ * - osal_wrapper_adapter.h / os_freertos.h
  * - Debug.h
  *
  * @author Ethan-Hang
@@ -33,9 +33,9 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "FreeRTOS.h"
-#include "event_groups.h"
-#include "semphr.h"
+#include "osal_wrapper_adapter.h"
+#include "osal_error.h"
+#include "os_freertos.h"
 
 #include "stm32f4xx_hal.h"
 #include "usart.h"
@@ -51,9 +51,9 @@ static const uint8_t MAGIC_APPLY[3] = { 0x77U, 0x88U, 0x99U };
 //******************************** Defines **********************************//
 
 //******************************* Variables *********************************//
-extern EventGroupHandle_t g_ota_evgrp;
-extern SemaphoreHandle_t  g_listener_byte_sem;
-extern uint8_t            g_listener_rx_byte;
+extern osal_event_group_handle_t g_ota_evgrp;
+extern osal_sema_handle_t        g_listener_byte_sem;
+extern uint8_t                   g_listener_rx_byte;
 //******************************* Variables *********************************//
 
 //******************************* Functions *********************************//
@@ -93,7 +93,7 @@ static void arm_listener_rx(void)
         * and retry — never spin-poll. ~5 ms gives Ymodem time to release
         * the bus on the abort path.
         **/
-        vTaskDelay(pdMS_TO_TICKS(5));
+        osal_task_delay(OS_MS_TO_TICKS(5));
     }
 }
 
@@ -117,7 +117,7 @@ void ota_uart_listener_task(void *argument)
         * tasks like iwdg_feeder, which is what was tripping IWDG and
         * making the system look frozen.
         **/
-        if (xSemaphoreTake(g_listener_byte_sem, portMAX_DELAY) != pdTRUE)
+        if (osal_sema_take(g_listener_byte_sem, OSAL_MAX_DELAY) != OSAL_SUCCESS)
         {
             continue;
         }
@@ -143,11 +143,12 @@ void ota_uart_listener_task(void *argument)
                 * once that returns and ota_flag is stamped, it sets the
                 * STAGED bit and the bus is free again.
                 **/
-                (void)xEventGroupWaitBits(g_ota_evgrp,
-                                          UPGRADE_EVENT_OTA_STAGED,
-                                          pdTRUE,   /* clear on take */
-                                          pdFALSE,  /* any bit       */
-                                          portMAX_DELAY);
+                (void)osal_event_group_wait_bits(g_ota_evgrp,
+                                                 UPGRADE_EVENT_OTA_STAGED,
+                                                 true,   /* clear on take */
+                                                 false,  /* any bit       */
+                                                 OSAL_MAX_DELAY,
+                                                 NULL);
 
                 state = LISTEN_FOR_APPLY;
                 DEBUG_OUT(i, YMODEM_LOG_TAG,

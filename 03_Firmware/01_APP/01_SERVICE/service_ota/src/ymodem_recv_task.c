@@ -6,7 +6,7 @@
  * - upgrade_service.h
  * - cfg_ota.h
  * - ymodem.h
- * - FreeRTOS.h, event_groups.h
+ * - osal_wrapper_adapter.h / os_freertos.h
  * - Debug.h
  *
  * @author Ethan-Hang
@@ -24,8 +24,9 @@
 //******************************** Includes *********************************//
 #include <stdint.h>
 
-#include "FreeRTOS.h"
-#include "event_groups.h"
+#include "osal_wrapper_adapter.h"
+#include "osal_error.h"
+#include "os_freertos.h"
 
 #include "firmware_upgrade.h"
 #include "upgrade_service.h"
@@ -59,7 +60,7 @@ static uint8_t s_ymodem_buf[2][1030];
 //******************************* Variables *********************************//
 
 //******************************* Functions *********************************//
-extern EventGroupHandle_t g_ota_evgrp;
+extern osal_event_group_handle_t g_ota_evgrp;
 
 void ymodem_recv_task(void *argument)
 {
@@ -73,11 +74,13 @@ void ymodem_recv_task(void *argument)
         * Block forever waiting for the listener to set OTA_START. The
         * bit is cleared on take so we always run a fresh session.
         **/
-        const EventBits_t bits = xEventGroupWaitBits(g_ota_evgrp,
-                                                     UPGRADE_EVENT_OTA_START,
-                                                     pdTRUE,   /* clear */
-                                                     pdFALSE,  /* any   */
-                                                     portMAX_DELAY);
+        uint32_t bits = 0;
+        (void)osal_event_group_wait_bits(g_ota_evgrp,
+                                          UPGRADE_EVENT_OTA_START,
+                                          true,   /* clear */
+                                          false,  /* any   */
+                                          OSAL_MAX_DELAY,
+                                          &bits);
         if (0U == (bits & UPGRADE_EVENT_OTA_START))
         {
             continue;
@@ -153,7 +156,7 @@ void ymodem_recv_task(void *argument)
         * firmware_upgrade_signal_start. Now it can resume polling UART1
         * for the apply magic (0x77 88 99).
         **/
-        (void)xEventGroupSetBits(g_ota_evgrp, UPGRADE_EVENT_OTA_STAGED);
+        (void)osal_event_group_set_bits(g_ota_evgrp, UPGRADE_EVENT_OTA_STAGED);
     }
 }
 //******************************* Functions *********************************//

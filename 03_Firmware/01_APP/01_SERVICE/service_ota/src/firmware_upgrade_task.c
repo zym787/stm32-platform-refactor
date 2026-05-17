@@ -6,7 +6,7 @@
  * - ymodem.h
  * - user_externflash_manage.h
  * - upgrade_service.h
- * - FreeRTOS.h / queue.h / semphr.h / event_groups.h
+ * - osal_wrapper_adapter.h / os_freertos.h
  * - usart.h, stm32f4xx_hal.h
  * - Debug.h
  *
@@ -32,10 +32,9 @@
 //******************************** Includes *********************************//
 #include <string.h>
 
-#include "FreeRTOS.h"
-#include "queue.h"
-#include "semphr.h"
-#include "event_groups.h"
+#include "osal_wrapper_adapter.h"
+#include "osal_error.h"
+#include "os_freertos.h"
 
 #include "stm32f4xx_hal.h"
 #include "usart.h"
@@ -68,18 +67,18 @@
  *        the producer (Ymodem in 02_Middleware_Platform) does not also try
  *        to own the lifetime.
  */
-QueueHandle_t     Q_YmodemReclength       = NULL;
-QueueHandle_t     Queue_AppDataBuffer     = NULL;
-SemaphoreHandle_t Semaphore_ExtFlashState = NULL;
+osal_queue_handle_t     Q_YmodemReclength       = NULL;
+osal_queue_handle_t     Queue_AppDataBuffer     = NULL;
+osal_sema_handle_t      Semaphore_ExtFlashState = NULL;
 
 /* OTA orchestration event group, owned by this module — distinct from the
    storage_manager's event group (different bit space, different consumer). */
-EventGroupHandle_t g_ota_evgrp           = NULL;
+osal_event_group_handle_t g_ota_evgrp           = NULL;
 
 /* Listener-only 1-byte RX path. Magic-byte scan uses interrupt-driven UART
    so the task blocks on this sema instead of busy-polling — otherwise the
    listener starves PRI_BACKGROUND tasks like iwdg_feeder and IWDG fires. */
-SemaphoreHandle_t g_listener_byte_sem    = NULL;
+osal_sema_handle_t g_listener_byte_sem    = NULL;
 uint8_t           g_listener_rx_byte     = 0U;
 
 /* Sector-aligned write coalescer. Owned by firmware_upgrade_task; flushed
@@ -103,9 +102,9 @@ int8_t firmware_upgrade_resources_init(void)
 {
     if (NULL == Q_YmodemReclength)
     {
-        Q_YmodemReclength = xQueueCreate(UPGRADE_QUEUE_LEN_FRAMES,
-                                         sizeof(uint16_t));
-        if (NULL == Q_YmodemReclength)
+        if (OSAL_SUCCESS != osal_queue_create(&Q_YmodemReclength,
+                                              UPGRADE_QUEUE_LEN_FRAMES,
+                                              sizeof(uint16_t)))
         {
             return -1;
         }
@@ -113,9 +112,9 @@ int8_t firmware_upgrade_resources_init(void)
 
     if (NULL == Queue_AppDataBuffer)
     {
-        Queue_AppDataBuffer = xQueueCreate(UPGRADE_QUEUE_DATA_DEPTH,
-                                           sizeof(Ymodem_RxContext_t *));
-        if (NULL == Queue_AppDataBuffer)
+        if (OSAL_SUCCESS != osal_queue_create(&Queue_AppDataBuffer,
+                                              UPGRADE_QUEUE_DATA_DEPTH,
+                                              sizeof(Ymodem_RxContext_t *)))
         {
             return -1;
         }
@@ -127,8 +126,7 @@ int8_t firmware_upgrade_resources_init(void)
         * Binary semaphore, starts EMPTY: Ymodem's first packet must wait
         * for consumer to ack before reusing the double-buffer.
         **/
-        Semaphore_ExtFlashState = xSemaphoreCreateBinary();
-        if (NULL == Semaphore_ExtFlashState)
+        if (OSAL_SUCCESS != osal_sema_init(&Semaphore_ExtFlashState, 0))
         {
             return -1;
         }
@@ -136,8 +134,7 @@ int8_t firmware_upgrade_resources_init(void)
 
     if (NULL == g_ota_evgrp)
     {
-        g_ota_evgrp = xEventGroupCreate();
-        if (NULL == g_ota_evgrp)
+        if (OSAL_SUCCESS != osal_event_group_create(&g_ota_evgrp))
         {
             return -1;
         }
@@ -145,8 +142,7 @@ int8_t firmware_upgrade_resources_init(void)
 
     if (NULL == g_listener_byte_sem)
     {
-        g_listener_byte_sem = xSemaphoreCreateBinary();
-        if (NULL == g_listener_byte_sem)
+        if (OSAL_SUCCESS != osal_sema_init(&g_listener_byte_sem, 0))
         {
             return -1;
         }
@@ -161,7 +157,7 @@ int8_t firmware_upgrade_signal_start(void)
     {
         return -1;
     }
-    (void)xEventGroupSetBits(g_ota_evgrp, UPGRADE_EVENT_OTA_START);
+    (void)osal_event_group_set_bits(g_ota_evgrp, UPGRADE_EVENT_OTA_START);
     return 0;
 }
 
@@ -238,7 +234,7 @@ void firmware_upgrade_task(void *argument)
     {
         Ymodem_RxContext_t *ctx = NULL;
 
-        if (pdPASS != xQueueReceive(Queue_AppDataBuffer, &ctx, portMAX_DELAY))
+        if (OSAL_SUCCESS != osal_queue_receive(Queue_AppDataBuffer, &ctx, OSAL_MAX_DELAY))
         {
             continue;
         }
@@ -361,7 +357,7 @@ void firmware_upgrade_task(void *argument)
         * the bootloader will reject the image on the next boot if the
         * size or CRC doesn't match what was written.
         **/
-        (void)xSemaphoreGive(Semaphore_ExtFlashState);
+        (void)osal_sema_give(Semaphore_ExtFlashState);
     }
 }
 
@@ -392,8 +388,8 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
         return;
     }
 
-    BaseType_t higher_prio_woken = pdFALSE;
-    (void)xQueueSendFromISR(Q_YmodemReclength, &Size, &higher_prio_woken);
+    osal_base_type_t higher_prio_woken = OSAL_FALSE;
+    (void)osal_queue_send_from_isr(Q_YmodemReclength, &Size, &higher_prio_woken);
     portYIELD_FROM_ISR(higher_prio_woken);
 }
 
@@ -425,8 +421,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         return;
     }
 
-    BaseType_t higher_prio_woken = pdFALSE;
-    (void)xSemaphoreGiveFromISR(g_listener_byte_sem, &higher_prio_woken);
+    osal_base_type_t higher_prio_woken = OSAL_FALSE;
+    (void)osal_sema_give_from_isr(g_listener_byte_sem, &higher_prio_woken);
     portYIELD_FROM_ISR(higher_prio_woken);
 }
 //******************************* Functions *********************************//

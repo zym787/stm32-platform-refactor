@@ -207,11 +207,11 @@ Core/Src/spi.c \
 01_APP/User_Sensor/storage/src/w25q64_hal_test_task.c \
 01_APP/User_Sensor/storage/src/storage_manager_task.c \
 01_APP/User_Sensor/storage/src/storage_assets.c \
-01_SERVICE/upgrade/src/upgrade_service.c \
-01_SERVICE/upgrade/src/iwdg_feeder_task.c \
-01_SERVICE/upgrade/src/firmware_upgrade_task.c \
-01_SERVICE/upgrade/src/ymodem_recv_task.c \
-01_SERVICE/upgrade/src/ota_uart_listener.c \
+01_SERVICE/service_ota/src/upgrade_service.c \
+01_SERVICE/service_ota/src/iwdg_feeder_task.c \
+01_SERVICE/service_ota/src/firmware_upgrade_task.c \
+01_SERVICE/service_ota/src/ymodem_recv_task.c \
+01_SERVICE/service_ota/src/ota_uart_listener.c \
 01_APP/User_Sensor/em7028/src/em7028_mock_test_task.c \
 01_APP/User_Sensor/em7028/src/em7028_handler_mock_test_task.c \
 01_APP/User_Sensor/em7028/src/em7028_iic_hal_test_task.c \
@@ -413,7 +413,7 @@ C_INCLUDES_APP = \
 
 # 01_SERVICE — business-agnostic services (OTA, future FOTA/provisioning/etc)
 C_INCLUDES_SERVICE = \
--I01_SERVICE/upgrade/inc
+-I01_SERVICE/service_ota/inc
 
 # 03_Config
 C_INCLUDES_CFG = \

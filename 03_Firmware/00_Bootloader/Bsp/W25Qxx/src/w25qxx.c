@@ -7,6 +7,9 @@ extern volatile uint32_t SysTickUptime;
 #define delay(ms)  delay_ms(ms)
 #define get_tick() SysTickUptime
 
+static void W25Qx_Reset(void);
+static uint8_t W25Qx_GetStatus(void);
+
 W25Qx_Parameter W25Qx_Para;
 /**
  * @brief  Initializes the W25QXXXX interface.
