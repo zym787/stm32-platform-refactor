@@ -109,7 +109,7 @@ void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
 
-  userShellInit();
+  // userShellInit();
   
   temp_humi_drv_init();
   motion_drv_init();
@@ -137,7 +137,7 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of letter_shell */
-  letter_shellHandle = osThreadNew(shellTask, (void*) &shell, &letter_shell_attributes);
+  // letter_shellHandle = osThreadNew(shellTask, (void*) &shell, &letter_shell_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   user_apptask_init();

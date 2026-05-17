@@ -1869,22 +1869,22 @@ void shellWriteEndLine(Shell *shell, char *buffer, int len)
  * @param param 参数(shell对象)
  *
  */
-void shellTask(void *param)
-{
-    Shell *shell = (Shell *)param;
-    char   data;
-#if SHELL_TASK_WHILE == 1
-    while (1)
-    {
-#endif
-        if (shell->read && shell->read(&data, 1) == 1)
-        {
-            shellHandler(shell, data);
-        }
-#if SHELL_TASK_WHILE == 1
-    }
-#endif
-}
+// void shellTask(void *param)
+// {
+//     Shell *shell = (Shell *)param;
+//     char   data;
+// #if SHELL_TASK_WHILE == 1
+//     while (1)
+//     {
+// #endif
+//         if (shell->read && shell->read(&data, 1) == 1)
+//         {
+//             shellHandler(shell, data);
+//         }
+// #if SHELL_TASK_WHILE == 1
+//     }
+// #endif
+// }
 
 
 /**
@@ -2015,9 +2015,9 @@ int shellExecute(int argc, char *argv[])
         }
         int (*func)()        = (int (*)())result;
         ShellCommand command = {
-            .attr.value = SHELL_CMD_PERMISSION(0) |
-                          SHELL_CMD_TYPE(SHELL_TYPE_CMD_FUNC) |
-                          SHELL_CMD_DISABLE_RETURN,
+            .attr.value        = SHELL_CMD_PERMISSION(0) |
+                                 SHELL_CMD_TYPE(SHELL_TYPE_CMD_FUNC) |
+                                 SHELL_CMD_DISABLE_RETURN,
             .data.cmd.function = func,
         };
         return shellExtRun(shell, &command, argc - 1, &argv[1]);

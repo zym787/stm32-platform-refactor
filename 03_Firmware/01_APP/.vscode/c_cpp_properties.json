@@ -86,7 +86,8 @@
                 "${workspaceFolder}/01_APP/User_Sensor/storage/inc",
                 "${workspaceFolder}/03_Config/inc",
                 "${workspaceFolder}/02_Middleware_Platform/heart_rate_algo/inc",
-                "${workspaceFolder}/02_Middleware_Platform/Ymodem/inc"
+                "${workspaceFolder}/02_Middleware_Platform/Ymodem/inc",
+                "${workspaceFolder}/01_SERVICE/upgrade/inc"
             ],
             "defines": [
                 "USE_HAL_DRIVER",

@@ -64,7 +64,8 @@
  * forward-compatible while the contract is iterated. Each ota_flag_write
  * costs ~1 s (16 KB sector erase) so callers should coalesce updates.
  */
-typedef struct {
+typedef struct 
+{
     uint32_t magic;             /**< CFG_OTA_FLAG_MAGIC; mismatch ⇒ uninit */
     uint32_t state;             /**< CFG_OTA_* widened to 32 bits */
     uint32_t image_size;        /**< staged image bytes in W25Q64 BLOCK_1 */

@@ -460,6 +460,22 @@ int8_t exA_to_exB_AES(int32_t fl_size)
     }
 
     memcpy(temp, s_mem_read_buffer, 16);
+
+    /**
+    * Diagnostic: dump the ciphertext bytes the bootloader sees at the
+    * start of BLOCK_1. Compare against the APP-side "first 16 B to write"
+    * log to localise corruption (Ymodem RX vs APP buffering vs SPI
+    * read/write vs AES misdecode).
+    **/
+    DEBUG_OUT(i, OTA_LOG_TAG,
+              "first 16 B from W25Q64 BLOCK_1: "
+              "%02X %02X %02X %02X %02X %02X %02X %02X "
+              "%02X %02X %02X %02X %02X %02X %02X %02X",
+              temp[0],  temp[1],  temp[2],  temp[3],
+              temp[4],  temp[5],  temp[6],  temp[7],
+              temp[8],  temp[9],  temp[10], temp[11],
+              temp[12], temp[13], temp[14], temp[15]);
+
     Aes_IV_key256bit_Decode(iv_work, temp, (uint8_t *)s_key_256);
 
     app_size = ((uint32_t)temp[15] << 24) | ((uint32_t)temp[14] << 16) |
@@ -704,9 +720,15 @@ void OTA_StateManager(void)
         }
         else
         {
-            // Set flag for main to jump to APP.
-            g_jumpinit = 0x55AA55AA;
-            soft_reset();
+            /**
+            * No upgrade pending, no key — just hand off to APP. The legacy
+            * upstream design soft-reset here and relied on a g_jumpinit
+            * sentinel checked by main() early, but our main loop owns the
+            * state machine directly so a soft_reset would just bring us
+            * right back into this branch on the next boot. jump_to_app()
+            * never returns.
+            **/
+            jump_to_app();
         }
         break;
 
@@ -750,15 +772,17 @@ void OTA_StateManager(void)
         break;
     case EE_OTA_APP_CHECKING:
         /**
-        * Reached only when APP failed to ack and IWDG reset us. Clear the
-        * flag and force a clean soft reset so the next boot falls into the
-        * normal path (and bootmanager.c's exA_to_app rollback runs there).
+        * Reached if APP failed to confirm last cycle (IWDG-reset us back
+        * here). Clear the flag and retry the APP — proper rollback via
+        * exA_to_app is a TODO for a later commit. Without the jump, a
+        * soft_reset here would land in NO_APP_UPDATE and just bounce
+        * back through main again.
         **/
         f.state = EE_OTA_NO_APP_UPDATE;
         (void)ota_flag_write(&f);
 
         ota_watchdog_start();
-        soft_reset();
+        jump_to_app();
         break;
     default:
         DEBUG_OUT(e, OTA_LOG_TAG, "OTA_StateManager: unknown state 0x%02X",

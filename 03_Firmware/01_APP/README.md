@@ -33,17 +33,23 @@
 
 ```bash
 # === 改固件代码 ===
-make                # 完整构建 → build/helloworld.{elf,hex,bin}
+make                # 完整构建 → build/helloworld.{elf,hex,bin,mxxx}
 make clean          # 清理 build/
 make mem-report     # 内存占用报告（Tools/mem_report.py）
 make OPT=-O2        # 指定优化等级（默认 -Os）
+
+# === OTA 镜像（默认 all 已经会自动产 .mxxx；下面是单独触发） ===
+make ota-image      # build/helloworld.bin → build/helloworld.mxxx
+                    # 16 B 头 + AES-256-CBC（Tools/ota_encrypt.py，uv 自动装 pycryptodome）
 
 # === 改 LVGL 资源图（独立通道，不动 firmware） ===
 make pack-assets    # → build/assets.bin（magic + 指针小图 + 240×240 背景）
 make flash-assets   # SEGGER JFlash CLI + 自定义 .FLM → W25Q64 LVGL 分区
 ```
 
-> 资源走外部 Flash 是为了让 240×240 表盘背景（169 KB）不挤占内部 Flash。详见下文 “外部 Flash LVGL 资源” 节。
+> 资源走外部 Flash 是为了让 240×240 表盘背景（169 KB）不挤占内部 Flash。详见下文 "外部 Flash LVGL 资源" 节。
+>
+> OTA 镜像（`.mxxx`）和固件 `.hex` 是同一份构建产物的两种封装：`.hex` 给 JFlash 首次量产烧录，`.mxxx` 给 Ymodem OTA 升级。详见下文 "OTA 升级链路" 节。
 
 ---
 
@@ -187,3 +193,98 @@ LVGL render → lv_port_extflash decoder
 ### 自定义 JLink .FLM
 
 `std_program_algorithms/` 是 Keil MDK 工程，编出 `W25Q64_8M_FLM.FLM` 部署到 `%APPDATA%\SEGGER\JLinkDevices\ST\STM32F4\`。`Devices.xml` 在同目录注册自定义设备 `STM32F411CE_W25Q64`，把 W25Q64 SPI bank 挂在 JLink 虚拟地址 `0x90000000`。FLM 内部把 JLink 地址重映射到 W25Q64 物理 `0x300000`（LVGL 分区起点）——意味着 JFlash 工具链**只能**写 LVGL 分区，无法误伤其它分区（OTA / FlashDB / FATFS）。
+
+---
+
+## 🔄 OTA 升级链路
+
+PC → UART1 → APP（Ymodem 收 + 写 W25Q64）→ soft reset → Bootloader（AES 解密 + 拷贝到内部 APP 槽 + 回滚兜底）。**触发不走 shell，靠 UART 魔术字**：
+
+```
+ PC 端                       APP（运行中）                     Bootloader（reset 后）
+─────                       ────────────                     ──────────────────
+0x11 22 33  ─UART1 TX─►  listener 扫到 → 设 OTA_START
+            Ymodem 1K包  ymodem_recv_task 串行 Ymodem_Receive
+                         firmware_upgrade_task 4 KB 缓冲 →
+                         Write_OtaData(W25Q64 OTA 分区)
+0x77 88 99  ─UART1 TX─►  listener 扫到 → NVIC_SystemReset()  
+                                                            读 ota_flag@0x08008000
+                                                            state=0x22 → 解密
+                                                            BLOCK_1→BLOCK_2 →
+                                                            内部 Flash + state=0x33
+                                                                                       │
+                                                            jump_to_app ◄──────────────┘
+new APP 启动 ◄────────  user_init 检 state=0x33/0x44 →
+                       auto-confirm 写 state=0x00 →
+                       iwdg_feeder 持续喂狗
+```
+
+### service 抽象层 01_SERVICE
+
+OTA 不属于"业务任务"也不属于"BSP 驱动"，单独抽到一层：
+
+```
+01_SERVICE/upgrade/
+├── inc/
+│   ├── cfg_ota.h ← 03_Config 实际放这里：共享 ota_flag_t 结构 + magic + 状态宏
+│   ├── upgrade_service.h     ota_flag_read/write
+│   └── firmware_upgrade.h    init / signal_start / signal_apply / flush_staged
+└── src/
+    ├── upgrade_service.c       内部 Flash 0x08008000 读写（__disable_irq 包裹）
+    ├── iwdg_feeder_task.c      F411 IWDG 起就不能停，always-on 500 ms 喂
+    ├── ota_uart_listener.c     UART1 RX 中断驱动 + 3-byte 滑窗扫魔术字
+    ├── ymodem_recv_task.c      包 Ymodem_Receive 全过程
+    └── firmware_upgrade_task.c 三个全局 OS 对象 + 4 KB sector 缓冲 + Write_OtaData
+```
+
+后续业务无关 service（FOTA、配网、电池策略等）都进 `01_SERVICE/`。
+
+### 加密格式 + 工具
+
+`make ota-image` 调 `Tools/ota_encrypt.py`（uv 自动装 pycryptodome），按 bootloader 的解密期望格式封装：
+
+```
+[12 B 零 | 4 B LE app_size | helloworld.bin | 0xFF pad 到 16 B 对齐]
+        ↓
+AES-256-CBC 加密（key/iv = bootmanager.c 硬编码 32×{0x31,0x32} 交替）
+        ↓
+build/helloworld.mxxx
+```
+
+> ⚠️ 硬编码 key 仅过渡用，上线前必须换成运行时注入。
+
+### 关键地址 & 状态字（`03_Config/inc/cfg_ota.h`）
+
+| 项 | 值 | 谁写 | 谁读 |
+|---|---|---|---|
+| `CFG_OTA_FLAG_ADDRESS` | `0x08008000`（内部 Flash Sector 2，16 KB） | APP / Bootloader | 同 |
+| `CFG_OTA_FLAG_MAGIC` | `0xA55A5AA5` | — | 用来识别空 sector |
+| W25Q64 OTA staging | `0x000000`（1 MB 分区，与 `MEMORY_OTA_START_ADDRESS` 一致） | APP firmware_upgrade_task | Bootloader exA_to_exB_AES |
+| W25Q64 BLOCK_2 staging | `0x080000`（解密后中转） | Bootloader 解密路径 | 同 |
+| 内部 APP 槽 | `0x0800C000`（464 KB，sectors 3-7） | Bootloader exB_to_app | — |
+| 当前 APP 大小 | linker 符号 `__app_size__` | APP user_init 写 ota_flag.current_app_size | Bootloader 回滚 backup 用 |
+
+### 状态机（沿用上游 `EE_OTA_*` 数值）
+
+| state | 谁写 | 含义 / 触发 |
+|---|---|---|
+| `0xFF INIT_NO_APP` | （magic 失配兜底） | 全片 erase 后首次启动 |
+| `0x00 NO_APP_UPDATE` | APP user_init / Bootloader CHECKING 路径 | APP 已确认健康，正常跳 APP |
+| `0x22 DOWNLOAD_FINISHED` | APP ymodem_recv_task | Ymodem 收完 + W25Q64 写完 + ota_flag 已更新 |
+| `0x33 APP_CHECK_START` | Bootloader ota_apply_update | 解密 + 拷贝完成，跳 APP 等 confirm |
+| `0x44 APP_CHECKING` | Bootloader CHECK_START 分支 | 跳 APP 前再推进一次（防 reset 中断后死循环）|
+
+APP `user_init` 看到 `0x33` 或 `0x44` 都 auto-confirm；若 IWDG 在 6 s 内没被 APP 喂上（说明新镜像跑不起来），Bootloader CHECKING 分支兜底回滚。
+
+### 一次完整使用流程
+
+```bash
+cd 03_Firmware/01_APP
+make                                  # build/helloworld.{hex,mxxx}
+# 首次量产：
+#   JFlash 烧 00_Bootloader/build/bootloader.hex 到 0x08000000
+#   JFlash 烧 01_APP/build/helloworld.hex      到 0x0800C000
+# 之后升级：
+#   PC 端 UART1 工具发 3 字节 "11 22 33" → 立刻 Ymodem 发 build/helloworld.mxxx
+#   收完后再发 3 字节 "77 88 99" → MCU reset → bootloader 完成升级
+```

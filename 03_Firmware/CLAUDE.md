@@ -56,10 +56,13 @@ cd 00_Bootloader && make clean
 cd 00_Bootloader && make mem-report # Tools/mem_report.py，Flash/RAM/RTT_RAM 三个 region 占用图
 
 # APP
-cd 01_APP && make                   # → build/helloworld.{elf,hex,bin}
+cd 01_APP && make                   # → build/helloworld.{elf,hex,bin,mxxx}
+                                    # .mxxx 是 OTA 加密镜像，build-core 自动调
+                                    # Tools/ota_encrypt.py 产出（uv run，自动装 pycryptodome）
 cd 01_APP && make -j16
 cd 01_APP && make clean
 cd 01_APP && make mem-report
+cd 01_APP && make ota-image         # 单独触发 OTA 镜像生成（默认 all 已包含）
 cd 01_APP && make OPT=-O2
 
 # 外部 Flash LVGL 资源（不动 firmware）
@@ -67,7 +70,7 @@ cd 01_APP && make pack-assets       # → build/assets.bin
 cd 01_APP && make flash-assets      # JFlash CLI + 自定义 .FLM 烧 W25Q64 LVGL 分区
 ```
 
-工具链：`arm-none-eabi-gcc`，目标 STM32F411xE（Cortex-M4F，硬浮点 fpv4-sp-d16）。`mem-report` 经 `uv run` 执行 `Tools/mem_report.py`（`uv` 装在 `~/.local/bin`，需登录 shell 才能找到）。
+工具链：`arm-none-eabi-gcc`，目标 STM32F411xE（Cortex-M4F，硬浮点 fpv4-sp-d16）。`mem-report` / `build_summary` / `ota_encrypt` 全经 `uv run` 走 `Tools/pyproject.toml` 自动管虚拟环境（`uv` 装在 `~/.local/bin`，需登录 shell 才能找到）。
 
 ## 烧录顺序
 
@@ -75,9 +78,15 @@ cd 01_APP && make flash-assets      # JFlash CLI + 自定义 .FLM 烧 W25Q64 LVG
 
 1. JFlash 烧 `01_APP/build/helloworld.hex`（自动落到 `0x0800C000+`）
 2. JFlash 烧 `00_Bootloader/build/bootloader.hex`（自动落到 `0x08000000+`）
-3. 上电 → Bootloader 打印 `bootloader: jumping to APP @ 0x0800C000` → 200 ms 后 `jump_to_app()` → APP 起来
+3. 上电 → Bootloader 进 `OTA_StateManager` 主循环 → 读内部 Flash `0x08008000` 的 ota_flag → 多数情况下 state=0x00（NO_APP_UPDATE）直接 `jump_to_app()` → APP 起来
 
-Bootloader 当前是「无条件直跳」实现：清空 OTA 状态机调用，只做 clock + SysTick + GPIO + USART1 + elog 初始化，打一条 log 后跳转。如果 APP 槽位无效（SP 不在 `0x20000000~0x2001FFFF` 范围）会落到 "APP slot invalid" 死循环。OTA 路径代码（`OTA_StateManager`、ymodem、AES、AT24Cxx 读写等）仍编译进对象文件，但因为 main 不再调用，`--gc-sections` 把它们都剥掉了，所以 Bootloader 体积只 12 KB。
+Bootloader 现在跑完整的 OTA 状态机：clock + SysTick + GPIO + USART1 + SPI2/W25Q64 + elog 初始化后进 `for(;;) OTA_StateManager(); delay_ms(500);` 循环，按 ota_flag 状态决定行为：
+
+- `0xFF INIT_NO_APP` / `0x00 NO_APP_UPDATE`：直接跳 APP（无键按下场景）
+- `0x22 DOWNLOAD_FINISHED`：解密 W25Q64 BLOCK_1 → BLOCK_2 → 备份当前 APP → 拷贝到内部 APP 槽 → 写 `0x33`、跳 APP
+- `0x33 CHECK_START` / `0x44 CHECKING`：APP confirm + 回滚兜底路径
+
+APP 槽位无效（SP 不在 `0x20000000~0x2001FFFF`）会落 "APP slot invalid" 死循环。完整 OTA 链路细节见 `01_APP/CLAUDE.md` 的 "OTA 升级链路" 节。Bootloader 当前 Flash 占用 ~89% / 32 KB（OTA + AES + Ymodem + SFUD 全 reachable）。
 
 ## 调试链路
 

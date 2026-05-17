@@ -1,5 +1,8 @@
-# STM32 GCC build outputs
-build/
+# STM32 GCC build outputs.
+# Note: use `build/*` (contents) not `build/` (the directory itself) so the
+# release-artifact whitelist at the bottom can still re-include specific
+# files — git rejects negations once a parent directory is fully excluded.
+build/*
 
 # Compiler / linker artifacts
 *.o
@@ -30,3 +33,8 @@ demo/
 project/
 std_program_algorithms/
 MDK-ARM/
+
+# Release artifacts — allowed back in so the burnable image can be checked
+# in for QA / OTA distribution. Order matters: this MUST come after the
+# global *.hex / build/* patterns above so the un-ignore takes precedence.
+!build/bootloader.hex

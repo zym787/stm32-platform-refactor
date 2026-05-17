@@ -60,6 +60,9 @@ void em7028_heart_rate_task(void *argument);
 void flash_handler_thread(void *argument);
 void storage_manager_task(void *argument);
 void iwdg_feeder_task(void *argument);
+void firmware_upgrade_task(void *argument);
+void ymodem_recv_task(void *argument);
+void ota_uart_listener_task(void *argument);
 
 usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
 {
@@ -275,10 +278,41 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
     [USER_TASK_IWDG_FEEDER_IDX] = {
         .task_name    = "iwdg_feeder",
         .func_pointer = iwdg_feeder_task,
-        /* 256-word stack is plenty — task body is a 2-line loop, no log
-           calls, no recursion. */
         .stack_depth  = 256,
         .priority     = PRI_BACKGROUND,
+        .task_handle  = NULL,
+        .argument     = NULL
+    },
+#endif
+
+#if USER_TASK_FIRMWARE_UPGRADE
+    [USER_TASK_FIRMWARE_UPGRADE_IDX] = {
+        .task_name    = "firmware_upgrade",
+        .func_pointer = firmware_upgrade_task,
+        .stack_depth  = 1024,
+        .priority     = PRI_SOFT_REALTIME,
+        .task_handle  = NULL,
+        .argument     = NULL
+    },
+#endif
+
+#if USER_TASK_YMODEM_RECV
+    [USER_TASK_YMODEM_RECV_IDX] = {
+        .task_name    = "ymodem_recv",
+        .func_pointer = ymodem_recv_task,
+        .stack_depth  = 1536,
+        .priority     = PRI_SOFT_REALTIME,
+        .task_handle  = NULL,
+        .argument     = NULL
+    },
+#endif
+
+#if USER_TASK_OTA_UART_LISTENER
+    [USER_TASK_OTA_UART_LISTENER_IDX] = {
+        .task_name    = "ota_uart_listener",
+        .func_pointer = ota_uart_listener_task,
+        .stack_depth  = 512,
+        .priority     = PRI_SOFT_REALTIME,
         .task_handle  = NULL,
         .argument     = NULL
     },

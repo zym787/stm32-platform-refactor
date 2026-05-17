@@ -9,7 +9,7 @@
  * - queue.h
  * - semphr.h
  * - Debug.h
- * 
+ *
  * @author Ethan-Hang
  *
  * @brief
@@ -348,7 +348,8 @@ static int32_t Ymodem_RxState_FileInfo(Ymodem_RxContext_t *ctx)
 
         Ymodem_File_Info_User_Handler(ctx);
 
-        DEBUG_OUT(d, YMODEM_FILE_LOG_TAG, "File size: %d bytes", ctx->size);
+        DEBUG_OUT(d, YMODEM_FILE_LOG_TAG, "File size: %d bytes",
+                  (int)ctx->size);
 
         Send_Byte(ACK);
         Send_Byte(CRC16);
@@ -396,7 +397,8 @@ static int32_t Ymodem_RxState_FileData(Ymodem_RxContext_t *ctx)
         // Calculate and display progress (integer math, no float)
         uint32_t progress_percent = (ctx->bytes_received * 100) / ctx->size;
         DEBUG_OUT(i, YMODEM_DATA_LOG_TAG, "Progress: %d/%d bytes (%d%%)",
-                  ctx->bytes_received, ctx->size, progress_percent);
+                  (int)ctx->bytes_received, (int)ctx->size,
+                  (int)progress_percent);
     }
 
     Send_Byte(ACK);
@@ -438,7 +440,7 @@ int32_t Ymodem_Receive(uint8_t (*buf)[1030])
     /* Initialize FlashDestination variable */
 
     DEBUG_OUT(i, YMODEM_LOG_TAG,
-              "Starting reception... (bufA @0x%08x)(bufB @0x%08x)",
+              "Starting reception... (bufA @0x%08lx)(bufB @0x%08lx)",
               (uint32_t)buf[0], (uint32_t)buf[1]);
 
     while (1)
@@ -530,7 +532,7 @@ int32_t Ymodem_Receive(uint8_t (*buf)[1030])
                 {
                     ctx.errors++;
                     DEBUG_OUT(w, YMODEM_LOG_TAG, "Timeout/Error, count: %d/%d",
-                              ctx.errors, MAX_ERRORS);
+                              (int)ctx.errors, MAX_ERRORS);
                 }
                 if (ctx.errors > MAX_ERRORS)
                 {
@@ -566,9 +568,8 @@ int32_t Ymodem_Receive(uint8_t (*buf)[1030])
     }
 
     /* Debug: Final result */
-    DEBUG_OUT(i, YMODEM_LOG_TAG, "Total bytes received: %d",
+    DEBUG_OUT(i, YMODEM_LOG_TAG, "Total bytes received: %lu",
               ctx.bytes_received);
 
     return ctx.bytes_received; /* Return actual bytes received */
 }
-

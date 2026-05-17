@@ -239,6 +239,14 @@ SECTIONS
     libgcc.a ( * )
   }
 
+  /* OTA: total bytes occupied by the APP image inside the FLASH region,
+     computed as (load-end-of-.data) - (FLASH origin). The .data LMA sits
+     right after every >FLASH section, so this captures the full binary
+     footprint. Consumed by 01_SERVICE/upgrade/ymodem_recv_task.c via
+     (uint32_t)&__app_size__ when stamping ota_flag.current_app_size so
+     the bootloader can size the rollback backup correctly. */
+  PROVIDE(__app_size__ = LOADADDR(.data) + SIZEOF(.data) - ORIGIN(FLASH));
+
 }
 
 

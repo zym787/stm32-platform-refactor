@@ -1,5 +1,8 @@
-# STM32 GCC build outputs
-build/
+# STM32 GCC build outputs.
+# Note: use `build/*` (contents) not `build/` (the directory itself) so the
+# release-artifact whitelist at the bottom can still re-include specific
+# files — git rejects negations once a parent directory is fully excluded.
+build/*
 
 # Compiler / linker artifacts
 *.o
@@ -29,3 +32,11 @@ Thumbs.db
 demo/
 project/
 std_program_algorithms/
+
+# Release artifacts — allowed back in so the burnable images can be checked
+# in for QA / OTA distribution. Order matters: this MUST come after the
+# global *.hex / *.bin / build/* patterns above so the un-ignore takes
+# precedence. .mxxx is the OTA-encrypted package produced by `make ota-image`.
+!build/helloworld.hex
+!build/helloworld.bin
+!build/helloworld.mxxx

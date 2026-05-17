@@ -58,6 +58,8 @@
 extern DMA_HandleTypeDef hdma_i2c3_rx;
 extern DMA_HandleTypeDef hdma_spi1_tx;
 extern DMA_HandleTypeDef hdma_tim2_ch3_up;
+extern DMA_HandleTypeDef hdma_usart1_rx;
+extern UART_HandleTypeDef huart1;
 extern TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN EV */
@@ -232,6 +234,34 @@ void DMA2_Stream2_IRQHandler(void)
   /* USER CODE END DMA2_Stream2_IRQn 1 */
 }
 
+/**
+  * @brief This function handles DMA2 stream5 global interrupt.
+  */
+void DMA2_Stream5_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream5_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream5_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart1_rx);
+  /* USER CODE BEGIN DMA2_Stream5_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream5_IRQn 1 */
+}
+
 /* USER CODE BEGIN 1 */
+
+/**
+  * @brief USART1 global interrupt. RX path: HAL UART driver dispatches
+  *        RXNE / IDLE events to the registered callbacks. Used by the OTA
+  *        service-layer listener to receive Ymodem frames via DMA + idle.
+  *
+  *        Note: DMA2_Stream5_IRQHandler is CubeMX-generated above (in the
+  *        Cube zone) when UART RX DMA is enabled in the .ioc — do NOT add
+  *        a second definition here.
+  */
+void USART1_IRQHandler(void)
+{
+    HAL_UART_IRQHandler(&huart1);
+}
 
 /* USER CODE END 1 */

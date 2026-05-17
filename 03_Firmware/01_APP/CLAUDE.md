@@ -5,13 +5,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 构建命令
 
 ```bash
-make                # 完整构建 → build/helloworld.{elf,hex,bin}
+make                # 完整构建 → build/helloworld.{elf,hex,bin,mxxx}
+                    # .mxxx 是 OTA 加密镜像，由 build-core 自动调
+                    # Tools/ota_encrypt.py (uv run) 产出
 make clean          # 删除 build/ 目录
 make mem-report     # 内存占用报告（Tools/mem_report.py，含 link region 占用图）
 make OPT=-O2        # 覆盖优化等级（默认 -Os；DEBUG=1 时切到 -Os 才能放下 .rodata）
+make ota-image      # 单独触发 OTA 镜像生成（默认 all 已包含）
 
 make pack-assets    # 仅打包 LVGL 资源 → build/assets.bin（不动 firmware）
-make flash-assets   # pack + JFlash CLI 烧 W25Q64 LVGL 分区（详见 “外部 Flash 资源” 节）
+make flash-assets   # pack + JFlash CLI 烧 W25Q64 LVGL 分区（详见 "外部 Flash 资源" 节）
 ```
 
 目标芯片：STM32F411xE（Cortex-M4F），工具链：`arm-none-eabi-gcc`，默认编译选项：`-Os -g -gdwarf-2`。
@@ -71,6 +74,10 @@ Wrapper API 风格按设备类型选择：
 - **ISR 派发**：`User_Isr_handlers/` — ISR 通过 OSAL notify 唤醒任务，避免在中断上下文中阻塞（防止 IIC 互斥锁死锁）。
 - **栈水位监控**：`User_Task_Config/src/task_higher_water_monitor.c` — 运行时任务栈占用监控。
 
+### 服务层（`01_SERVICE/`）
+
+业务无关 service 抽象，与 `01_APP/` 平级。目前唯一子模块 `01_SERVICE/upgrade/` 承载 OTA 升级链路（详见 "OTA 升级链路" 节）。后续 FOTA、配网、电池策略等 service 都进这一层。
+
 ### OSAL 层（`02_OS_Platform/`）
 
 `OSAL_Common/inc/osal_common_types.h` 定义项目全局共用类型：`osal_task_handle_t`、`osal_queue_handle_t`、`osal_mutex_handle_t`、`osal_tick_type_t` 等。始终通过 `osal_wrapper_adapter.h` 包含。
@@ -81,7 +88,7 @@ Wrapper API 风格按设备类型选择：
 
 ### 配置层（`03_Config/`）
 
-用于项目级宏开关（`CFG_` 前缀）：功能特性开关、板级 IO 映射、RTOS 资源大小。当前包含 `cfg_storage.h`（W25Q64 LVGL 子分区 magic + 资源 offset/size），其它模块逐步迁入。
+用于项目级宏开关（`CFG_` 前缀）：功能特性开关、板级 IO 映射、RTOS 资源大小。当前包含 `cfg_storage.h`（W25Q64 LVGL 子分区 magic + 资源 offset/size）和 `cfg_ota.h`（OTA flag 结构 + magic + 状态宏，与 bootloader `Tasks/Bootmanager/inc/ota_flag.h` 必须保持字节兼容）。
 
 ### 调试工具（`04_Debug_Tool/`）
 
@@ -204,6 +211,77 @@ biaopan1 的 `lv_img_dsc_t.data` 不指像素，指 `lv_extflash_meta_t`（含 m
 | `make flash-assets` | pack + `JFlash.exe -openprj ... -auto -exit` 经 .FLM 直写 W25Q64 LVGL 分区 |
 
 JLink 设备 `STM32F411CE_W25Q64` 注册在 `%APPDATA%\SEGGER\JLinkDevices\ST\STM32F4\Devices.xml`。FLM 是本板适配版（SPI2/PB10/14/15、CS PB13），源码在 `std_program_algorithms/`（Keil 工程）。
+
+## OTA 升级链路
+
+PC → UART1 → APP（Ymodem 收 + 写 W25Q64 OTA 分区）→ NVIC_SystemReset → Bootloader（AES-256-CBC 解密 + BLOCK_1→BLOCK_2→内部 Flash + 回滚兜底）。**触发不走 shell**，靠 UART 魔术字 `0x11 22 33`（启动）/ `0x77 88 99`（应用）。
+
+### 链路任务（`01_SERVICE/upgrade/`）
+
+| 任务 | 优先级 | 职责 |
+|---|---|---|
+| `ota_uart_listener_task` | `PRI_NORMAL` | `HAL_UART_Receive_IT` + 3-byte 滑窗扫魔术字，发现 start 设 `UPGRADE_EVENT_OTA_START`，发现 apply 调 `NVIC_SystemReset` |
+| `ymodem_recv_task` | `PRI_NORMAL` | 阻塞等 OTA_START → 调 `Ymodem_Receive()` → 完成后 `firmware_upgrade_flush_staged()` + `ota_flag_write()` + set `OTA_STAGED` |
+| `firmware_upgrade_task` | `PRI_NORMAL` | consume `Queue_AppDataBuffer`，4 KB sector 缓冲后调 `Write_OtaData` 写 W25Q64 |
+| `iwdg_feeder_task` | `PRI_BACKGROUND` | always-on 500 ms 喂狗（F411 IWDG 起后不可关）|
+
+三个 OS 全局对象由 `firmware_upgrade_resources_init()`（在 `user_init_task` 中调）创建，给 `02_Middleware_Platform/Ymodem/src/ymodem.c` 用：
+
+- `Q_YmodemReclength`（uint16_t × 4）：DMA-idle 段长队列
+- `Queue_AppDataBuffer`（`Ymodem_RxContext_t*` × 2）：Ymodem 用户层 → 升级 consumer
+- `Semaphore_ExtFlashState`（binary）：consumer 写完一包后给，让 Ymodem 切 ping-pong buffer
+
+### UART1 RX 双路（互斥不并存）
+
+| 模式 | 谁用 | HAL API |
+|---|---|---|
+| 中断单字节 | listener 扫魔术字时 | `HAL_UART_Receive_IT(&huart1, &g_listener_rx_byte, 1)` + `HAL_UART_RxCpltCallback` |
+| DMA-idle | `Ymodem_Receive` 整段 | `HAL_UARTEx_ReceiveToIdle_DMA` + `HAL_UARTEx_RxEventCallback` |
+
+listener 设 OTA_START 后**立刻挂起到 OTA_STAGED**，期间不 re-arm IT；ymodem_recv_task 完成后 set STAGED，listener 才重新 arm。任一时刻只有一个回调被武装。
+
+### 加密格式（`Tools/ota_encrypt.py`）
+
+`make ota-image` 跑 Python 脚本（pycryptodome，uv 自动装）：
+
+```
+[12 B 零 | 4 B LE app_size | helloworld.bin | 0xFF pad 到 16 B 对齐]
+        ↓
+AES-256-CBC 加密（key/iv = bootmanager.c 硬编码 32×{0x31,0x32} 交替，硬编码仅过渡）
+        ↓
+build/helloworld.mxxx
+```
+
+bootloader 的 `exA_to_exB_AES` 解密首块取 bytes[12..15] 当 LE uint32 = app_size。
+
+### 关键地址与状态字（`03_Config/inc/cfg_ota.h`）
+
+| 项 | 值 | 说明 |
+|---|---|---|
+| `CFG_OTA_FLAG_ADDRESS` | `0x08008000` | 内部 Flash Sector 2（16 KB），存 `ota_flag_t` |
+| `CFG_OTA_FLAG_MAGIC` | `0xA55A5AA5` | magic，与空 sector（0xFFFFFFFF）区分 |
+| W25Q64 OTA staging | `0x000000` | 1 MB，`MEMORY_OTA_START_ADDRESS` |
+| 内部 APP 槽 | `0x0800C000` | 464 KB（sectors 3-7）|
+| linker `__app_size__` | `LOADADDR(.data) + SIZEOF(.data) - ORIGIN(FLASH)` | 当前 APP 字节数，写入 `ota_flag.current_app_size` 供 bootloader 回滚备份 |
+
+### 状态机（`CFG_OTA_*` 数值）
+
+| state | 谁写 | 触发 |
+|---|---|---|
+| `0xFF INIT_NO_APP` | （magic 失配兜底） | 全片 erase 首启 |
+| `0x00 NO_APP_UPDATE` | APP user_init / Bootloader CHECKING 兜底 | APP 已 confirm，正常跳 APP |
+| `0x22 DOWNLOAD_FINISHED` | APP `ymodem_recv_task` | Ymodem 完成 + W25Q64 写完 |
+| `0x33 APP_CHECK_START` | Bootloader `ota_apply_update` 末尾 | 解密 + 拷贝完成，跳 APP 等 confirm |
+| `0x44 APP_CHECKING` | Bootloader `OTA_StateManager::CHECK_START` 分支 | 跳 APP 前再推进一次（防 reset 中断后死循环）|
+
+APP `user_init` 看到 `0x33` 或 `0x44` 都 auto-confirm 写 `0x00`；若 IWDG 在 6 s 内没被 APP 喂上，bootloader CHECKING 分支兜底回滚。
+
+### 易踩坑
+
+- **W25Q64 Page Program 跨 page 回卷**：`bsp_w25q64_driver.c::w25q64_write_data_erase` 必须按 256 B page 边界拆 chunk，erase 仍 per-sector (4 KB)。否则单个 Page Program 跨 page 时 W25Q64 地址回卷到 page 起点 → 后续字节覆盖前面字节
+- **APP `Write_OtaData` 每次 erase 整 sector**：sub-sector 写入会抹掉同 sector 之前的数据。`firmware_upgrade_task.c` 用 4 KB `s_sector_buf[]` 攒满再写，ymodem_recv_task 调 `firmware_upgrade_flush_staged()` 冲尾段
+- **`ota_flag_write` 必须 `__disable_irq()` 包裹**：F411 单 bank flash erase 阻塞 ~1 s，期间 ISR 在 flash 取指会死锁
+- **UART1 polled HAL 会饿死 PRI_BACKGROUND**：listener 必须走中断/DMA 模式，否则 `iwdg_feeder` 抢不到 CPU → IWDG fire 整机 reset
 
 ## 新增外设驱动步骤
 

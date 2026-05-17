@@ -560,28 +560,50 @@ static w25q64_status_t w25q64_write_data_noerase(
     }
 
     /**
-     * Write Enable must be issued before every Page Program.
-     * The WEL bit resets automatically after the program completes.
-     **/
-    ret = __w25q64_write_command(driver_instance,
-                                W25Q64_CMD_WRITE_ENABLE);
-    if (W25Q64_OK != ret)
+    * W25Q64 Page Program wraps addresses within a 256-byte page on
+    * overflow — must split into page-bounded chunks. See companion
+    * comment in w25q64_write_data_erase for full datasheet citation.
+    * Write Enable must be re-issued before each Page Program; the WEL
+    * bit auto-clears after each program completes.
+    **/
+    uint32_t bytes_written = 0U;
+    while (bytes_written < data_length)
     {
-        return ret;
+        uint32_t cur_addr       = address + bytes_written;
+        uint32_t offset_in_page = cur_addr & (W25Q64_PAGE_SIZE - 1U);
+        uint32_t space_in_page  = W25Q64_PAGE_SIZE - offset_in_page;
+        uint32_t remaining      = data_length - bytes_written;
+        uint32_t chunk_size = (remaining < space_in_page) ? remaining
+                                                          : space_in_page;
+
+        ret = __w25q64_write_command(driver_instance,
+                                     W25Q64_CMD_WRITE_ENABLE);
+        if (W25Q64_OK != ret)
+        {
+            return ret;
+        }
+
+        ret = __w25q64_write_command_addr_data(
+            driver_instance,
+            W25Q64_CMD_WRITE_DATA,
+            cur_addr,
+            &p_data_buffer[bytes_written],
+            chunk_size);
+        if (W25Q64_OK != ret)
+        {
+            return ret;
+        }
+
+        ret = __w25q64_wait_write_complete(driver_instance);
+        if (W25Q64_OK != ret)
+        {
+            return ret;
+        }
+
+        bytes_written += chunk_size;
     }
 
-    ret = __w25q64_write_command_addr_data(
-        driver_instance,
-        W25Q64_CMD_WRITE_DATA,
-        address,
-        p_data_buffer,
-        data_length);
-    if (W25Q64_OK != ret)
-    {
-        return ret;
-    }
-
-    return __w25q64_wait_write_complete(driver_instance);
+    return W25Q64_OK;
 }
 
 /**
@@ -627,23 +649,57 @@ static w25q64_status_t w25q64_write_data_erase(
         return W25Q64_ERRORPARAMETER;
     }
 
+    /**
+    * W25Q64 Page Program (0x02) writes UP TO 256 bytes within one page
+    * (256-byte aligned). If the host sends past the page boundary, the
+    * chip wraps the address back to the page start and overwrites bytes
+    * already programmed in that page (see W25Q64FW datasheet, "Page
+    * Program" section). So we must:
+    *   1. Erase the 4 KB sector once per sector
+    *   2. Break writes into page-aligned chunks of at most PAGE_SIZE
+    *
+    * Bug hit on 2026-05-17: a single 4096 B Page Program landed the
+    * trailing 256 bytes of the buffer at addresses 0..255, the rest
+    * overwritten in place — bootloader's OTA decrypt saw .mxxx[3840..]
+    * at offset 0 and rejected the image.
+    **/
     while (bytes_written < data_length)
     {
         uint32_t cur_addr = address + bytes_written;
-        uint32_t sector_base = cur_addr & ~(W25Q64_SECTOR_SIZE - 1U);
-        uint32_t offset_in_sector = cur_addr - sector_base;
-        uint32_t space_in_sector = W25Q64_SECTOR_SIZE
-                                   - offset_in_sector;
-        uint32_t remaining = data_length - bytes_written;
-        uint32_t chunk_size = (remaining < space_in_sector)
-                              ? remaining : space_in_sector;
 
-        /* Erase the 4KB sector containing cur_addr. */
-        ret = __w25q64_erase_sector(driver_instance, sector_base);
-        if (W25Q64_OK != ret)
+        /* Erase the 4 KB sector only on entering a new sector. */
+        if (((cur_addr) & (W25Q64_SECTOR_SIZE - 1U)) == 0U)
         {
-            return ret;
+            uint32_t sector_base = cur_addr & ~(W25Q64_SECTOR_SIZE - 1U);
+            ret = __w25q64_erase_sector(driver_instance, sector_base);
+            if (W25Q64_OK != ret)
+            {
+                return ret;
+            }
         }
+        else if (bytes_written == 0U)
+        {
+            /* First chunk lands in the middle of a sector — erase the
+               containing sector before any write touches it. */
+            uint32_t sector_base = cur_addr & ~(W25Q64_SECTOR_SIZE - 1U);
+            ret = __w25q64_erase_sector(driver_instance, sector_base);
+            if (W25Q64_OK != ret)
+            {
+                return ret;
+            }
+        }
+
+        /* Per-page-program chunk: limited by both the remaining bytes,
+           the rest of the current page, and the rest of the current
+           sector (we re-erase per sector). */
+        uint32_t offset_in_page = cur_addr & (W25Q64_PAGE_SIZE - 1U);
+        uint32_t space_in_page  = W25Q64_PAGE_SIZE - offset_in_page;
+        uint32_t offset_in_sector = cur_addr & (W25Q64_SECTOR_SIZE - 1U);
+        uint32_t space_in_sector  = W25Q64_SECTOR_SIZE - offset_in_sector;
+        uint32_t remaining = data_length - bytes_written;
+        uint32_t chunk_size = remaining;
+        if (chunk_size > space_in_page)   { chunk_size = space_in_page; }
+        if (chunk_size > space_in_sector) { chunk_size = space_in_sector; }
 
         /* Write Enable + Page Program + poll BUSY. */
         ret = __w25q64_write_command(

@@ -48,13 +48,18 @@
 #define USER_TASK_WT588_TEST            0
 
 /* --- Display (LVGL / ST7789) --- */
-#define USER_LVGL_TEST_TASK             0
+#define USER_LVGL_TEST_TASK             1
 
 /* --- Storage (W25Q64) --- */
-#define USER_TASK_W25Q64_HANDLER        0
+/* W25Q64_HANDLER + STORAGE_MANAGER are mandatory for the OTA path:
+   firmware_upgrade_task → Write_OtaData → storage_manager_task posts
+   EVENT_OTA → externflash_drv_write → flash_handler_thread does the
+   actual SPI page-program. With either disabled, Write_OtaData blocks
+   forever on s_done_sem and Ymodem stalls at the first data packet. */
+#define USER_TASK_W25Q64_HANDLER        1
 #define USER_TASK_W25Q64_HAL_TEST       0
 #define USER_TASK_W25Q64_MOCK           0
-#define USER_TASK_STORAGE_MANAGER       0
+#define USER_TASK_STORAGE_MANAGER       1
 
 /* --- Heart Rate (EM7028) --- */
 #define USER_TASK_EM7028_HANDLER        1
@@ -75,6 +80,9 @@
    bring-up / unit testing on hardware where the bootloader hasn't enabled
    the watchdog. Keep at 1 in production. */
 #define USER_TASK_IWDG_FEEDER           1
+#define USER_TASK_FIRMWARE_UPGRADE      1
+#define USER_TASK_YMODEM_RECV           1
+#define USER_TASK_OTA_UART_LISTENER     1
 
 typedef enum
 {
@@ -137,6 +145,15 @@ typedef enum
 #endif
 #if USER_TASK_IWDG_FEEDER
     USER_TASK_IWDG_FEEDER_IDX,
+#endif
+#if USER_TASK_FIRMWARE_UPGRADE
+    USER_TASK_FIRMWARE_UPGRADE_IDX,
+#endif
+#if USER_TASK_YMODEM_RECV
+    USER_TASK_YMODEM_RECV_IDX,
+#endif
+#if USER_TASK_OTA_UART_LISTENER
+    USER_TASK_OTA_UART_LISTENER_IDX,
 #endif
     USER_TASK_NUM
 } usertaskid_t;

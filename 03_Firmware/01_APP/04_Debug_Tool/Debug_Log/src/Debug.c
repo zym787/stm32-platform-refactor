@@ -127,7 +127,11 @@ int debug_is_tag_allowed(const char *tag)
             (strcmp(             EM7028_LOG_TAG, tag) == 0)                  ||
             (strcmp(         EM7028_ERR_LOG_TAG, tag) == 0)                  ||
             (strcmp(            HR_ALGO_LOG_TAG, tag) == 0)                  ||
-            (strcmp(        HR_ALGO_ERR_LOG_TAG, tag) == 0)
+            (strcmp(        HR_ALGO_ERR_LOG_TAG, tag) == 0)                  ||
+            (strcmp(             YMODEM_LOG_TAG, tag) == 0)                  ||
+            (strcmp(        YMODEM_FILE_LOG_TAG, tag) == 0)                  ||
+            (strcmp(        YMODEM_DATA_LOG_TAG, tag) == 0)                  ||
+            (strcmp(      YMODEM_PACKET_LOG_TAG, tag) == 0)
             ;
 }
 
