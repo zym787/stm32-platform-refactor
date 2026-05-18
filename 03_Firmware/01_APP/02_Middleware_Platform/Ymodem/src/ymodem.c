@@ -52,6 +52,58 @@ static uint16_t          s_u16_YmodRecLength;
 /* Private functions ---------------------------------------------------------*/
 
 /**
+ * @brief Update XMODEM/YMODEM CRC-16 (poly 0x1021, init 0, no reflection)
+ *        with one input byte.
+ *
+ * @param  crc_in  Running CRC accumulator.
+ * @param  byte    Input byte to mix in.
+ *
+ * @return Updated CRC.
+ *
+ * @note Bit-bang implementation matches the bootloader's Ymodem so any image
+ *       that round-trips through both still verifies on the wire. Loop body
+ *       borrowed verbatim — do not rewrite to a table without re-checking
+ *       compatibility with the sender's CRC.
+ */
+static uint16_t crc16_update(uint16_t crc_in, uint8_t byte)
+{
+    uint32_t crc = crc_in;
+    uint32_t in  = byte | 0x100u;
+    do
+    {
+        crc <<= 1;
+        in  <<= 1;
+        if (in & 0x100u)
+        {
+            ++crc;
+        }
+        if (crc & 0x10000u)
+        {
+            crc ^= 0x1021u;
+        }
+    } while (!(in & 0x10000u));
+    return (uint16_t)(crc & 0xFFFFu);
+}
+
+/**
+ * @brief Compute Ymodem packet CRC-16 over @p size payload bytes, appending
+ *        two zero bytes the way the XMODEM-CRC algorithm augments the data
+ *        stream so the result matches the 2-byte trailer the sender appended.
+ */
+static uint16_t crc16_xmodem(const uint8_t *data, uint32_t size)
+{
+    uint16_t       crc      = 0U;
+    const uint8_t *data_end = data + size;
+    while (data < data_end)
+    {
+        crc = crc16_update(crc, *data++);
+    }
+    crc = crc16_update(crc, 0U);
+    crc = crc16_update(crc, 0U);
+    return crc;
+}
+
+/**
  * @brief  Convert string to integer.
  * @param  inputstr: Input string, supports dec/hex and K/M suffix.
  * @param  intnum: Output integer value.
@@ -348,6 +400,27 @@ static int32_t Receive_Packet(uint8_t *data, int32_t *length, uint32_t timeout)
     {
         return (int32_t)YMODEM_PKT_TIMEOUT;
     }
+
+    /* CRC-16/XMODEM check. Sender places the running CRC over the
+       128/1024 B payload (MSB first, LSB second) in the two trailer bytes
+       immediately after the data. Without this check, a corrupted payload
+       with intact SOH/STX + SEQ/~SEQ would silently pass to the consumer. */
+    {
+        const uint16_t expected_crc =
+            crc16_xmodem(&data[PACKET_HEADER], (uint32_t)packet_size);
+        const uint16_t received_crc =
+            ((uint16_t)data[PACKET_HEADER + packet_size] << 8) |
+             (uint16_t)data[PACKET_HEADER + packet_size + 1];
+        if (expected_crc != received_crc)
+        {
+            DEBUG_OUT(w, YMODEM_PACKET_LOG_TAG,
+                      "CRC mismatch seq=%u got=0x%04X expected=0x%04X",
+                      (unsigned)(data[PACKET_SEQNO_INDEX] & 0xFFu),
+                      (unsigned)received_crc, (unsigned)expected_crc);
+            return (int32_t)YMODEM_PKT_TIMEOUT;
+        }
+    }
+
     *length = packet_size;
     return (int32_t)YMODEM_PKT_SUCCESS;
 }
@@ -469,6 +542,7 @@ int32_t Ymodem_Receive(uint8_t (*buf)[1030])
     ctx.session_done     = 0;
     ctx.packets_received = 0;
     ctx.session_begin    = 0;
+    ctx.eot_seen         = 0;
     ctx.state            = YMODEM_RX_STATE_FILE_INFO;
     /* Initialize FlashDestination variable */
 
@@ -494,25 +568,46 @@ int32_t Ymodem_Receive(uint8_t (*buf)[1030])
                 case -1:
                     Send_Byte(ACK);
                     return (int32_t)YMODEM_RX_ABORTED;
-                /* End of transmission */
+                /* End of transmission. Ymodem batch spec requires the
+                   sender to send EOT twice — the first verified with NAK,
+                   the second ACK'd. This is what makes a stuck dialog on
+                   the PC side recognise the session as cleanly closed. */
                 case 0:
-                    Send_Byte(ACK);
                     if (ctx.state == YMODEM_RX_STATE_FILE_DATA)
                     {
-                        /* First EOT: transition back to FILE_INFO for EOF
-                         * packet */
-                        ctx.state     = YMODEM_RX_STATE_FILE_INFO;
-                        ctx.file_done = 1;
-                        DEBUG_OUT(d, YMODEM_LOG_TAG,
-                                  "EOT received, waiting for EOF packet...");
+                        if (ctx.eot_seen == 0)
+                        {
+                            /* First EOT: NAK forces sender to retransmit
+                               EOT, which doubles as the verify step. */
+                            Send_Byte(NAK);
+                            ctx.eot_seen = 1;
+                            DEBUG_OUT(d, YMODEM_LOG_TAG,
+                                      "First EOT seen, NAK sent for verify");
+                        }
+                        else
+                        {
+                            /* Second EOT confirmed: ACK and request the
+                               trailing batch-terminator block 0 via 'C'
+                               (sent by the outer file_done path). */
+                            Send_Byte(ACK);
+                            ctx.state     = YMODEM_RX_STATE_FILE_INFO;
+                            ctx.file_done = 1;
+                            ctx.eot_seen  = 0;
+                            DEBUG_OUT(d, YMODEM_LOG_TAG,
+                                      "Second EOT ACK'd, awaiting block 0");
+                        }
                     }
-                    else if (ctx.state == YMODEM_RX_STATE_FILE_INFO)
+                    else /* state == YMODEM_RX_STATE_FILE_INFO */
                     {
-                        /* Second EOT or EOF packet received, end session */
+                        /* Stray EOT in FILE_INFO — some non-spec senders
+                           collapse the dance and ship an EOT instead of
+                           the empty-filename block. Treat as end-of-batch
+                           so we don't hang forever. */
+                        Send_Byte(ACK);
                         ctx.file_done    = 1;
                         ctx.session_done = 1;
                         DEBUG_OUT(i, YMODEM_LOG_TAG,
-                                  "Session complete, file transfer successful");
+                                  "Session complete (EOT in FILE_INFO)");
                     }
                     break;
                 /* Normal packet */
@@ -560,6 +655,25 @@ int32_t Ymodem_Receive(uint8_t (*buf)[1030])
                 return (int32_t)YMODEM_RX_USER_ABORT;
             case YMODEM_PKT_TIMEOUT:
             default:
+                /* Graceful close for senders that omit the batch-terminator
+                   block 0. After EOT-NAK-EOT-ACK we transitioned to
+                   FILE_INFO and sent 'C' to invite block 0; spec-strict
+                   senders reply with empty-filename SOH, but many real-
+                   world tools (Tera Term, some lrzsz configs, parts of
+                   Xshell) consider the session done after the second-EOT
+                   ACK and never send block 0. Recognise that state — full
+                   payload received + back in FILE_INFO — and close
+                   cleanly rather than failing the OTA. */
+                if (ctx.state == YMODEM_RX_STATE_FILE_INFO &&
+                    ctx.size  > 0 &&
+                    ctx.bytes_received >= ctx.size)
+                {
+                    DEBUG_OUT(i, YMODEM_LOG_TAG,
+                              "Session complete (sender skipped block 0)");
+                    ctx.file_done    = 1;
+                    ctx.session_done = 1;
+                    break;
+                }
                 /* Timeout or packet error */
                 if (ctx.session_begin > 0)
                 {

@@ -85,6 +85,8 @@ typedef struct
     int32_t          session_begin;
     int32_t          size;              /* Total file size from filename packet */
     int32_t          bytes_received;    /* Bytes received so far */
+    int32_t          eot_seen;          /* 1 = first EOT NAK'd, waiting for the
+                                           second per Ymodem batch spec */
     Ymodem_RxState_t state;
     uint8_t         *buf;
 } Ymodem_RxContext_t;
