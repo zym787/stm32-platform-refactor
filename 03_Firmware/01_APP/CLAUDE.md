@@ -223,30 +223,54 @@ JLink 设备 `STM32F411CE_W25Q64` 注册在 `%APPDATA%\SEGGER\JLinkDevices\ST\ST
 
 PC → UART1 → APP（Ymodem 收 + 写 W25Q64 OTA 分区）→ NVIC_SystemReset → Bootloader（AES-256-CBC 解密 + BLOCK_1→BLOCK_2→内部 Flash + 回滚兜底）。**触发不走 shell**，靠 UART 魔术字 `0x11 22 33`（启动）/ `0x77 88 99`（应用）。
 
-### 分层（v3 — service / adapter 分离）
+### 分层（v4 — MCU port 接管 HAL，adapter 进 SERVICE）
 
 ```
-01_APP/01_APP/Service_Adapters/        ← 板级适配（HAL / W25Q64 实现）
-  uart1_ota_transport.c                  HAL UART 实现 ota_transport.h
-                                         + HAL callback 宿主
-                                         + firmware_upgrade_signal_apply
-  w25q64_ota_storage.c                   Write_OtaData 实现 ota_storage.h
+02_MCU_Platform/MCU_Core_UART/          ← UART 在 MCU 端口（与 IIC/SPI/IFlash 同辈）
+  uart_port/inc/mcu_uart_port.h         稳定 API（uart_id 参数化）
+  uart_port/src/mcu_uart_port.c         STM32 HAL + ISR dispatch
+                                        + USART1_IRQHandler 也在这
 
-01_SERVICE/service_ota/                ← 平台无关 OTA 业务
-  inc/ota_transport.h                    抽象 IT-byte + DMA-idle-frame + TX
-  inc/ota_storage.h                      抽象 sector erase + program + read
-  inc/firmware_upgrade.h                 服务入口 / 任务声明
-  inc/upgrade_service.h                  ota_flag 持久化（已经在 MCU 端口抽象）
-  src/ota_uart_listener.c                ota_service_task —— 状态机，只用抽象 API
-  src/firmware_upgrade_task.c            consumer，只用 ota_storage
-  src/iwdg_feeder_task.c                 不动
-  src/upgrade_service.c                  不动
+01_SERVICE/service_ota/                 ← OTA 业务 + 板级适配同位
+  inc/ota_transport.h                   抽象（不绑定具体 UART id）
+  inc/ota_storage.h                     抽象
+  inc/firmware_upgrade.h                服务入口 / 任务声明
+  inc/upgrade_service.h                 ota_flag 持久化
+  src/ota_uart_listener.c               状态机
+  src/firmware_upgrade_task.c           consumer
+  src/iwdg_feeder_task.c                喂狗
+  src/upgrade_service.c                 ota_flag 读写（走 MCU_Core_IFlash）
+  adapters/                             ← 板级 wiring
+    uart1_ota_transport.c               1-行翻译：ota_transport_* → mcu_uart_*
+                                        (OTA_UART_ID == MCU_UART_1)
+                                        + firmware_upgrade_signal_apply
+                                          (NVIC_SystemReset，待 MCU_Core_Reset)
+    w25q64_ota_storage.c                ota_storage_* → service_storage Write/Read_OtaData
 
-02_Middleware_Platform/Ymodem/         ← 中间件，只 #include ota_transport.h
-  src/ymodem.c                           HAL 调用全部替换为 ota_transport_*
+02_Middleware_Platform/Ymodem/          ← 中间件，0 HAL include
+  src/ymodem.c                          调 ota_transport_* 走全链路
 ```
 
-替换 transport（例如换 BLE OTA）⇔ 在 `01_APP/01_APP/Service_Adapters/` 里替 `uart1_ota_transport.c` 为 `bleN_ota_transport.c`，service 与 Ymodem 一行代码都不动。
+调用栈：
+
+```
+ota_service_task                    ┐
+  ota_transport_listen_byte_wait    │  service 层（业务）
+    ↓                               ┘
+  mcu_uart_recv_byte_wait(MCU_UART_1, ...)   ← adapter 1 行翻译
+    ↓                               ┐
+  osal_sema_take(s_state[1].byte_sem)         MCU port 内部
+    ↓                                         （HAL + ISR + OS）
+  [ ISR fires when byte arrives ]
+    HAL_UART_RxCpltCallback
+      state_for_handle(huart) → &s_state[1]
+      osal_sema_give_from_isr(byte_sem)     ┘
+```
+
+替换 transport：
+- 换 UART：改 `adapters/uart1_ota_transport.c` 里 `OTA_UART_ID` 一行
+- 换 BLE：新增 `adapters/bleN_ota_transport.c` 实现 `ota_transport.h`，service / Ymodem / MCU_Core_UART 都不动
+- 换 MCU：替换 `mcu_uart_port.c` 一个文件即可（API 不变），service / adapter / Ymodem 都不动
 
 ### 链路任务
 

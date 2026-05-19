@@ -19,7 +19,6 @@
 #include "main.h"
 
 #include "i2c.h"
-#include "usart.h"
 #include "bsp_mpuxxxx_handler.h"
 
 
@@ -68,25 +67,9 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
     }
 }
 
-/**
-* @brief USART1 global interrupt vector handler. The HAL driver multiplexes
-*        RXNE / IDLE / error events from inside HAL_UART_IRQHandler and
-*        dispatches them to the registered HAL_UART_RxCpltCallback /
-*        HAL_UARTEx_RxEventCallback (both live in 01_SERVICE/service_ota
-*        and feed the OTA Ymodem listener + recv pipeline).
-*
-*        DMA2_Stream5 (UART1 RX DMA) IRQ stays in Core/Src/stm32f4xx_it.c
-*        because CubeMX generates it from the .ioc when UART RX DMA is
-*        enabled. Do NOT add a second DMA2_Stream5_IRQHandler here — the
-*        linker would reject the duplicate symbol.
-*
-* @note  Lives in the App layer (not Core/Src/stm32f4xx_it.c) because it is
-*        not a peripheral handler CubeMX owns — it's a manual addition
-*        wiring the App-layer OTA path into the HAL.
-* */
-void USART1_IRQHandler(void)
-{
-    HAL_UART_IRQHandler(&huart1);
-}
+/* USART1_IRQHandler moved to 02_MCU_Platform/MCU_Core_UART/uart_port/src/
+   mcu_uart_port.c — vector handlers for managed peripherals live in their
+   MCU port. HAL_UART_RxCpltCallback / HAL_UARTEx_RxEventCallback moved
+   there too, so all USART1 ISR machinery is in one place. */
 
 //******************************* Functions *********************************//

@@ -213,8 +213,9 @@ Core/Src/spi.c \
 01_SERVICE/service_ota/src/iwdg_feeder_task.c \
 01_SERVICE/service_ota/src/firmware_upgrade_task.c \
 01_SERVICE/service_ota/src/ota_uart_listener.c \
-01_APP/Service_Adapters/uart1_ota_transport.c \
-01_APP/Service_Adapters/w25q64_ota_storage.c \
+01_SERVICE/service_ota/adapters/uart1_ota_transport.c \
+01_SERVICE/service_ota/adapters/w25q64_ota_storage.c \
+02_MCU_Platform/MCU_Core_UART/uart_port/src/mcu_uart_port.c \
 01_APP/User_Sensor/em7028/src/em7028_mock_test_task.c \
 01_APP/User_Sensor/em7028/src/em7028_handler_mock_test_task.c \
 01_APP/User_Sensor/em7028/src/em7028_iic_hal_test_task.c \
@@ -336,6 +337,7 @@ C_INCLUDES_OSAL = \
 C_INCLUDES_MCU = \
 -I02_MCU_Platform/MCU_Core_IIC/i2c_port/inc \
 -I02_MCU_Platform/MCU_Core_SPI/spi_port/inc \
+-I02_MCU_Platform/MCU_Core_UART/uart_port/inc \
 -I02_MCU_Platform/MCU_Core_GPIO/inc \
 -I02_MCU_Platform/MCU_Core_Systick/inc \
 -I02_MCU_Platform/MCU_Core_DWT/inc \
