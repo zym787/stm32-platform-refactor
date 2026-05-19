@@ -4,27 +4,29 @@
  * @par dependencies
  * - firmware_upgrade.h
  * - ymodem.h
- * - user_externflash_manage.h
- * - upgrade_service.h
+ * - ota_storage.h     (abstract OTA staging — adapter lives in 01_APP)
+ * - ota_transport.h   (called from service_init for one-shot setup)
+ * - upgrade_service.h (ota_flag persistence — already MCU-port-abstracted)
  * - osal_wrapper_adapter.h / os_freertos.h
- * - usart.h, stm32f4xx_hal.h
  * - Debug.h
  *
  * @author Ethan-Hang
  *
- * @brief Consumer half of the OTA pipeline + the three global OS objects
- *        Ymodem (02_Middleware_Platform/Ymodem/src/ymodem.c) externs:
- *          Q_YmodemReclength     — uint16_t per-frame RX length from DMA-idle
- *          Queue_AppDataBuffer   — Ymodem_RxContext_t * per Ymodem packet
- *          Semaphore_ExtFlashState — back-pressure ack to Ymodem producer
+ * @brief Consumer half of the OTA pipeline. Pure service-layer code:
+ *        speaks only to OSAL + the abstract OTA storage interface. No
+ *        HAL, no MCU peripheral, no W25Q64 awareness.
  *
- *        Also hosts HAL_UARTEx_RxEventCallback (the DMA-idle bottom half
- *        that feeds Q_YmodemReclength from ISR context).
+ *        Owns two OSAL objects that bridge to the Ymodem producer:
+ *          Queue_AppDataBuffer     — Ymodem_RxContext_t * per packet
+ *          Semaphore_ExtFlashState — back-pressure ack to Ymodem
  *
- *        Does NOT drive Ymodem_Receive itself — that lives in
- *        ymodem_recv_task.c so the consumer can stay a pure drain loop.
+ *        The third OSAL object the previous version owned
+ *        (Q_YmodemReclength) is now internal to the transport adapter,
+ *        accessed through ota_transport_frame_wait().
  *
  * @version V1.0 2026-05-14
+ * @version V3.0 2026-05-18  storage abstracted via ota_storage; HAL
+ *                            callbacks moved to the transport adapter
  *
  * @note 1 tab == 4 spaces!
  *****************************************************************************/
@@ -36,80 +38,64 @@
 #include "osal_error.h"
 #include "os_freertos.h"
 
-#include "stm32f4xx_hal.h"
-#include "usart.h"
-
 #include "firmware_upgrade.h"
 #include "ymodem.h"
-#include "user_externflash_manage.h"
+#include "ota_storage.h"
+#include "ota_transport.h"
 #include "upgrade_service.h"
+#include "cfg_ota.h"
 #include "Debug.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
-#define UPGRADE_QUEUE_LEN_FRAMES   (4U)
 #define UPGRADE_QUEUE_DATA_DEPTH   (2U)   /* matches Ymodem double-buffer  */
 
 /**
- * @brief Sector-buffer size. W25Q64's bsp driver (w25q64_write_data_erase)
- *        erases the full 4 KB sector containing the target address on
- *        EVERY write call. Two consecutive 1024-byte Ymodem packets that
- *        land in the same sector would otherwise wipe each other. Buffer
- *        a full sector in RAM and issue one Write_OtaData per sector to
- *        keep writes non-overlapping with their own erases.
+ * @brief Sector-buffer size. Must equal ota_storage_sector_size() at
+ *        runtime — kept as a compile-time constant because s_sector_buf
+ *        is a static BSS allocation. If a future storage adapter has a
+ *        different sector size (e.g. 64 KB block-erase chip), bump this
+ *        in lockstep.
  */
 #define UPGRADE_SECTOR_BUF_SIZE    (4096U)
 //******************************** Defines **********************************//
 
 //******************************* Variables *********************************//
 /**
- * @brief Globals exported to Ymodem via extern. Definitions live here so
- *        the producer (Ymodem in 02_Middleware_Platform) does not also try
- *        to own the lifetime.
+ * @brief Producer-consumer between Ymodem and this task.
+ *
+ *        Definitions live here (not in Ymodem) so service_ota owns the
+ *        lifetime — Ymodem just externs them. Adapter-level OSAL objects
+ *        (byte sema, frame-length queue) live in the transport adapter
+ *        in 01_APP/Service_Adapters/.
  */
-osal_queue_handle_t     Q_YmodemReclength       = NULL;
-osal_queue_handle_t     Queue_AppDataBuffer     = NULL;
-osal_sema_handle_t      Semaphore_ExtFlashState = NULL;
-
-/* OTA orchestration event group, owned by this module — distinct from the
-   storage_manager's event group (different bit space, different consumer). */
-osal_event_group_handle_t g_ota_evgrp           = NULL;
-
-/* Listener-only 1-byte RX path. Magic-byte scan uses interrupt-driven UART
-   so the task blocks on this sema instead of busy-polling — otherwise the
-   listener starves PRI_BACKGROUND tasks like iwdg_feeder and IWDG fires. */
-osal_sema_handle_t g_listener_byte_sem    = NULL;
-uint8_t           g_listener_rx_byte     = 0U;
+osal_queue_handle_t Queue_AppDataBuffer     = NULL;
+osal_sema_handle_t  Semaphore_ExtFlashState = NULL;
 
 /* Sector-aligned write coalescer. Owned by firmware_upgrade_task; flushed
    by firmware_upgrade_flush_staged() at session end. BSS-allocated to keep
-   the task stack small. Access is single-producer (firmware_upgrade_task
-   processes Queue_AppDataBuffer serially; the flush call from
-   ymodem_recv_task only runs AFTER Ymodem_Receive returns, by which point
-   firmware_upgrade_task has finished the last ctx and is parked on the
-   queue) so no mutex is needed. */
+   the task stack small. Single-producer access (this task processes
+   Queue_AppDataBuffer serially; the flush call from ota_service_task only
+   runs AFTER Ymodem_Receive returns, by which point this task has parked
+   on the queue) so no mutex is needed. */
 static uint8_t   s_sector_buf[UPGRADE_SECTOR_BUF_SIZE];
 static uint32_t  s_sector_buf_used   = 0U;
 static uint32_t  s_session_bytes_out = 0U;
-/* OTA-partition write cursor; advances per flushed 4 KB sector. File-scope
-   so firmware_upgrade_flush_staged() (called from ymodem_recv_task) can
+/* OTA-partition write cursor; advances per flushed sector. File-scope so
+   firmware_upgrade_flush_staged() (called from ota_service_task) can
    reach it after firmware_upgrade_task has parked on Queue_AppDataBuffer. */
 static uint32_t  s_ota_write_offset  = 0U;
 //******************************* Variables *********************************//
 
 //******************************* Functions *********************************//
-int8_t firmware_upgrade_resources_init(void)
+/**
+* @brief Create the service-owned OS resources (Queue_AppDataBuffer +
+*        Semaphore_ExtFlashState). Adapter-owned resources (byte sema,
+*        frame queue) are created by ota_transport_init separately.
+*        Idempotent.
+* */
+static int8_t firmware_upgrade_resources_init(void)
 {
-    if (NULL == Q_YmodemReclength)
-    {
-        if (OSAL_SUCCESS != osal_queue_create(&Q_YmodemReclength,
-                                              UPGRADE_QUEUE_LEN_FRAMES,
-                                              sizeof(uint16_t)))
-        {
-            return -1;
-        }
-    }
-
     if (NULL == Queue_AppDataBuffer)
     {
         if (OSAL_SUCCESS != osal_queue_create(&Queue_AppDataBuffer,
@@ -132,33 +118,58 @@ int8_t firmware_upgrade_resources_init(void)
         }
     }
 
-    if (NULL == g_ota_evgrp)
-    {
-        if (OSAL_SUCCESS != osal_event_group_create(&g_ota_evgrp))
-        {
-            return -1;
-        }
-    }
-
-    if (NULL == g_listener_byte_sem)
-    {
-        if (OSAL_SUCCESS != osal_sema_init(&g_listener_byte_sem, 0))
-        {
-            return -1;
-        }
-    }
-
     return 0;
 }
 
-int8_t firmware_upgrade_signal_start(void)
+int8_t firmware_upgrade_service_init(void)
 {
-    if (NULL == g_ota_evgrp)
+    /**
+    * Post-OTA verification: bootloader leaves state=CHECK_START before
+    * jumping in here. Confirm we booted successfully by flipping the flag
+    * back to NO_APP_UPDATE — must complete inside the IWDG window (~6 s)
+    * or the watchdog will fire and bootloader rolls back from BLOCK_1.
+    *
+    * For now this is unconditional auto-confirm. Future work (battery /
+    * sensor self-test) can gate the write on those checks; do NOT push
+    * it later in the init path without confirming total elapsed time
+    * stays well under 6 s.
+    *
+    * Best-effort step — a write failure is logged but does not fail the
+    * service init (bootloader rollback will recover).
+    **/
+    ota_flag_t ota_f;
+    if (ota_flag_read(&ota_f) == 0 &&
+        (ota_f.state == CFG_OTA_APP_CHECK_START ||
+         ota_f.state == CFG_OTA_APP_CHECKING))
     {
+        DEBUG_OUT(w, USER_INIT_LOG_TAG,
+                  "post-OTA first boot (state=0x%02X): auto-confirm",
+                  (unsigned)ota_f.state);
+        ota_f.state = CFG_OTA_NO_APP_UPDATE;
+        if (ota_flag_write(&ota_f) != 0)
+        {
+            DEBUG_OUT(e, USER_INIT_ERR_LOG_TAG,
+                      "post-OTA confirm write failed (IWDG will roll back)");
+        }
+    }
+
+    /**
+    * Bring up the abstract transport + storage adapters. Doing this here
+    * (vs scattered calls in user_init) keeps the OTA service self-
+    * contained: callers only need to invoke firmware_upgrade_service_init
+    * to have the whole OTA path ready.
+    **/
+    if (OTA_TRANSPORT_OK != ota_transport_init())
+    {
+        DEBUG_OUT(e, USER_INIT_ERR_LOG_TAG, "ota_transport_init failed");
         return -1;
     }
-    (void)osal_event_group_set_bits(g_ota_evgrp, UPGRADE_EVENT_OTA_START);
-    return 0;
+    if (OTA_STORAGE_OK != ota_storage_init())
+    {
+        DEBUG_OUT(e, USER_INIT_ERR_LOG_TAG, "ota_storage_init failed");
+        return -1;
+    }
+    return firmware_upgrade_resources_init();
 }
 
 int32_t firmware_upgrade_flush_staged(void)
@@ -178,14 +189,14 @@ int32_t firmware_upgrade_flush_staged(void)
     memset(&s_sector_buf[s_sector_buf_used], 0xFFU,
            UPGRADE_SECTOR_BUF_SIZE - s_sector_buf_used);
 
-    ext_flash_status_t st = Write_OtaData(s_ota_write_offset,
-                                          UPGRADE_SECTOR_BUF_SIZE,
-                                          s_sector_buf);
-    if (EXT_FLASH_OK != st)
+    ota_storage_status_t st = ota_storage_write(s_ota_write_offset,
+                                                 s_sector_buf,
+                                                 UPGRADE_SECTOR_BUF_SIZE);
+    if (OTA_STORAGE_OK != st)
     {
         DEBUG_OUT(e, YMODEM_DATA_LOG_TAG,
-                  "OTA W25Q64 final sector flush failed at offset=%lu err=%d",
-                  (unsigned long)s_ota_write_offset, (int)st);
+                  "OTA storage final sector flush failed at offset=%lu",
+                  (unsigned long)s_ota_write_offset);
         s_sector_buf_used = 0U;
         return -1;
     }
@@ -194,7 +205,7 @@ int32_t firmware_upgrade_flush_staged(void)
     * Account only the actual session bytes (not the 0xFF pad). The
     * bootloader records image_size = bytes_received (the Ymodem-declared
     * count, equal to the .mxxx file length), and reads only that many
-    * bytes from W25Q64 during decrypt.
+    * bytes from storage during decrypt.
     **/
     s_session_bytes_out += s_sector_buf_used;
     s_sector_buf_used    = 0U;
@@ -203,26 +214,11 @@ int32_t firmware_upgrade_flush_staged(void)
     return (int32_t)s_session_bytes_out;
 }
 
-void firmware_upgrade_signal_apply(void)
-{
-    /**
-    * Tiny delay before reset to let any in-flight UART TX (log lines /
-    * the listener echo) drain. EasyLogger writes are async into RTT, not
-    * UART, so this is mostly defensive — 50 ms is well within IWDG window.
-    **/
-    HAL_Delay(50U);
-    NVIC_SystemReset();
-}
-
 /**
 * @brief Consumer of Ymodem_RxContext_t pointers — writes each FILE_DATA
-*        payload to the W25Q64 OTA partition and unblocks the Ymodem
+*        payload to the abstract OTA storage and unblocks the Ymodem
 *        producer via Semaphore_ExtFlashState. FILE_INFO ctx skips the
 *        write but still acks so Ymodem can flip buffers.
-*
-* @param[in] argument : ignored.
-* @param[out] : None.
-* @return None.
 * */
 void firmware_upgrade_task(void *argument)
 {
@@ -234,7 +230,8 @@ void firmware_upgrade_task(void *argument)
     {
         Ymodem_RxContext_t *ctx = NULL;
 
-        if (OSAL_SUCCESS != osal_queue_receive(Queue_AppDataBuffer, &ctx, OSAL_MAX_DELAY))
+        if (OSAL_SUCCESS != osal_queue_receive(Queue_AppDataBuffer, &ctx,
+                                                OSAL_MAX_DELAY))
         {
             continue;
         }
@@ -255,7 +252,8 @@ void firmware_upgrade_task(void *argument)
             s_sector_buf_used   = 0U;
             s_session_bytes_out = 0U;
             DEBUG_OUT(i, YMODEM_FILE_LOG_TAG,
-                      "OTA session start, declared size=%d B", (int)ctx->size);
+                      "OTA session start, declared size=%d B",
+                      (int)ctx->size);
         }
         else if (YMODEM_RX_STATE_FILE_DATA == ctx->state)
         {
@@ -263,19 +261,21 @@ void firmware_upgrade_task(void *argument)
             * FILE_DATA block. Ymodem trimmed packet_length to actual
             * payload bytes already. Payload sits past PACKET_HEADER.
             *
-            * Drip the bytes into s_sector_buf and only call Write_OtaData
-            * when we have a full 4 KB sector — the underlying driver
-            * erases the whole sector per write, so partial-sector writes
-            * would wipe out preceding partial-sector writes in the same
-            * sector. ymodem_recv_task calls firmware_upgrade_flush_staged
-            * at session end to drain the final partial sector.
+            * Drip the bytes into s_sector_buf and only call
+            * ota_storage_write when we have a full sector — the
+            * underlying medium typically erases a whole sector per
+            * write, so partial-sector writes would wipe out preceding
+            * partial-sector writes in the same sector. ota_service_task
+            * calls firmware_upgrade_flush_staged at session end to
+            * drain the final partial sector.
             **/
             uint32_t        bytes = (uint32_t)ctx->packet_length;
             const uint8_t  *src   = ctx->packet_data + PACKET_HEADER;
 
             while (bytes > 0U)
             {
-                const uint32_t cap = UPGRADE_SECTOR_BUF_SIZE - s_sector_buf_used;
+                const uint32_t cap  = UPGRADE_SECTOR_BUF_SIZE -
+                                       s_sector_buf_used;
                 const uint32_t take = (bytes < cap) ? bytes : cap;
 
                 memcpy(&s_sector_buf[s_sector_buf_used], src, take);
@@ -285,64 +285,19 @@ void firmware_upgrade_task(void *argument)
 
                 if (s_sector_buf_used == UPGRADE_SECTOR_BUF_SIZE)
                 {
-                    /**
-                    * Diagnostic: dump the first 16 B of the very first
-                    * sector before write + after read-back. Lets us tell
-                    * a W25Q64 write/read corruption from an upstream-
-                    * Ymodem corruption when the bootloader rejects the
-                    * staged image. Only logs on the first sector
-                    * (offset == 0) — kept terse so it's safe to leave on.
-                    **/
-                    if (0U == s_ota_write_offset)
-                    {
-                        DEBUG_OUT(i, YMODEM_DATA_LOG_TAG,
-                                  "first 16 B to write: "
-                                  "%02X %02X %02X %02X %02X %02X %02X %02X "
-                                  "%02X %02X %02X %02X %02X %02X %02X %02X",
-                                  s_sector_buf[0],  s_sector_buf[1],
-                                  s_sector_buf[2],  s_sector_buf[3],
-                                  s_sector_buf[4],  s_sector_buf[5],
-                                  s_sector_buf[6],  s_sector_buf[7],
-                                  s_sector_buf[8],  s_sector_buf[9],
-                                  s_sector_buf[10], s_sector_buf[11],
-                                  s_sector_buf[12], s_sector_buf[13],
-                                  s_sector_buf[14], s_sector_buf[15]);
-                    }
-
-                    ext_flash_status_t st = Write_OtaData(s_ota_write_offset,
-                                                          UPGRADE_SECTOR_BUF_SIZE,
-                                                          s_sector_buf);
-                    if (EXT_FLASH_OK != st)
+                    ota_storage_status_t st = ota_storage_write(
+                        s_ota_write_offset,
+                        s_sector_buf,
+                        UPGRADE_SECTOR_BUF_SIZE);
+                    if (OTA_STORAGE_OK != st)
                     {
                         DEBUG_OUT(e, YMODEM_DATA_LOG_TAG,
-                                  "OTA W25Q64 sector write failed at "
-                                  "offset=%lu err=%d",
-                                  (unsigned long)s_ota_write_offset, (int)st);
+                                  "OTA storage write failed at offset=%lu",
+                                  (unsigned long)s_ota_write_offset);
                     }
                     else
                     {
                         s_session_bytes_out += UPGRADE_SECTOR_BUF_SIZE;
-                    }
-
-                    /* Read-back verify the first sector. */
-                    if (0U == s_ota_write_offset && EXT_FLASH_OK == st)
-                    {
-                        uint8_t verify[16] = {0};
-                        if (EXT_FLASH_OK == Read_OtaData(0U, 16U, verify))
-                        {
-                            DEBUG_OUT(i, YMODEM_DATA_LOG_TAG,
-                                      "first 16 B read-back: "
-                                      "%02X %02X %02X %02X %02X %02X %02X %02X "
-                                      "%02X %02X %02X %02X %02X %02X %02X %02X",
-                                      verify[0],  verify[1],
-                                      verify[2],  verify[3],
-                                      verify[4],  verify[5],
-                                      verify[6],  verify[7],
-                                      verify[8],  verify[9],
-                                      verify[10], verify[11],
-                                      verify[12], verify[13],
-                                      verify[14], verify[15]);
-                        }
                     }
 
                     s_ota_write_offset += UPGRADE_SECTOR_BUF_SIZE;
@@ -359,70 +314,5 @@ void firmware_upgrade_task(void *argument)
         **/
         (void)osal_sema_give(Semaphore_ExtFlashState);
     }
-}
-
-/**
-* @brief HAL DMA-idle callback. Fires from USART1 / DMA2_Stream5 IRQ
-*        context with @p Size = bytes received before the idle line was
-*        detected. Forwards the length to Receive_Byte() in ymodem.c via
-*        Q_YmodemReclength.
-*
-* @param[in]  huart : UART handle (only huart1 is wired).
-* @param[in]  Size  : bytes received in this DMA segment.
-* @param[out] : None.
-* @return None.
-*
-* @note Implemented here (vs. inside ymodem.c) because the queue handle is
-*       owned by this module's resource init — keeping the callback near
-*       the owner avoids a header-only dependency on FreeRTOS internals
-*       from inside the upstream Ymodem source.
-* */
-void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
-{
-    if (huart->Instance != USART1)
-    {
-        return;
-    }
-    if (NULL == Q_YmodemReclength)
-    {
-        return;
-    }
-
-    osal_base_type_t higher_prio_woken = OSAL_FALSE;
-    (void)osal_queue_send_from_isr(Q_YmodemReclength, &Size, &higher_prio_woken);
-    portYIELD_FROM_ISR(higher_prio_woken);
-}
-
-/**
-* @brief HAL completion callback for one-byte interrupt-driven RX. Fires
-*        when HAL_UART_Receive_IT() armed by the listener finishes. Wakes
-*        the listener task via a binary semaphore so it can process the
-*        byte and re-arm.
-*
-* @param[in]  huart : UART handle (only huart1 is wired).
-* @param[out] : None.
-* @return None.
-*
-* @note Co-existence with HAL_UARTEx_RxEventCallback above: at any given
-*       moment only one of {RxCplt, RxEvent} is armed on huart1.
-*         - LISTENER state IDLE/AWAIT_APPLY → listener has armed
-*           HAL_UART_Receive_IT, expects RxCpltCallback
-*         - listener is blocked on UPGRADE_EVENT_OTA_STAGED → Ymodem owns
-*           UART via HAL_UARTEx_ReceiveToIdle_DMA, expects RxEventCallback
-* */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-    if (huart->Instance != USART1)
-    {
-        return;
-    }
-    if (NULL == g_listener_byte_sem)
-    {
-        return;
-    }
-
-    osal_base_type_t higher_prio_woken = OSAL_FALSE;
-    (void)osal_sema_give_from_isr(g_listener_byte_sem, &higher_prio_woken);
-    portYIELD_FROM_ISR(higher_prio_woken);
 }
 //******************************* Functions *********************************//

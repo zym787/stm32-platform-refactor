@@ -10,26 +10,19 @@
  *
  *        Exposes:
  *          - One-shot resource init called from user_init before tasks spawn
- *          - Event bits that the magic-byte listener (01_SERVICE/upgrade/
- *            ota_uart_listener.c, added in a later commit) uses to drive the
- *            upgrade state machine
+ *          - Apply-trigger entry the orchestrator calls on the apply magic
+ *          - End-of-session sector-buffer flush helper
  *          - The two task entries that get registered in g_user_task_cfg[]
  *
- *        Task topology:
+ *        Task topology (v2 — merged listener + ymodem_recv):
  *
  *          ┌─────────────────────────────────────────────────────────────┐
- *          │ ota_uart_listener (later commit)                            │
- *          │   scans UART1 RX for 0x11 22 33 / 0x77 88 99 magic bytes    │
- *          │   sets EVENT_OTA_START / EVENT_OTA_APPLY                    │
- *          └────────────────────────┬────────────────────────────────────┘
- *                                   │ event group
- *                                   ▼
- *          ┌────────────────────────┴────────────────────────────────────┐
- *          │ ymodem_recv_task                                            │
- *          │   waits EVENT_OTA_START                                     │
- *          │   runs Ymodem_Receive(double-buffer 2×1030 B)               │
- *          │   on completion: writes ota_flag {state=DOWNLOAD_FINISHED,  │
- *          │   image_size, current_app_size} and logs "OTA staged"       │
+ *          │ ota_service_task                                            │
+ *          │   scans UART1 for 0x11 22 33 / 0x77 88 99 magic bytes,      │
+ *          │   drives Ymodem_Receive (double-buffer 2×1030 B), writes    │
+ *          │   ota_flag {state=DOWNLOAD_FINISHED, image_size,            │
+ *          │   current_app_size} on success, then NVIC_SystemReset on    │
+ *          │   apply magic.                                              │
  *          └──┬──────────────────────────────────────────────────────────┘
  *             │ Queue_AppDataBuffer (Ymodem_RxContext_t *)
  *             ▼
@@ -39,10 +32,10 @@
  *          │   gives Semaphore_ExtFlashState so Ymodem can swap buffers  │
  *          └─────────────────────────────────────────────────────────────┘
  *
- *        UART1 RX is owned by the listener / Ymodem_Receive — see
+ *        UART1 RX is owned by ota_service_task — see
  *        HAL_UARTEx_RxEventCallback in firmware_upgrade_task.c.
  *
- * @version V1.0 2026-05-14
+ * @version V2.0 2026-05-18  merged listener + ymodem_recv → ota_service_task
  *
  * @note 1 tab == 4 spaces!
  *****************************************************************************/
@@ -56,40 +49,34 @@
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
-/* Event-group bits driving the OTA orchestration state machine. */
-#define UPGRADE_EVENT_OTA_START   (1UL << 0)  /* listener → ymodem_recv  */
-#define UPGRADE_EVENT_OTA_APPLY   (1UL << 1)  /* (reserved)              */
-#define UPGRADE_EVENT_OTA_STAGED  (1UL << 2)  /* ymodem_recv → listener  */
 //******************************** Defines **********************************//
 
 //******************************* Functions *********************************//
 /**
-* @brief Create OS resources owned by the firmware-upgrade service.
+* @brief One-shot service-level init for the OTA firmware-upgrade path.
+*
+*        Two responsibilities in one call so user_init doesn't have to
+*        know the internal ordering:
+*
+*          1. Post-OTA verification: if the bootloader left ota_flag.state
+*             at CHECK_START / CHECKING, auto-confirm by flipping it back
+*             to NO_APP_UPDATE. Must complete inside the IWDG window
+*             (~6 s) — bootloader rolls back from W25Q64 BLOCK_1 otherwise.
+*          2. Create OS resources (queues + binary semaphores) consumed by
+*             ota_service_task (orchestrator) and firmware_upgrade_task
+*             (W25Q64 write consumer).
 *
 *        Must be called from user_init_task_function BEFORE the two upgrade
-*        tasks (firmware_upgrade_task, ymodem_recv_task) and the magic-byte
-*        listener are spawned. Idempotent (no-op on second call).
-*
-* @param[in]  : None.
-* @param[out] : None.
+*        tasks are spawned. Step 2 is idempotent (no-op on second call).
 *
 * @return  0 on success, -1 on resource creation failure.
 * */
-int8_t firmware_upgrade_resources_init(void);
-
-/**
-* @brief Signal "start a Ymodem download cycle now". Edge-triggered; the
-*        listener calls this on the first 0x11 22 33 magic, ymodem_recv_task
-*        consumes the event.
-*
-* @return  0 on success, -1 if resources not initialised.
-* */
-int8_t firmware_upgrade_signal_start(void);
+int8_t firmware_upgrade_service_init(void);
 
 /**
 * @brief Signal "apply the staged image now" — triggers NVIC_SystemReset()
-*        after a short delay so the listener TX buffer can flush. Listener
-*        calls this on the 0x77 88 99 magic.
+*        after a short delay so any in-flight UART TX can drain.
+*        ota_service_task calls this on the 0x77 88 99 magic.
 *
 * @return  Does not return; the system resets.
 * */
@@ -97,7 +84,7 @@ void firmware_upgrade_signal_apply(void);
 
 /**
 * @brief Flush the partial-sector staging buffer at the end of a Ymodem
-*        session. Must be called by ymodem_recv_task right after
+*        session. Must be called by ota_service_task right after
 *        Ymodem_Receive returns successfully, BEFORE stamping the OTA
 *        flag — otherwise the last sub-4KB chunk never reaches W25Q64.
 *
@@ -116,8 +103,7 @@ int32_t firmware_upgrade_flush_staged(void);
 
 /* Task entries, registered in g_user_task_cfg[]. */
 void firmware_upgrade_task(void *argument);
-void ymodem_recv_task     (void *argument);
-void ota_uart_listener_task(void *argument);
+void ota_service_task     (void *argument);
 //******************************* Functions *********************************//
 
 #endif /* __FIRMWARE_UPGRADE_H__ */

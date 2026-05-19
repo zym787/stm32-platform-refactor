@@ -2,29 +2,48 @@
  * @file ota_uart_listener.c
  *
  * @par dependencies
+ * - ota_transport.h
  * - firmware_upgrade.h
- * - usart.h, stm32f4xx_hal.h
+ * - cfg_ota.h
+ * - upgrade_service.h
+ * - ymodem.h
  * - osal_wrapper_adapter.h / os_freertos.h
  * - Debug.h
  *
  * @author Ethan-Hang
  *
- * @brief OTA trigger source. Polls UART1 for two magic-byte sequences:
+ * @brief Single OTA orchestration task. Service-layer code — speaks only
+ *        to ota_transport.h (abstract byte/frame I/O), never to HAL or a
+ *        specific MCU.
  *
- *          0x11 0x22 0x33  →  signal ymodem_recv_task to start staging
- *          0x77 0x88 0x99  →  apply the staged image (NVIC_SystemReset)
+ *            ┌──────────────┐
+ *            │ SCAN_START   │  ota_transport_listen_byte_*   slide-and-match
+ *            │              │      0x11 22 33  ─►─┐
+ *            └──────────────┘                     │
+ *                                                 ▼
+ *                                       ┌──────────────────┐
+ *                                       │ YMODEM_ACTIVE    │  Ymodem_Receive
+ *                                       │  + ota_flag write│  (frame mode)
+ *                                       └────────┬─────────┘
+ *                                                │ success
+ *                                                ▼
+ *            ┌──────────────┐
+ *            │ SCAN_APPLY   │  ota_transport_listen_byte_*   slide-and-match
+ *            │              │      0x77 88 99  → NVIC_SystemReset
+ *            └──────────────┘
  *
- *        UART1 ownership rules:
- *          - In IDLE state the listener owns UART1 RX via 1-byte polled
- *            HAL_UART_Receive with a short timeout.
- *          - When the start magic matches, the listener BLOCKS on
- *            UPGRADE_EVENT_OTA_STAGED so it doesn't fight Ymodem_Receive
- *            (which arms HAL_UARTEx_ReceiveToIdle_DMA on the same UART).
- *          - After the staged bit is set, ymodem_recv_task is back in
- *            its wait-for-OTA_START loop and the listener resumes
- *            ownership, this time scanning for the apply magic.
+ *        Producer / consumer split with firmware_upgrade_task is preserved:
+ *        the Ymodem user-handler queues each FILE_DATA ctx pointer into
+ *        Queue_AppDataBuffer so W25Q64 writes happen in parallel with
+ *        DMA reception.
  *
- * @version V1.0 2026-05-14
+ *        The transport adapter (01_APP/Service_Adapters/uart1_ota_transport.c)
+ *        guarantees that listen-byte (IT-mode single byte) and frame
+ *        (DMA-idle frame) paths never race — switching between them is a
+ *        synchronous handoff inside the adapter.
+ *
+ * @version V2.0 2026-05-14  merged listener + ymodem_recv → ota_service_task
+ * @version V3.0 2026-05-18  decoupled from HAL UART — uses ota_transport
  *
  * @note 1 tab == 4 spaces!
  *****************************************************************************/
@@ -37,10 +56,11 @@
 #include "osal_error.h"
 #include "os_freertos.h"
 
-#include "stm32f4xx_hal.h"
-#include "usart.h"
-
+#include "ota_transport.h"
 #include "firmware_upgrade.h"
+#include "upgrade_service.h"
+#include "cfg_ota.h"
+#include "ymodem.h"
 #include "Debug.h"
 //******************************** Includes *********************************//
 
@@ -51,9 +71,22 @@ static const uint8_t MAGIC_APPLY[3] = { 0x77U, 0x88U, 0x99U };
 //******************************** Defines **********************************//
 
 //******************************* Variables *********************************//
-extern osal_event_group_handle_t g_ota_evgrp;
-extern osal_sema_handle_t        g_listener_byte_sem;
-extern uint8_t                   g_listener_rx_byte;
+/**
+ * @brief Linker-provided symbol: total bytes the current APP occupies in
+ *        the internal-Flash slot. See STM32F411XX_FLASH.ld; the symbol's
+ *        *address* IS the value. Stamped into ota_flag.current_app_size
+ *        so the bootloader knows how many bytes to back up before flashing
+ *        the new image.
+ */
+extern uint32_t                  __app_size__;
+
+/**
+ * @brief Ymodem double-buffer: two 1030-byte packet slots ping-pong'd by
+ *        the producer (Ymodem_Receive) and consumer (firmware_upgrade_task)
+ *        through Queue_AppDataBuffer + Semaphore_ExtFlashState handshake.
+ *        BSS-allocated to avoid pushing 2 KB onto the task stack.
+ */
+static uint8_t                   s_ymodem_buf[2][1030];
 //******************************* Variables *********************************//
 
 //******************************* Functions *********************************//
@@ -79,83 +112,125 @@ static bool slide_and_match(uint8_t window[3], uint8_t byte,
 }
 
 /**
-* @brief Arm one byte of interrupt-driven RX. Quietly retries on BUSY —
-*        that means HAL is still in the previous RX or Ymodem grabbed the
-*        bus, both transient.
+* @brief Run one Ymodem download cycle and stamp the OTA flag on success.
+*
+* Called from the YMODEM_ACTIVE state. Returns 0 on success (image staged
+* + ota_flag written), -1 on any failure inside the receive / flush / flag
+* write path. Caller decides whether to re-scan or apply based on result.
 * */
-static void arm_listener_rx(void)
+static int8_t ota_run_ymodem_session(void)
 {
-    while (HAL_UART_Receive_IT(&huart1, &g_listener_rx_byte, 1U) != HAL_OK)
+    DEBUG_OUT(i, YMODEM_LOG_TAG, "OTA download starting, awaiting Ymodem");
+
+    const int32_t rx_result = Ymodem_Receive(s_ymodem_buf);
+
+    if (rx_result <= 0)
     {
-        /**
-        * HAL returns BUSY if a previous RX is still active or if the
-        * peripheral hasn't drained from a Ymodem Abort. Yield briefly
-        * and retry — never spin-poll. ~5 ms gives Ymodem time to release
-        * the bus on the abort path.
-        **/
-        osal_task_delay(OS_MS_TO_TICKS(5));
+        DEBUG_OUT(e, YMODEM_LOG_TAG,
+                  "Ymodem_Receive returned %d, OTA staging aborted",
+                  (int)rx_result);
+        return -1;
     }
+
+    /**
+    * Drain firmware_upgrade_task's 4 KB sector-aligned coalescing buffer.
+    * Without this the final sub-4KB chunk never reaches storage.
+    **/
+    if (firmware_upgrade_flush_staged() < 0)
+    {
+        DEBUG_OUT(e, YMODEM_LOG_TAG,
+                  "Final-sector flush failed, aborting stage");
+        return -1;
+    }
+
+    /**
+    * Stamp the OTA flag struct so the next boot the bootloader sees
+    * state=DOWNLOAD_FINISHED, reads image_size, and applies.
+    **/
+    ota_flag_t f;
+    if (ota_flag_read(&f) != 0)
+    {
+        f.magic = CFG_OTA_FLAG_MAGIC;
+    }
+    f.current_app_size = (uint32_t)&__app_size__;
+    f.state            = CFG_OTA_DOWNLOAD_FINISHED;
+    f.image_size       = (uint32_t)rx_result;
+
+    if (ota_flag_write(&f) != 0)
+    {
+        DEBUG_OUT(e, YMODEM_LOG_TAG,
+                  "ota_flag_write failed, image will NOT apply on boot");
+        return -1;
+    }
+
+    DEBUG_OUT(i, YMODEM_LOG_TAG,
+              "OTA staged: %ld bytes; awaiting apply trigger",
+              (long)rx_result);
+    return 0;
 }
 
-void ota_uart_listener_task(void *argument)
+/**
+* @brief Unified OTA orchestration task — scans the transport for start
+*        magic, drives one Ymodem session end-to-end, then scans for apply
+*        magic and resets. Doesn't know what underlying transport it's
+*        running on — that's the adapter's job.
+* */
+void ota_service_task(void *argument)
 {
     (void)argument;
 
-    enum { LISTEN_FOR_START, LISTEN_FOR_APPLY } state = LISTEN_FOR_START;
+    enum { SCAN_START, SCAN_APPLY } scan_state = SCAN_START;
     uint8_t window[3] = { 0U, 0U, 0U };
 
     DEBUG_OUT(i, YMODEM_LOG_TAG,
-              "ota_uart_listener_task entered (scanning for start magic)");
+              "ota_service_task entered (scanning for start magic)");
 
-    arm_listener_rx();
+    (void)ota_transport_listen_byte_arm();
 
     for (;;)
     {
-        /**
-        * Block on the binary semaphore the RxCpltCallback gives. CPU
-        * yields cleanly here — listener no longer starves PRI_BACKGROUND
-        * tasks like iwdg_feeder, which is what was tripping IWDG and
-        * making the system look frozen.
-        **/
-        if (osal_sema_take(g_listener_byte_sem, OSAL_MAX_DELAY) != OSAL_SUCCESS)
+        uint8_t rx_byte = 0U;
+        if (OTA_TRANSPORT_OK !=
+            ota_transport_listen_byte_wait(&rx_byte, OSAL_MAX_DELAY))
         {
+            /* Timeout would only fire if the adapter reports it — we use
+               OS_MS_MAX_DELAY so this branch is effectively unreachable
+               on the production adapter, but defensive coding keeps the
+               state machine robust if a future BLE transport surfaces
+               idle timeouts here. */
             continue;
         }
 
-        const uint8_t rx_byte = g_listener_rx_byte;
-
-        if (LISTEN_FOR_START == state)
+        if (SCAN_START == scan_state)
         {
             if (slide_and_match(window, rx_byte, MAGIC_START))
             {
                 DEBUG_OUT(i, YMODEM_LOG_TAG,
-                          "OTA start magic seen, signalling ymodem_recv");
-
+                          "OTA start magic seen, switching to Ymodem");
                 memset(window, 0, sizeof(window));
-                (void)firmware_upgrade_signal_start();
 
                 /**
-                * Block on STAGED — UART1 RX is implicitly released to
-                * Ymodem here. We do NOT re-arm HAL_UART_Receive_IT until
-                * Ymodem is done, otherwise IT and ReceiveToIdle_DMA fight
-                * over the same peripheral. ymodem_recv_task calls
-                * HAL_UARTEx_ReceiveToIdle_DMA from inside Ymodem_Receive;
-                * once that returns and ota_flag is stamped, it sets the
-                * STAGED bit and the bus is free again.
+                * UART RX is implicitly released to Ymodem here. The
+                * adapter guarantees listen_byte_arm's IT slot was
+                * consumed by the third magic byte's RxCpltCallback, so
+                * Ymodem_Receive's first frame_arm sees the transport
+                * idle and arms cleanly.
                 **/
-                (void)osal_event_group_wait_bits(g_ota_evgrp,
-                                                 UPGRADE_EVENT_OTA_STAGED,
-                                                 true,   /* clear on take */
-                                                 false,  /* any bit       */
-                                                 OSAL_MAX_DELAY,
-                                                 NULL);
-
-                state = LISTEN_FOR_APPLY;
-                DEBUG_OUT(i, YMODEM_LOG_TAG,
-                          "OTA staged, now scanning for apply magic");
+                if (0 == ota_run_ymodem_session())
+                {
+                    scan_state = SCAN_APPLY;
+                    DEBUG_OUT(i, YMODEM_LOG_TAG,
+                              "OTA staged, now scanning for apply magic");
+                }
+                else
+                {
+                    /* Stay in SCAN_START — let the user retry the upload. */
+                    DEBUG_OUT(w, YMODEM_LOG_TAG,
+                              "OTA session failed, rescanning for start magic");
+                }
             }
         }
-        else /* LISTEN_FOR_APPLY */
+        else /* SCAN_APPLY */
         {
             if (slide_and_match(window, rx_byte, MAGIC_APPLY))
             {
@@ -165,8 +240,8 @@ void ota_uart_listener_task(void *argument)
             }
         }
 
-        /* Re-arm one-byte IT for the next character. */
-        arm_listener_rx();
+        /* Re-arm the next byte slot. */
+        (void)ota_transport_listen_byte_arm();
     }
 }
 //******************************* Functions *********************************//

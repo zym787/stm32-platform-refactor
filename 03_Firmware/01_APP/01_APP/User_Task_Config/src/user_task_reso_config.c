@@ -61,8 +61,7 @@ void flash_handler_thread(void *argument);
 void storage_manager_task(void *argument);
 void iwdg_feeder_task(void *argument);
 void firmware_upgrade_task(void *argument);
-void ymodem_recv_task(void *argument);
-void ota_uart_listener_task(void *argument);
+void ota_service_task(void *argument);
 
 usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
 {
@@ -71,93 +70,93 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
     /* Motion (MPU6050) */
 #if USER_TASK_MPU6050_HANDLER
     [USER_TASK_MPU6050_HANDLER_IDX] = {
-        .task_name = "mpu6050_handler_thread",
+        .task_name    = "mpu6050_handler_thread",
         .func_pointer = mpuxxxx_handler_thread,
-        .stack_depth = 384,
-        .priority = PRI_NORMAL + 1,
-        .task_handle = NULL,
-        .argument = &mpu6050_input_args
+        .stack_depth  = 384,
+        .priority     = PRI_NORMAL + 1,
+        .task_handle  = NULL,
+        .argument     = &mpu6050_input_args
     },
 #endif
 
 #if USER_TASK_UNPACK_TASK
     [USER_TASK_UNPACK_TASK_IDX] = {
-        .task_name = "unpack_task_thread",
+        .task_name    = "unpack_task_thread",
         .func_pointer = unpack_task_thread,
-        .stack_depth = 512,
-        .priority = PRI_NORMAL,
-        .task_handle = NULL,
-        .argument = NULL
+        .stack_depth  = 512,
+        .priority     = PRI_NORMAL,
+        .task_handle  = NULL,
+        .argument     = NULL
     },
 #endif
 
     /* Temp / Humidity (AHT21) */
 #if USER_TASK_TEMP_HUMI_HANDLER
     [USER_TASK_TEMP_HUMI_HANDLER_IDX] = {
-        .task_name = "temp_humi_handler_thread",
+        .task_name    = "temp_humi_handler_thread",
         .func_pointer = temp_humi_handler_thread,
-        .stack_depth = 256,
-        .priority = PRI_NORMAL,
-        .task_handle = NULL,
-        .argument = &aht21_input_arg
+        .stack_depth  = 256,
+        .priority     = PRI_NORMAL,
+        .task_handle  = NULL,
+        .argument     = &aht21_input_arg
     },
 #endif
 
 #if USER_TASK_TEMP_HUMI_TEST_A
     [USER_TASK_TEMP_HUMI_TEST_A_IDX] = {
-        .task_name = "temp_humi_test_task_a",
+        .task_name    = "temp_humi_test_task_a",
         .func_pointer = temp_humi_test_task_a,
-        .stack_depth = 384,
-        .priority = PRI_NORMAL,
-        .task_handle = NULL,
-        .argument = NULL
+        .stack_depth  = 384,
+        .priority     = PRI_NORMAL,
+        .task_handle  = NULL,
+        .argument     = NULL
     },
 #endif
 
 #if USER_TASK_TEMP_HUMI_TEST_B
     [USER_TASK_TEMP_HUMI_TEST_B_IDX] = {
-        .task_name = "temp_humi_test_task_b",
+        .task_name    = "temp_humi_test_task_b",
         .func_pointer = temp_humi_test_task_b,
-        .stack_depth = 384,
-        .priority = PRI_NORMAL,
-        .task_handle = NULL,
-        .argument = NULL
+        .stack_depth  = 384,
+        .priority     = PRI_NORMAL,
+        .task_handle  = NULL,
+        .argument     = NULL
     },
 #endif
 
     /* Audio (WT588) */
 #if USER_TASK_WT588_HANDLER
     [USER_TASK_WT588_HANDLER_IDX] = {
-        .task_name = "wt588_handler_thread",
+        .task_name    = "wt588_handler_thread",
         .func_pointer = wt588_handler_thread,
-        .stack_depth = 256,
-        .priority = PRI_NORMAL - 2,
-        .task_handle = NULL,
-        .argument = &wt588_handler_input_args
+        .stack_depth  = 256,
+        .priority     = PRI_NORMAL - 2,
+        .task_handle  = NULL,
+        .argument     = &wt588_handler_input_args
     },
 #endif
 
     /* Display (LVGL / ST7789) */
 #if USER_LVGL_TEST_TASK
     [USER_LVGL_TEST_TASK_IDX] = {
-        .task_name = "lvgl_display_task",
+        .task_name    = "lvgl_display_task",
         .func_pointer = lvgl_display_task,
-        .stack_depth = 4096,
-        .priority = PRI_SOFT_REALTIME,
-        .task_handle = NULL,
-        .argument = NULL
+        .stack_depth  = 4096,
+        .priority     = PRI_SOFT_REALTIME,
+        .task_handle  = NULL,
+        .argument     = NULL
     },
 #endif
 
     /* Storage (W25Q64) */
 #if USER_TASK_W25Q64_HANDLER
     [USER_TASK_W25Q64_HANDLER_IDX] = {
-        .task_name = "flash_handler_thread",
+        .task_name    = "flash_handler_thread",
         .func_pointer = flash_handler_thread,
-        .stack_depth = 384,
-        .priority = PRI_NORMAL,
-        .task_handle = NULL,
-        .argument = &w25q64_input_arg
+        .stack_depth  = 384,
+        .priority     = PRI_NORMAL,
+        .task_handle  = NULL,
+        .argument     = &w25q64_input_arg
     },
 #endif
 
@@ -198,12 +197,12 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
     /* System */
 #if USER_TASK_TASK_HIGHER_WATER
     [USER_TASK_TASK_HIGHER_WATER_IDX] = {
-        .task_name = "task_higher_water_thread",
+        .task_name    = "task_higher_water_thread",
         .func_pointer = task_higher_water_thread,
-        .stack_depth = 256,
-        .priority = PRI_NORMAL + 2,
-        .task_handle = NULL,
-        .argument = NULL
+        .stack_depth  = 256,
+        .priority     = PRI_NORMAL + 2,
+        .task_handle  = NULL,
+        .argument     = NULL
     },
 #endif
 
@@ -230,22 +229,11 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
     },
 #endif
 
-#if USER_TASK_YMODEM_RECV
-    [USER_TASK_YMODEM_RECV_IDX] = {
-        .task_name    = "ymodem_recv",
-        .func_pointer = ymodem_recv_task,
-        .stack_depth  = 256,
-        .priority     = PRI_SOFT_REALTIME,
-        .task_handle  = NULL,
-        .argument     = NULL
-    },
-#endif
-
-#if USER_TASK_OTA_UART_LISTENER
-    [USER_TASK_OTA_UART_LISTENER_IDX] = {
-        .task_name    = "ota_uart_listener",
-        .func_pointer = ota_uart_listener_task,
-        .stack_depth  = 256,
+#if USER_TASK_OTA_SERVICE
+    [USER_TASK_OTA_SERVICE_IDX] = {
+        .task_name    = "ota_service",
+        .func_pointer = ota_service_task,
+        .stack_depth  = 384,
         .priority     = PRI_SOFT_REALTIME,
         .task_handle  = NULL,
         .argument     = NULL
@@ -267,23 +255,23 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
 
 #if USER_TASK_W25Q64_MOCK
     [USER_TASK_W25Q64_MOCK_IDX] = {
-        .task_name = "w25q64_mock_test_task",
+        .task_name    = "w25q64_mock_test_task",
         .func_pointer = w25q64_handler_mock_test_task,
-        .stack_depth = 1024,
-        .priority = PRI_NORMAL,
-        .task_handle = NULL,
-        .argument = NULL
+        .stack_depth  = 1024,
+        .priority     = PRI_NORMAL,
+        .task_handle  = NULL,
+        .argument     = NULL
     },
 #endif
 
 #if USER_TASK_W25Q64_HAL_TEST
     [USER_TASK_W25Q64_HAL_TEST_IDX] = {
-        .task_name = "w25q64_hal_test_task",
+        .task_name    = "w25q64_hal_test_task",
         .func_pointer = w25q64_hal_test_task,
-        .stack_depth = 1024,
-        .priority = PRI_NORMAL - 1,
-        .task_handle = NULL,
-        .argument = NULL
+        .stack_depth  = 1024,
+        .priority     = PRI_NORMAL - 1,
+        .task_handle  = NULL,
+        .argument     = NULL
     },
 #endif
 

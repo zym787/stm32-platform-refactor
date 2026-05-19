@@ -74,8 +74,10 @@
    the watchdog. Keep at 1 in production. */
 #define USER_TASK_IWDG_FEEDER           1
 #define USER_TASK_FIRMWARE_UPGRADE      1
-#define USER_TASK_YMODEM_RECV           1
-#define USER_TASK_OTA_UART_LISTENER     1
+/* ota_service_task is the merge of the old listener + ymodem_recv tasks
+   (v2 2026-05-18); USER_TASK_YMODEM_RECV / USER_TASK_OTA_UART_LISTENER
+   are removed. */
+#define USER_TASK_OTA_SERVICE           1
 
 /* ========== Test / debug tasks (disabled by default) ========== */
 
@@ -134,11 +136,8 @@ typedef enum
 #if USER_TASK_FIRMWARE_UPGRADE
     USER_TASK_FIRMWARE_UPGRADE_IDX,
 #endif
-#if USER_TASK_YMODEM_RECV
-    USER_TASK_YMODEM_RECV_IDX,
-#endif
-#if USER_TASK_OTA_UART_LISTENER
-    USER_TASK_OTA_UART_LISTENER_IDX,
+#if USER_TASK_OTA_SERVICE
+    USER_TASK_OTA_SERVICE_IDX,
 #endif
 /* --- Test / debug --- */
 #if USER_TASK_WT588_TEST

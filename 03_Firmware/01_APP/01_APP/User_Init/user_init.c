@@ -24,7 +24,6 @@
 #include "user_task_reso_config.h"
 #include "user_init.h"
 #include "user_externflash_manage.h"
-#include "upgrade_service.h"
 #include "firmware_upgrade.h"
 #include "Debug.h"
 
@@ -45,37 +44,14 @@ static void user_init_task_function(void *argument)
 {
     int32_t ret = 0;
 
-    /**
-    * Post-OTA verification: bootloader leaves state=CHECK_START before
-    * jumping in here. Confirm we booted successfully by flipping the flag
-    * back to NO_APP_UPDATE — must complete inside the IWDG window (~6 s)
-    * or the watchdog will fire and bootloader rolls back from BLOCK_1.
-    *
-    * For now this is unconditional auto-confirm right at the top of init.
-    * Future work (battery / sensor self-test) can gate the write on those
-    * checks; do NOT push it further down the init path without confirming
-    * total elapsed time stays well under 6 s.
-    **/
-    ota_flag_t ota_f;
-    if (ota_flag_read(&ota_f) == 0 &&
-        (ota_f.state == CFG_OTA_APP_CHECK_START ||
-         ota_f.state == CFG_OTA_APP_CHECKING))
+    /* OTA service init: post-OTA verify (auto-confirm CHECK_START /
+     * CHECKING) + OS resources for ota_service_task / firmware_upgrade_task.
+     * Kept first so the auto-confirm write happens well within the IWDG
+     * window. */
+    if (0 != firmware_upgrade_service_init())
     {
-        /**
-        * Both CHECK_START (0x33, ota_apply_update direct jump) and
-        * CHECKING (0x44, bootloader OTA_StateManager re-entry after an
-        * intermediate reset) need an auto-confirm here — otherwise IWDG
-        * fires and bootloader bounces us forever.
-        **/
-        DEBUG_OUT(w, USER_INIT_LOG_TAG,
-                  "post-OTA first boot (state=0x%02X): auto-confirm",
-                  (unsigned)ota_f.state);
-        ota_f.state = CFG_OTA_NO_APP_UPDATE;
-        if (ota_flag_write(&ota_f) != 0)
-        {
-            DEBUG_OUT(e, USER_INIT_ERR_LOG_TAG,
-                      "post-OTA confirm write failed (IWDG will roll back)");
-        }
+        DEBUG_OUT(e, USER_INIT_ERR_LOG_TAG,
+                  "firmware_upgrade_service_init failed");
     }
 
     /* App-layer OS resources owned by the storage manager.
@@ -86,15 +62,6 @@ static void user_init_task_function(void *argument)
     {
         DEBUG_OUT(e, USER_INIT_ERR_LOG_TAG,
                   "storage_manager_resources_init failed");
-    }
-
-    /* OTA firmware-upgrade OS resources: queues + binary semaphore + event
-     * group consumed by ymodem_recv_task / firmware_upgrade_task /
-     * ota_uart_listener (the listener is added in a later commit). */
-    if (0 != firmware_upgrade_resources_init())
-    {
-        DEBUG_OUT(e, USER_INIT_ERR_LOG_TAG,
-                  "firmware_upgrade_resources_init failed");
     }
 
     /* MCU port buses (mutex creation; HAL handles already initialised). */

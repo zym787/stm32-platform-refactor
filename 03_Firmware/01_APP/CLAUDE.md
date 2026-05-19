@@ -223,29 +223,58 @@ JLink 设备 `STM32F411CE_W25Q64` 注册在 `%APPDATA%\SEGGER\JLinkDevices\ST\ST
 
 PC → UART1 → APP（Ymodem 收 + 写 W25Q64 OTA 分区）→ NVIC_SystemReset → Bootloader（AES-256-CBC 解密 + BLOCK_1→BLOCK_2→内部 Flash + 回滚兜底）。**触发不走 shell**，靠 UART 魔术字 `0x11 22 33`（启动）/ `0x77 88 99`（应用）。
 
-### 链路任务（`01_SERVICE/service_ota/`）
+### 分层（v3 — service / adapter 分离）
+
+```
+01_APP/01_APP/Service_Adapters/        ← 板级适配（HAL / W25Q64 实现）
+  uart1_ota_transport.c                  HAL UART 实现 ota_transport.h
+                                         + HAL callback 宿主
+                                         + firmware_upgrade_signal_apply
+  w25q64_ota_storage.c                   Write_OtaData 实现 ota_storage.h
+
+01_SERVICE/service_ota/                ← 平台无关 OTA 业务
+  inc/ota_transport.h                    抽象 IT-byte + DMA-idle-frame + TX
+  inc/ota_storage.h                      抽象 sector erase + program + read
+  inc/firmware_upgrade.h                 服务入口 / 任务声明
+  inc/upgrade_service.h                  ota_flag 持久化（已经在 MCU 端口抽象）
+  src/ota_uart_listener.c                ota_service_task —— 状态机，只用抽象 API
+  src/firmware_upgrade_task.c            consumer，只用 ota_storage
+  src/iwdg_feeder_task.c                 不动
+  src/upgrade_service.c                  不动
+
+02_Middleware_Platform/Ymodem/         ← 中间件，只 #include ota_transport.h
+  src/ymodem.c                           HAL 调用全部替换为 ota_transport_*
+```
+
+替换 transport（例如换 BLE OTA）⇔ 在 `01_APP/01_APP/Service_Adapters/` 里替 `uart1_ota_transport.c` 为 `bleN_ota_transport.c`，service 与 Ymodem 一行代码都不动。
+
+### 链路任务
 
 | 任务 | 优先级 | 职责 |
 |---|---|---|
-| `ota_uart_listener_task` | `PRI_NORMAL` | `HAL_UART_Receive_IT` + 3-byte 滑窗扫魔术字，发现 start 设 `UPGRADE_EVENT_OTA_START`，发现 apply 调 `NVIC_SystemReset` |
-| `ymodem_recv_task` | `PRI_NORMAL` | 阻塞等 OTA_START → 调 `Ymodem_Receive()` → 完成后 `firmware_upgrade_flush_staged()` + `ota_flag_write()` + set `OTA_STAGED` |
-| `firmware_upgrade_task` | `PRI_NORMAL` | consume `Queue_AppDataBuffer`，4 KB sector 缓冲后调 `Write_OtaData` 写 W25Q64 |
+| `ota_service_task` | `PRI_SOFT_REALTIME` | 状态机 `SCAN_START → YMODEM_ACTIVE → SCAN_APPLY`：`ota_transport_listen_byte_*` 1-byte 滑窗扫 `0x11 22 33` magic → 调 `Ymodem_Receive()`（内部走 `ota_transport_frame_*`）→ `firmware_upgrade_flush_staged()` + `ota_flag_write()` → IT 模式扫 `0x77 88 99` apply magic → `firmware_upgrade_signal_apply()`（adapter 内 `NVIC_SystemReset`） |
+| `firmware_upgrade_task` | `PRI_SOFT_REALTIME` | consume `Queue_AppDataBuffer`，4 KB sector 缓冲后调 `ota_storage_write` 写下层（默认 W25Q64） |
 | `iwdg_feeder_task` | `PRI_BACKGROUND` | always-on 500 ms 喂狗（F411 IWDG 起后不可关）|
 
-三个 OS 全局对象由 `firmware_upgrade_resources_init()`（在 `user_init_task` 中调）创建，给 `02_Middleware_Platform/Ymodem/src/ymodem.c` 用：
+OS 全局对象按所有权分两组：
 
-- `Q_YmodemReclength`（uint16_t × 4）：DMA-idle 段长队列
-- `Queue_AppDataBuffer`（`Ymodem_RxContext_t*` × 2）：Ymodem 用户层 → 升级 consumer
-- `Semaphore_ExtFlashState`（binary）：consumer 写完一包后给，让 Ymodem 切 ping-pong buffer
+- **adapter 内部**（`uart1_ota_transport.c` 私有）：
+  - `s_byte_sem`（binary）—— `HAL_UART_RxCpltCallback` 给一次
+  - `s_frame_queue`（uint16_t × 4）—— `HAL_UARTEx_RxEventCallback` 给段长
+  - 创建/管理由 `ota_transport_init()` 处理
+- **service 共享**（`firmware_upgrade_task.c` 定义，Ymodem extern）：
+  - `Queue_AppDataBuffer`（`Ymodem_RxContext_t*` × 2）—— Ymodem user_handler → consumer
+  - `Semaphore_ExtFlashState`（binary）—— consumer 写完一包 → Ymodem 切 ping-pong buffer
+  - 创建由 `firmware_upgrade_service_init()` 处理（一站式：post-OTA verify + transport_init + storage_init + service resources）
 
 ### UART1 RX 双路（互斥不并存）
 
-| 模式 | 谁用 | HAL API |
+| 模式 | 谁用 | 抽象 API |
 |---|---|---|
-| 中断单字节 | listener 扫魔术字时 | `HAL_UART_Receive_IT(&huart1, &g_listener_rx_byte, 1)` + `HAL_UART_RxCpltCallback` |
-| DMA-idle | `Ymodem_Receive` 整段 | `HAL_UARTEx_ReceiveToIdle_DMA` + `HAL_UARTEx_RxEventCallback` |
+| 中断单字节 | `ota_service_task` 在 SCAN_START / SCAN_APPLY 状态 | `ota_transport_listen_byte_arm` + `_wait` |
+| DMA-idle frame | `Ymodem_Receive` 整段（YMODEM_ACTIVE 状态内） | `ota_transport_frame_arm` + `_is_armed` + `_wait` + `_stop` |
 
-listener 设 OTA_START 后**立刻挂起到 OTA_STAGED**，期间不 re-arm IT；ymodem_recv_task 完成后 set STAGED，listener 才重新 arm。任一时刻只有一个回调被武装。
+具体 HAL 实现细节封在 `uart1_ota_transport.c`：IT single-shot → magic 第 3 字节命中自然消耗；YMODEM_ACTIVE 进入时 RxState 已经回 READY，frame_arm 直接成功。session 结束（无论成败）后 `ota_service_task` 调 `listen_byte_arm` 重 arm IT 回到扫 magic。任一时刻只有一个 HAL 回调被武装。
 
 ### 加密格式（`Tools/ota_encrypt.py`）
 

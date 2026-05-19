@@ -3,10 +3,9 @@
  *
  * @par dependencies
  * - string.h
- * - usart.h
- * - main.h
  * - osal_wrapper_adapter.h
  * - os_freertos.h
+ * - ota_transport.h     (abstract byte stream — adapter lives in 01_APP)
  * - Debug.h
  *
  * @author Ethan-Hang
@@ -15,12 +14,15 @@
  * Ymodem protocol receive and packet forward module.
  *
  * Processing flow:
- * 1. Receive Ymodem packets over UART DMA.
+ * 1. Receive Ymodem packets via the abstract ota_transport (UART / BLE /
+ *    CAN — whichever adapter is linked in).
  * 2. Parse file info and payload packets.
  * 3. Forward payload to OTA download task by queue.
  * 4. Synchronize producer and consumer by semaphore.
  *
  * @version V1.0 2026-3-28
+ * @version V2.0 2026-05-18  decoupled from STM32 HAL — all UART access
+ *                            now goes through ota_transport.h.
  *
  * @note 1 tab == 4 spaces!
  *
@@ -28,12 +30,12 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <string.h>
-#include "usart.h"
-#include "main.h"
 
 #include "osal_wrapper_adapter.h"
 #include "osal_error.h"
 #include "os_freertos.h"
+
+#include "ota_transport.h"
 
 #include "ymodem.h"
 #include "Debug.h"
@@ -42,10 +44,20 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 uint8_t                  file_name[FILE_NAME_LENGTH];
-extern osal_queue_handle_t Q_YmodemReclength;
+/**
+ * @brief Producer-consumer to the OTA staging task. These remain
+ *        application-level coupling — the Ymodem user handlers below act
+ *        as the "OTA delivery point" for received frames. If Ymodem is
+ *        ever reused outside the OTA flow these would be swapped for a
+ *        callback registration, but for this project OTA is the only
+ *        consumer so direct externs keep the diff smallest.
+ */
 extern osal_queue_handle_t Queue_AppDataBuffer;
 extern osal_sema_handle_t  Semaphore_ExtFlashState;
-static uint16_t          s_u16_YmodRecLength;
+
+/** @brief Bytes received in the most recent ota_transport_frame_wait —
+ *         consumed by Receive_Packet to validate packet length. */
+static uint16_t            s_u16_YmodRecLength;
 
 
 /* Private function prototypes -----------------------------------------------*/
@@ -204,44 +216,32 @@ static uint32_t Str2Int(uint8_t *inputstr, int32_t *intnum)
  */
 static int32_t Receive_Byte(uint8_t *c, uint16_t length, uint32_t timeout)
 {
-    HAL_StatusTypeDef hal_ret;
-    int32_t           retval;
-
     /**
-    * If the user handler pre-armed DMA on the next buffer already, skip the
-    * re-arm — the fresh buffer is already receiving bytes and we just need
-    * to wait for the IDLE callback to push the frame length into the queue.
-    *
-    * Without pre-arm the window between "last packet's IDLE fires" and
-    * "next Receive_Byte arms DMA" is ~2 ms (FreeRTOS scheduling + queue-
-    * send + sema-take + swap-buffer + Send_Byte ACK). F411 USART has only
-    * RDR for a single byte of buffering — if the sender fires the next
-    * packet on ACK receipt, the leading bytes hit an unarmed DMA and
-    * overrun RDR, forcing a NAK retransmission on every single packet.
+    * If the user handler pre-armed the next buffer already, skip the
+    * re-arm — the fresh buffer is already receiving bytes and we just
+    * need to wait for the transport idle event to deliver the frame
+    * length. Project memory [[f411-usart-rdr-overrun]]: without pre-arm
+    * the ~2 ms re-arm gap on F411 USART overruns RDR.
     **/
-    if (huart1.RxState != HAL_UART_STATE_BUSY_RX)
+    if (!ota_transport_frame_is_armed())
     {
-        hal_ret = HAL_UARTEx_ReceiveToIdle_DMA(&huart1, c, length);
-        if (hal_ret != HAL_OK)
+        ota_transport_status_t arm_st = ota_transport_frame_arm(c, length);
+        if (OTA_TRANSPORT_OK != arm_st)
         {
-            HAL_UART_DMAStop(&huart1);
-            hal_ret = HAL_UARTEx_ReceiveToIdle_DMA(&huart1, c, length);
-            if (hal_ret != HAL_OK)
+            /* First arm failed — most often a stale RxState from a
+               previous abort. Hard-stop then retry once. */
+            (void)ota_transport_frame_stop();
+            arm_st = ota_transport_frame_arm(c, length);
+            if (OTA_TRANSPORT_OK != arm_st)
             {
                 return YMODEM_PKT_TIMEOUT;
             }
         }
-        __HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT);
     }
 
-    /* osal_queue_receive returns OSAL_SUCCESS (=0) on data arrival and a
-       non-zero error code (OSAL_QUEUE_TIMEOUT / OSAL_INVALID_POINTER /
-       OSAL_ERR_IN_ISR) on failure — NOT a TRUE/FALSE boolean. Comparing
-       against OSAL_FALSE (also 0) inverts the semantics and silently
-       discards every successful DMA-idle frame. */
-    retval = osal_queue_receive(Q_YmodemReclength, &s_u16_YmodRecLength,
-                                OS_MS_TO_TICKS(timeout));
-    if (retval != OSAL_SUCCESS)
+    ota_transport_status_t wait_st =
+        ota_transport_frame_wait(&s_u16_YmodRecLength, timeout);
+    if (OTA_TRANSPORT_OK != wait_st)
     {
         return YMODEM_PKT_TIMEOUT;
     }
@@ -249,14 +249,13 @@ static int32_t Receive_Byte(uint8_t *c, uint16_t length, uint32_t timeout)
 }
 
 /**
- * @brief  Send a byte
+ * @brief  Send a byte via the abstract OTA transport.
  * @param  c: Character
  * @retval 0: Byte sent
  */
 static uint32_t Send_Byte(uint8_t c)
 {
-    // SerialPutChar(c);
-    HAL_UART_Transmit(&huart1, &c, 1, HAL_MAX_DELAY);
+    (void)ota_transport_tx_byte(c);
     return 0;
 }
 
@@ -292,13 +291,13 @@ static void Ymodem_File_Info_User_Handler(Ymodem_RxContext_t *ctx)
     }
 
     /**
-    * Pre-arm DMA on the fresh buffer. The sender will fire the next
-    * packet on ACK receipt, and the main loop still has Send_Byte(ACK)
-    * ahead of it — without this pre-arm the leading bytes overrun RDR.
-    * Receive_Byte() detects RxState == BUSY and skips its own arm.
+    * Pre-arm the next-buffer receive on the abstract transport. The
+    * sender will fire the next packet on ACK receipt, and the main loop
+    * still has Send_Byte(ACK) ahead of it — without this pre-arm the
+    * leading bytes overrun RDR on F411. Receive_Byte() then sees
+    * ota_transport_frame_is_armed() == true and skips its own arm.
     **/
-    HAL_UARTEx_ReceiveToIdle_DMA(&huart1, ctx->packet_data, 1030);
-    __HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT);
+    (void)ota_transport_frame_arm(ctx->packet_data, 1030U);
 }
 
 /**
@@ -333,11 +332,10 @@ static void Ymodem_File_Data_User_Handler(Ymodem_RxContext_t *ctx)
     }
 
     /**
-    * Pre-arm DMA on the fresh buffer — same reasoning as
-    * Ymodem_File_Info_User_Handler above.
+    * Pre-arm the fresh buffer via the abstract transport — same reason
+    * as Ymodem_File_Info_User_Handler above.
     **/
-    HAL_UARTEx_ReceiveToIdle_DMA(&huart1, ctx->packet_data, 1030);
-    __HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT);
+    (void)ota_transport_frame_arm(ctx->packet_data, 1030U);
 }
 
 /**
