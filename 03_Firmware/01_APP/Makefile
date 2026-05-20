@@ -327,6 +327,10 @@ C_DEFS =  \
 # include paths
 #######################################
 
+# 02_Common_Platform — unified types & error vocabulary
+C_INCLUDES_COMMON = \
+-I02_Common_Platform/inc
+
 # 02_OS_Platform — OSAL
 C_INCLUDES_OSAL = \
 -I02_OS_Platform/OSAL_Common/inc \
@@ -435,6 +439,7 @@ C_INCLUDES = \
 -IMiddlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F \
 -IDrivers/CMSIS/Device/ST/STM32F4xx/Include \
 -IDrivers/CMSIS/Include \
+$(C_INCLUDES_COMMON) \
 $(C_INCLUDES_MCU) \
 $(C_INCLUDES_BSP_DRV) \
 $(C_INCLUDES_BSP_INT) \
