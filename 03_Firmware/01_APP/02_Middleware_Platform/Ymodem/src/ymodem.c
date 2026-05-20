@@ -36,6 +36,7 @@
 #include "os_freertos.h"
 
 #include "ota_transport.h"
+#include "firmware_upgrade.h"   /* externs g_otaDataQueue / g_extFlashAckSem */
 
 #include "ymodem.h"
 #include "Debug.h"
@@ -50,10 +51,9 @@ uint8_t                  file_name[FILE_NAME_LENGTH];
  *        as the "OTA delivery point" for received frames. If Ymodem is
  *        ever reused outside the OTA flow these would be swapped for a
  *        callback registration, but for this project OTA is the only
- *        consumer so direct externs keep the diff smallest.
+ *        consumer so direct extern (via firmware_upgrade.h) keeps the
+ *        diff smallest.
  */
-extern osal_queue_handle_t Queue_AppDataBuffer;
-extern osal_sema_handle_t  Semaphore_ExtFlashState;
 
 /** @brief Bytes received in the most recent ota_transport_frame_wait —
  *         consumed by Receive_Packet to validate packet length. */
@@ -267,14 +267,14 @@ static uint32_t Send_Byte(uint8_t c)
  */
 static void Ymodem_File_Info_User_Handler(Ymodem_RxContext_t *ctx)
 {
-    if (osal_queue_send(Queue_AppDataBuffer, &ctx, OSAL_MAX_DELAY) != OSAL_SUCCESS)
+    if (osal_queue_send(g_otaDataQueue, &ctx, OSAL_MAX_DELAY) != OSAL_SUCCESS)
     {
         DEBUG_OUT(e, YMODEM_LOG_TAG, "Failed to send file data to queue");
         return;
     }
 
     /* Wait until download task consumes the FILE_INFO message. */
-    if (osal_sema_take(Semaphore_ExtFlashState, OSAL_MAX_DELAY) != OSAL_SUCCESS)
+    if (osal_sema_take(g_extFlashAckSem, OSAL_MAX_DELAY) != OSAL_SUCCESS)
     {
         DEBUG_OUT(e, YMODEM_LOG_TAG,
                   "Failed to sync file info with download task");
@@ -307,7 +307,7 @@ static void Ymodem_File_Info_User_Handler(Ymodem_RxContext_t *ctx)
  */
 static void Ymodem_File_Data_User_Handler(Ymodem_RxContext_t *ctx)
 {
-    if (osal_queue_send(Queue_AppDataBuffer, &ctx, OSAL_MAX_DELAY) != OSAL_SUCCESS)
+    if (osal_queue_send(g_otaDataQueue, &ctx, OSAL_MAX_DELAY) != OSAL_SUCCESS)
     {
         DEBUG_OUT(e, YMODEM_LOG_TAG, "Failed to send file info to queue");
         return;
@@ -315,7 +315,7 @@ static void Ymodem_File_Data_User_Handler(Ymodem_RxContext_t *ctx)
 
     /* Wait until download task writes this packet into W25Q before reusing
      * context buffers. */
-    if (osal_sema_take(Semaphore_ExtFlashState, OSAL_MAX_DELAY) != OSAL_SUCCESS)
+    if (osal_sema_take(g_extFlashAckSem, OSAL_MAX_DELAY) != OSAL_SUCCESS)
     {
         DEBUG_OUT(e, YMODEM_LOG_TAG,
                   "Failed to sync file data with download task");

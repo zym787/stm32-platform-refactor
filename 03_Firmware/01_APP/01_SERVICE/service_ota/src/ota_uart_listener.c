@@ -34,7 +34,7 @@
  *
  *        Producer / consumer split with firmware_upgrade_task is preserved:
  *        the Ymodem user-handler queues each FILE_DATA ctx pointer into
- *        Queue_AppDataBuffer so W25Q64 writes happen in parallel with
+ *        g_otaDataQueue so W25Q64 writes happen in parallel with
  *        DMA reception.
  *
  *        The transport adapter (01_APP/Service_Adapters/uart1_ota_transport.c)

@@ -31,8 +31,11 @@
 //******************************** Includes *********************************//
 #include <stdint.h>
 
-#include "stm32f4xx_hal.h"           /* HAL_Delay + NVIC_SystemReset only —
+#include "stm32f4xx_hal.h"           /* NVIC_SystemReset only —
                                         will move to MCU_Core_Reset later */
+
+#include "osal_wrapper_adapter.h"
+#include "os_freertos.h"
 
 #include "ota_transport.h"
 #include "firmware_upgrade.h"
@@ -126,7 +129,13 @@ ota_transport_status_t ota_transport_tx_byte(uint8_t b)
 * */
 void firmware_upgrade_signal_apply(void)
 {
-    HAL_Delay(50U);
+    /**
+    * Yield (not busy-wait) for ~50 ms so any in-flight RTT logs and the
+    * final ACK byte on UART1 can drain before the core resets. Lower-
+    * priority background tasks may also run during this window — that's
+    * fine, we're about to reset anyway.
+    **/
+    osal_task_delay(OS_MS_TO_TICKS(50));
     NVIC_SystemReset();
 }
 //******************************* Functions *********************************//

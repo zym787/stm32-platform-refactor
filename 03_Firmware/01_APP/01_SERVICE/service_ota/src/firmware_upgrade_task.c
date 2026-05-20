@@ -17,8 +17,8 @@
  *        HAL, no MCU peripheral, no W25Q64 awareness.
  *
  *        Owns two OSAL objects that bridge to the Ymodem producer:
- *          Queue_AppDataBuffer     — Ymodem_RxContext_t * per packet
- *          Semaphore_ExtFlashState — back-pressure ack to Ymodem
+ *          g_otaDataQueue     — Ymodem_RxContext_t * per packet
+ *          g_extFlashAckSem — back-pressure ack to Ymodem
  *
  *        The third OSAL object the previous version owned
  *        (Q_YmodemReclength) is now internal to the transport adapter,
@@ -33,6 +33,7 @@
 
 //******************************** Includes *********************************//
 #include <string.h>
+#include <stdbool.h>
 
 #include "osal_wrapper_adapter.h"
 #include "osal_error.h"
@@ -69,13 +70,13 @@
  *        (byte sema, frame-length queue) live in the transport adapter
  *        in 01_APP/Service_Adapters/.
  */
-osal_queue_handle_t Queue_AppDataBuffer     = NULL;
-osal_sema_handle_t  Semaphore_ExtFlashState = NULL;
+osal_queue_handle_t g_otaDataQueue     = NULL;
+osal_sema_handle_t  g_extFlashAckSem = NULL;
 
 /* Sector-aligned write coalescer. Owned by firmware_upgrade_task; flushed
    by firmware_upgrade_flush_staged() at session end. BSS-allocated to keep
    the task stack small. Single-producer access (this task processes
-   Queue_AppDataBuffer serially; the flush call from ota_service_task only
+   g_otaDataQueue serially; the flush call from ota_service_task only
    runs AFTER Ymodem_Receive returns, by which point this task has parked
    on the queue) so no mutex is needed. */
 static uint8_t   s_sector_buf[UPGRADE_SECTOR_BUF_SIZE];
@@ -83,22 +84,30 @@ static uint32_t  s_sector_buf_used   = 0U;
 static uint32_t  s_session_bytes_out = 0U;
 /* OTA-partition write cursor; advances per flushed sector. File-scope so
    firmware_upgrade_flush_staged() (called from ota_service_task) can
-   reach it after firmware_upgrade_task has parked on Queue_AppDataBuffer. */
+   reach it after firmware_upgrade_task has parked on g_otaDataQueue. */
 static uint32_t  s_ota_write_offset  = 0U;
+/* Sticky "this session is poisoned" flag — flipped on the first
+   ota_storage_write failure. Once set, firmware_upgrade_flush_staged()
+   returns -1 immediately so ota_run_ymodem_session() bails out before
+   stamping the ota_flag. Cleared on FILE_INFO at the start of the next
+   session. Without this, a write failure mid-stream would leave a 4 KB
+   gap in the staged image but the bytes-out counter would still match
+   the declared image size — bootloader would decrypt a corrupted blob. */
+static bool      s_session_poisoned   = false;
 //******************************* Variables *********************************//
 
 //******************************* Functions *********************************//
 /**
-* @brief Create the service-owned OS resources (Queue_AppDataBuffer +
-*        Semaphore_ExtFlashState). Adapter-owned resources (byte sema,
+* @brief Create the service-owned OS resources (g_otaDataQueue +
+*        g_extFlashAckSem). Adapter-owned resources (byte sema,
 *        frame queue) are created by ota_transport_init separately.
 *        Idempotent.
 * */
 static int8_t firmware_upgrade_resources_init(void)
 {
-    if (NULL == Queue_AppDataBuffer)
+    if (NULL == g_otaDataQueue)
     {
-        if (OSAL_SUCCESS != osal_queue_create(&Queue_AppDataBuffer,
+        if (OSAL_SUCCESS != osal_queue_create(&g_otaDataQueue,
                                               UPGRADE_QUEUE_DATA_DEPTH,
                                               sizeof(Ymodem_RxContext_t *)))
         {
@@ -106,13 +115,13 @@ static int8_t firmware_upgrade_resources_init(void)
         }
     }
 
-    if (NULL == Semaphore_ExtFlashState)
+    if (NULL == g_extFlashAckSem)
     {
         /**
         * Binary semaphore, starts EMPTY: Ymodem's first packet must wait
         * for consumer to ack before reusing the double-buffer.
         **/
-        if (OSAL_SUCCESS != osal_sema_init(&Semaphore_ExtFlashState, 0))
+        if (OSAL_SUCCESS != osal_sema_init(&g_extFlashAckSem, 0))
         {
             return -1;
         }
@@ -174,6 +183,13 @@ int8_t firmware_upgrade_service_init(void)
 
 int32_t firmware_upgrade_flush_staged(void)
 {
+    if (s_session_poisoned)
+    {
+        /* A prior ota_storage_write failed; refuse to seal the session so
+           ota_run_ymodem_session sees the error and skips the ota_flag write. */
+        return -1;
+    }
+
     if (0U == s_sector_buf_used)
     {
         /* Already aligned — nothing left to flush. */
@@ -217,7 +233,7 @@ int32_t firmware_upgrade_flush_staged(void)
 /**
 * @brief Consumer of Ymodem_RxContext_t pointers — writes each FILE_DATA
 *        payload to the abstract OTA storage and unblocks the Ymodem
-*        producer via Semaphore_ExtFlashState. FILE_INFO ctx skips the
+*        producer via g_extFlashAckSem. FILE_INFO ctx skips the
 *        write but still acks so Ymodem can flip buffers.
 * */
 void firmware_upgrade_task(void *argument)
@@ -230,7 +246,7 @@ void firmware_upgrade_task(void *argument)
     {
         Ymodem_RxContext_t *ctx = NULL;
 
-        if (OSAL_SUCCESS != osal_queue_receive(Queue_AppDataBuffer, &ctx,
+        if (OSAL_SUCCESS != osal_queue_receive(g_otaDataQueue, &ctx,
                                                 OSAL_MAX_DELAY))
         {
             continue;
@@ -251,6 +267,7 @@ void firmware_upgrade_task(void *argument)
             s_ota_write_offset  = 0U;
             s_sector_buf_used   = 0U;
             s_session_bytes_out = 0U;
+            s_session_poisoned  = false;
             DEBUG_OUT(i, YMODEM_FILE_LOG_TAG,
                       "OTA session start, declared size=%d B",
                       (int)ctx->size);
@@ -291,17 +308,25 @@ void firmware_upgrade_task(void *argument)
                         UPGRADE_SECTOR_BUF_SIZE);
                     if (OTA_STORAGE_OK != st)
                     {
+                        /**
+                        * Poison the session. We keep consuming and acking
+                        * incoming packets (so Ymodem can drain cleanly and
+                        * the link doesn't time out), but bytes_out stays
+                        * frozen and flush_staged will refuse to seal at
+                        * the end. ota_run_ymodem_session sees the failure
+                        * and does not write the ota_flag.
+                        **/
                         DEBUG_OUT(e, YMODEM_DATA_LOG_TAG,
-                                  "OTA storage write failed at offset=%lu",
+                                  "OTA storage write failed at offset=%lu — session poisoned",
                                   (unsigned long)s_ota_write_offset);
-                    }
-                    else
-                    {
-                        s_session_bytes_out += UPGRADE_SECTOR_BUF_SIZE;
+                        s_session_poisoned = true;
+                        s_sector_buf_used  = 0U;
+                        break;
                     }
 
-                    s_ota_write_offset += UPGRADE_SECTOR_BUF_SIZE;
-                    s_sector_buf_used   = 0U;
+                    s_session_bytes_out += UPGRADE_SECTOR_BUF_SIZE;
+                    s_ota_write_offset  += UPGRADE_SECTOR_BUF_SIZE;
+                    s_sector_buf_used    = 0U;
                 }
             }
         }
@@ -312,7 +337,7 @@ void firmware_upgrade_task(void *argument)
         * the bootloader will reject the image on the next boot if the
         * size or CRC doesn't match what was written.
         **/
-        (void)osal_sema_give(Semaphore_ExtFlashState);
+        (void)osal_sema_give(g_extFlashAckSem);
     }
 }
 //******************************* Functions *********************************//

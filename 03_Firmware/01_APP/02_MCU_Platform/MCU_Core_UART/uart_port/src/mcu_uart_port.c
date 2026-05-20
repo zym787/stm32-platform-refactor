@@ -44,6 +44,16 @@
 
 //******************************** Defines **********************************//
 #define MCU_UART_FRAME_QUEUE_DEPTH   (4U)
+
+/**
+ * @brief Cap on mcu_uart_recv_byte_arm retry loop. 20 × 5 ms = 100 ms,
+ *        which is far longer than any legitimate DMA release window
+ *        (~2 ms worst case in the OTA flow). If we don't get back to
+ *        IDLE inside this budget the underlying HAL state machine is
+ *        wedged — return BUSY so the caller can log + recover instead
+ *        of silently spinning forever.
+ */
+#define MCU_UART_BYTE_ARM_RETRY_MAX  (20U)
 //******************************** Defines **********************************//
 
 //******************************* Variables *********************************//
@@ -63,16 +73,24 @@ static mcu_uart_state_t s_state[MCU_UART_COUNT];
 * @brief Look up the per-UART state row that owns the given HAL handle.
 *        Returns NULL if the handle has not been bound by
 *        mcu_uart_port_init.
+*
+*        Dispatch by USART instance (not a loop over the state table)
+*        because this runs in ISR context — switch lets the compiler
+*        emit a direct compare-and-branch instead of a sequential walk.
+*        When you add a new UART to mcu_uart_id_t, add a case here in
+*        lockstep.
 * */
 static mcu_uart_state_t *state_for_handle(UART_HandleTypeDef *huart)
 {
-    for (int i = 0; i < (int)MCU_UART_COUNT; i++)
+    if (NULL == huart)
     {
-        if (s_state[i].hal_handle == huart)
-        {
-            return &s_state[i];
-        }
+        return NULL;
     }
+    if (USART1 == huart->Instance)
+    {
+        return &s_state[MCU_UART_1];
+    }
+    /* add USART2 / USART6 / etc here when CubeMX enables them */
     return NULL;
 }
 
@@ -123,19 +141,25 @@ mcu_uart_status_t mcu_uart_recv_byte_arm(mcu_uart_id_t id)
     {
         return MCU_UART_INVALID;
     }
-    while (HAL_UART_Receive_IT(s_state[id].hal_handle,
-                                (uint8_t *)&s_state[id].byte_buf, 1U)
-           != HAL_OK)
+    /**
+    * HAL returns BUSY if a previous RX is still active or the peripheral
+    * hasn't drained from a Ymodem abort. Yield briefly and retry — never
+    * spin-poll. ~5 ms gives the previous owner (frame-mode DMA) time to
+    * release the bus. Capped at MCU_UART_BYTE_ARM_RETRY_MAX so a wedged
+    * HAL state machine surfaces as MCU_UART_BUSY instead of an infinite
+    * loop.
+    **/
+    for (uint32_t retry = 0U; retry < MCU_UART_BYTE_ARM_RETRY_MAX; retry++)
     {
-        /**
-        * HAL returns BUSY if a previous RX is still active or the
-        * peripheral hasn't drained from a Ymodem abort. Yield briefly
-        * and retry — never spin-poll. ~5 ms gives the previous owner
-        * (frame-mode DMA) time to release the bus.
-        **/
+        if (HAL_OK == HAL_UART_Receive_IT(s_state[id].hal_handle,
+                                          (uint8_t *)&s_state[id].byte_buf,
+                                          1U))
+        {
+            return MCU_UART_OK;
+        }
         osal_task_delay(OS_MS_TO_TICKS(5));
     }
-    return MCU_UART_OK;
+    return MCU_UART_BUSY;
 }
 
 mcu_uart_status_t mcu_uart_recv_byte_wait(mcu_uart_id_t id,
@@ -212,8 +236,15 @@ int mcu_uart_recv_frame_is_armed(mcu_uart_id_t id)
     {
         return 0;
     }
-    return (s_state[id].hal_handle->RxState == HAL_UART_STATE_BUSY_RX)
-            ? 1 : 0;
+    /**
+    * RxState is written by HAL inside HAL_UART_IRQHandler. Use a volatile
+    * read to prevent the compiler from caching the value across the call
+    * boundary — otherwise a tight ota_service_task loop could see a stale
+    * BUSY_RX after the ISR has already moved the state to READY.
+    **/
+    HAL_UART_StateTypeDef rx =
+        *(volatile HAL_UART_StateTypeDef *)&s_state[id].hal_handle->RxState;
+    return (HAL_UART_STATE_BUSY_RX == rx) ? 1 : 0;
 }
 
 mcu_uart_status_t mcu_uart_recv_frame_abort(mcu_uart_id_t id)

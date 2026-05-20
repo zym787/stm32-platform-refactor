@@ -24,12 +24,12 @@
  *          │   current_app_size} on success, then NVIC_SystemReset on    │
  *          │   apply magic.                                              │
  *          └──┬──────────────────────────────────────────────────────────┘
- *             │ Queue_AppDataBuffer (Ymodem_RxContext_t *)
+ *             │ g_otaDataQueue (Ymodem_RxContext_t *)
  *             ▼
  *          ┌──┴──────────────────────────────────────────────────────────┐
  *          │ firmware_upgrade_task                                       │
  *          │   consumes ctx, writes payload to W25Q64 OTA partition      │
- *          │   gives Semaphore_ExtFlashState so Ymodem can swap buffers  │
+ *          │   gives g_extFlashAckSem so Ymodem can swap buffers         │
  *          └─────────────────────────────────────────────────────────────┘
  *
  *        UART1 RX is owned by ota_service_task — see
@@ -46,10 +46,31 @@
 
 //******************************** Includes *********************************//
 #include <stdint.h>
+
+#include "osal_wrapper_adapter.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
 //******************************** Defines **********************************//
+
+//******************************* Variables *********************************//
+/**
+ * @brief OSAL handles shared between the Ymodem producer and
+ *        firmware_upgrade_task (consumer). Defined in firmware_upgrade_task.c,
+ *        created by firmware_upgrade_service_init.
+ *
+ *        g_otaDataQueue   : Ymodem_RxContext_t * per FILE_INFO / FILE_DATA
+ *                           packet — Ymodem hands ownership of the current
+ *                           ping-pong buffer to the consumer.
+ *        g_extFlashAckSem : binary back-pressure ack — consumer signals
+ *                           "buffer free for reuse" so Ymodem can swap.
+ *
+ *        Declared here (not at file scope in ymodem.c) so the linkage is
+ *        discoverable by grep and the symbols cannot drift apart.
+ */
+extern osal_queue_handle_t g_otaDataQueue;
+extern osal_sema_handle_t  g_extFlashAckSem;
+//******************************* Variables *********************************//
 
 //******************************* Functions *********************************//
 /**
