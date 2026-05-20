@@ -94,22 +94,22 @@ Core/Src/i2c.c \
 Core/Src/iic_hal.c \
 Core/Src/spi_hal.c \
 Core/Src/spi.c \
-02_OS_Platform/OS_Implementation/src/os_impl_heap.c \
-02_OS_Platform/OS_Implementation/src/os_impl_mutex.c \
-02_OS_Platform/OS_Implementation/src/os_impl_queue.c \
-02_OS_Platform/OS_Implementation/src/os_impl_sema.c \
-02_OS_Platform/OS_Implementation/src/os_impl_task.c \
-02_OS_Platform/OS_Implementation/src/os_impl_timer.c \
-02_OS_Platform/OS_Implementation/src/os_impl_event_group.c \
-02_OS_Platform/OS_Implementation/src/os_impl_notify.c \
-02_OS_Platform/OS_Wrapper/src/osal_heap.c \
-02_OS_Platform/OS_Wrapper/src/osal_mutex.c \
-02_OS_Platform/OS_Wrapper/src/osal_notify.c \
-02_OS_Platform/OS_Wrapper/src/osal_queue.c \
-02_OS_Platform/OS_Wrapper/src/osal_sema.c \
-02_OS_Platform/OS_Wrapper/src/osal_task.c \
-02_OS_Platform/OS_Wrapper/src/osal_timer.c \
-02_OS_Platform/OS_Wrapper/src/osal_event_group.c \
+04_Impl/impl_os/src/os_impl_heap.c \
+04_Impl/impl_os/src/os_impl_mutex.c \
+04_Impl/impl_os/src/os_impl_queue.c \
+04_Impl/impl_os/src/os_impl_sema.c \
+04_Impl/impl_os/src/os_impl_task.c \
+04_Impl/impl_os/src/os_impl_timer.c \
+04_Impl/impl_os/src/os_impl_event_group.c \
+04_Impl/impl_os/src/os_impl_notify.c \
+03_Platform/platform_os/OS_Wrapper/src/osal_heap.c \
+03_Platform/platform_os/OS_Wrapper/src/osal_mutex.c \
+03_Platform/platform_os/OS_Wrapper/src/osal_notify.c \
+03_Platform/platform_os/OS_Wrapper/src/osal_queue.c \
+03_Platform/platform_os/OS_Wrapper/src/osal_sema.c \
+03_Platform/platform_os/OS_Wrapper/src/osal_task.c \
+03_Platform/platform_os/OS_Wrapper/src/osal_timer.c \
+03_Platform/platform_os/OS_Wrapper/src/osal_event_group.c \
 04_Debug_Tool/Systemview/src/SEGGER_RTT.c \
 04_Debug_Tool/Systemview/src/SEGGER_RTT_printf.c \
 04_Debug_Tool/Systemview/src/SEGGER_SYSVIEW.c \
@@ -327,15 +327,15 @@ C_DEFS =  \
 # include paths
 #######################################
 
-# 02_Common_Platform — unified types & error vocabulary
+# 03_Platform/platform_common — unified types & error vocabulary
 C_INCLUDES_COMMON = \
--I02_Common_Platform/inc
+-I03_Platform/platform_common/inc
 
-# 02_OS_Platform — OSAL
+# OS Platform — OSAL (interface in 03_Platform, FreeRTOS impl in 04_Impl)
 C_INCLUDES_OSAL = \
--I02_OS_Platform/OSAL_Common/inc \
--I02_OS_Platform/OS_Implementation/inc \
--I02_OS_Platform/OS_Wrapper/inc
+-I03_Platform/platform_os/OSAL_Common/inc \
+-I04_Impl/impl_os/inc \
+-I03_Platform/platform_os/OS_Wrapper/inc
 
 # 02_MCU_Platform
 C_INCLUDES_MCU = \
