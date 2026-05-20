@@ -129,13 +129,13 @@ Core/Src/spi.c \
 02_Middleware_Platform/LetterShell/src/shell_port.c \
 02_Middleware_Platform/LetterShell/src/shell.c \
 02_BSP_Platform/Bsp_Drivers/wt588f02/handler/src/linklist.c \
-02_MCU_Platform/MCU_Core_IIC/i2c_port/src/i2c_port.c \
-02_MCU_Platform/MCU_Core_SPI/spi_port/src/spi_port.c \
-02_MCU_Platform/MCU_Core_GPIO/src/gpio_port.c \
-02_MCU_Platform/MCU_Core_Systick/src/systick_port.c \
-02_MCU_Platform/MCU_Core_DWT/src/dwt_port.c \
-02_MCU_Platform/MCU_Core_Watchdog/src/watchdog_port.c \
-02_MCU_Platform/MCU_Core_IFlash/src/iflash_port.c \
+04_Impl/impl_mcu/MCU_Core_IIC/src/i2c_port.c \
+04_Impl/impl_mcu/MCU_Core_SPI/src/spi_port.c \
+04_Impl/impl_mcu/MCU_Core_GPIO/src/gpio_port.c \
+04_Impl/impl_mcu/MCU_Core_Systick/src/systick_port.c \
+04_Impl/impl_mcu/MCU_Core_DWT/src/dwt_port.c \
+04_Impl/impl_mcu/MCU_Core_Watchdog/src/watchdog_port.c \
+04_Impl/impl_mcu/MCU_Core_IFlash/src/iflash_port.c \
 02_BSP_Platform/Bsp_Drivers/aht21/driver/src/bsp_aht21_driver.c \
 02_BSP_Platform/Bsp_Drivers/aht21/handler/src/bsp_temp_humi_xxx_handler.c \
 02_BSP_Platform/Bsp_Drivers/mpu6050/driver/src/bsp_mpuxxxx_driver.c \
@@ -215,7 +215,7 @@ Core/Src/spi.c \
 01_SERVICE/service_ota/src/ota_uart_listener.c \
 01_SERVICE/service_ota/adapters/uart1_ota_transport.c \
 01_SERVICE/service_ota/adapters/w25q64_ota_storage.c \
-02_MCU_Platform/MCU_Core_UART/uart_port/src/mcu_uart_port.c \
+04_Impl/impl_mcu/MCU_Core_UART/src/mcu_uart_port.c \
 01_APP/User_Sensor/em7028/src/em7028_mock_test_task.c \
 01_APP/User_Sensor/em7028/src/em7028_handler_mock_test_task.c \
 01_APP/User_Sensor/em7028/src/em7028_iic_hal_test_task.c \
@@ -337,16 +337,16 @@ C_INCLUDES_OSAL = \
 -I04_Impl/impl_os/inc \
 -I03_Platform/platform_os/OS_Wrapper/inc
 
-# 02_MCU_Platform
+# MCU Platform — port headers in 03_Platform, HAL implementations in 04_Impl
 C_INCLUDES_MCU = \
--I02_MCU_Platform/MCU_Core_IIC/i2c_port/inc \
--I02_MCU_Platform/MCU_Core_SPI/spi_port/inc \
--I02_MCU_Platform/MCU_Core_UART/uart_port/inc \
--I02_MCU_Platform/MCU_Core_GPIO/inc \
--I02_MCU_Platform/MCU_Core_Systick/inc \
--I02_MCU_Platform/MCU_Core_DWT/inc \
--I02_MCU_Platform/MCU_Core_Watchdog/inc \
--I02_MCU_Platform/MCU_Core_IFlash/inc
+-I03_Platform/platform_mcu/MCU_Core_IIC/inc \
+-I03_Platform/platform_mcu/MCU_Core_SPI/inc \
+-I03_Platform/platform_mcu/MCU_Core_UART/inc \
+-I03_Platform/platform_mcu/MCU_Core_GPIO/inc \
+-I03_Platform/platform_mcu/MCU_Core_Systick/inc \
+-I03_Platform/platform_mcu/MCU_Core_DWT/inc \
+-I03_Platform/platform_mcu/MCU_Core_Watchdog/inc \
+-I03_Platform/platform_mcu/MCU_Core_IFlash/inc
 
 # 02_Middleware_Platform
 C_INCLUDES_MW = \
