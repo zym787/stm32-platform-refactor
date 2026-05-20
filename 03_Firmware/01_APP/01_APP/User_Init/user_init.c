@@ -23,7 +23,7 @@
 
 #include "user_task_reso_config.h"
 #include "user_init.h"
-#include "user_externflash_manage.h"
+#include "service_storage_facade.h"
 #include "firmware_upgrade.h"
 #include "Debug.h"
 

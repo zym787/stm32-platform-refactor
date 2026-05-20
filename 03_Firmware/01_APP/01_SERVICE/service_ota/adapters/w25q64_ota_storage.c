@@ -3,7 +3,7 @@
  *
  * @par dependencies
  * - ota_storage.h
- * - user_externflash_manage.h (service_storage façade)
+ * - service_storage_facade.h (service_storage façade)
  *
  * @author Ethan-Hang
  *
@@ -25,7 +25,7 @@
 //******************************** Includes *********************************//
 #include <stdint.h>
 
-#include "user_externflash_manage.h"
+#include "service_storage_facade.h"
 
 #include "ota_storage.h"
 //******************************** Includes *********************************//

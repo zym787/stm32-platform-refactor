@@ -48,6 +48,14 @@
 #include "Debug.h"
 //******************************** Includes *********************************//
 
+/**
+ * Whole-file gate. Default OFF — the task is never registered. Flip
+ * USER_TASK_CST816T_HAL_TEST to 1 in user_task_reso_config.h to compile
+ * the body. Note: this file also installs an EXTI2 ISR hook through
+ * user_isr_handlers, so when the gate is OFF that hook stays unbound.
+ */
+#if USER_TASK_CST816T_HAL_TEST
+
 //******************************** Defines **********************************//
 #define CST816T_HAL_BOOT_WAIT_MS         1500u
 #define CST816T_HAL_POLL_INTERVAL_MS      200u
@@ -436,4 +444,5 @@ void cst816t_hal_test_task(void *argument)
         }
     }
 }
+#endif /* USER_TASK_CST816T_HAL_TEST */
 //******************************* Functions *********************************//

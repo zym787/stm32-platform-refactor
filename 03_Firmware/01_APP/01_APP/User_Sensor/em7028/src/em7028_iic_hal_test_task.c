@@ -52,6 +52,15 @@
 #include "Debug.h"
 //******************************** Includes *********************************//
 
+/**
+ * Whole-file gate. Default OFF — production builds run the production
+ * em7028_heart_rate_task instead. Flip USER_TASK_EM7028_IIC_HAL_TEST to 1
+ * in user_task_reso_config.h to compile this smoke-test path; note the
+ * frame queue is single-consumer so only one of {IIC_HAL_TEST,
+ * JSCOPE_CAPTURE, HEART_RATE} can be enabled at a time.
+ */
+#if USER_TASK_EM7028_IIC_HAL_TEST
+
 //******************************** Defines **********************************//
 /** Wait for em7028_handler_thread to finish bsp_em7028_handler_inst. The
  *  inst auto-runs the driver's pf_init which itself spends ~12 ms on boot
@@ -433,4 +442,5 @@ void em7028_iic_hal_test_task(void *argument)
     }
 }
 
+#endif /* USER_TASK_EM7028_IIC_HAL_TEST */
 //******************************* Functions *********************************//

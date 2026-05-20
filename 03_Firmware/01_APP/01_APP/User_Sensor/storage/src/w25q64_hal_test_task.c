@@ -52,6 +52,15 @@
 #include "Debug.h"
 //******************************** Includes *********************************//
 
+/**
+ * Whole-file gate. Production builds default to OFF — the task is never
+ * created (g_user_task_cfg[] entry is also gated by the same macro) and
+ * the __WEAK__ stub in user_task_reso_config.c picks up the symbol.
+ * Flip USER_TASK_W25Q64_HAL_TEST to 1 in user_task_reso_config.h to
+ * bring up real hardware.
+ */
+#if USER_TASK_W25Q64_HAL_TEST
+
 //******************************** Defines **********************************//
 /** Wait for flash_handler_thread to finish bsp_w25q64_handler_inst(). */
 #define W25Q64_HAL_BOOT_WAIT_MS         500U
@@ -482,4 +491,5 @@ void w25q64_hal_test_task(void *argument)
     }
 }
 
+#endif /* USER_TASK_W25Q64_HAL_TEST */
 //******************************* Functions *********************************//

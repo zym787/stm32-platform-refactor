@@ -1,5 +1,5 @@
 /******************************************************************************
- * @file user_externflash_manage.h
+ * @file service_storage_facade.h
  *
  * @par dependencies
  * - osal_common_types.h

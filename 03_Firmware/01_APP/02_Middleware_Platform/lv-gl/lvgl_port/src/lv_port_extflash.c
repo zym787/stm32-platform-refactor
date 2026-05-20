@@ -3,7 +3,7 @@
  *
  * @par dependencies
  * - lv_port_extflash.h
- * - user_externflash_manage.h
+ * - service_storage_facade.h
  * - lvgl.h
  *
  * @author Ethan-Hang
@@ -32,7 +32,7 @@
 //******************************** Includes *********************************//
 #include "lv_port_extflash.h"
 
-#include "user_externflash_manage.h"
+#include "service_storage_facade.h"
 #include "Debug.h"
 
 #include "lvgl.h"

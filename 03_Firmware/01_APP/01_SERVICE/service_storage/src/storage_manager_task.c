@@ -2,7 +2,7 @@
  * @file storage_manager_task.c
  *
  * @par dependencies
- * - user_externflash_manage.h
+ * - service_storage_facade.h
  * - bsp_wrapper_externflash.h
  * - osal_event_group.h / osal_sema.h / osal_mutex.h
  *
@@ -34,7 +34,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include "user_externflash_manage.h"
+#include "service_storage_facade.h"
 
 #include "bsp_wrapper_externflash.h"
 #include "osal_event_group.h"

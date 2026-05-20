@@ -47,6 +47,14 @@
 #include "Debug.h"
 //******************************** Includes *********************************//
 
+/**
+ * Whole-file gate. Default OFF — the task is never registered. Flip
+ * USER_TASK_ST7789_HAL_TEST to 1 in user_task_reso_config.h to compile
+ * the body (no g_user_task_cfg[] entry exists; this file is invoked
+ * from manual experimentation only).
+ */
+#if USER_TASK_ST7789_HAL_TEST
+
 //******************************** Defines **********************************//
 #define ST7789_HAL_PANEL_WIDTH       240U
 #define ST7789_HAL_PANEL_HEIGHT      320U
@@ -400,4 +408,5 @@ void st7789_hal_test_task(void *argument)
     }
 }
 
+#endif /* USER_TASK_ST7789_HAL_TEST */
 //******************************* Functions *********************************//

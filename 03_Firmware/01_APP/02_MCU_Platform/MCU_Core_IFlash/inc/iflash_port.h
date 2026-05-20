@@ -24,6 +24,16 @@
  *        file; sector identifiers and word size are reasonable lowest common
  *        denominator across STM32 / NXP / Renesas embedded Flash.
  *
+ * @par BATCH USAGE NOTE
+ *        Each call masks IRQs for ~1 s and SysTick stops advancing for the
+ *        same window — FreeRTOS tick effectively pauses, software timers
+ *        drift, osal_task_delay durations stretch. Single-shot use (current
+ *        ota_flag write path: one sector at a time) is fine; back-to-back
+ *        erases compound the tick loss. If you ever add a multi-sector
+ *        operation (e.g. KVS / FlashDB), call this once per sector with at
+ *        least one osal_task_delay(0) between calls so the scheduler can
+ *        resync the tick base and the IWDG feeder can run.
+ *
  * @version V1.0 2026-05-17
  *
  * @note 1 tab == 4 spaces!

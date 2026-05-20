@@ -131,7 +131,7 @@ RTT Terminal 分组（`DEBUG_RTT_CH_*`）：
 
 #### SEGGER SystemView
 
-实时 OS 追踪，通过 RTT 传输。8KB SRAM 专用于 RTT buffer（链接脚本中 `RTT_RAM` 区域，地址 `0x2001E000`）。
+实时 OS 追踪，通过 RTT 传输。16 KB SRAM 专用于 RTT buffer（链接脚本中 `RTT_RAM` 区域，地址 `0x2001C000`，与 Bootloader 共址）。
 
 ## 调试工作流
 
@@ -150,7 +150,7 @@ RTT Terminal 分组（`DEBUG_RTT_CH_*`）：
 - **MCU**：STM32F411xE — Cortex-M4F，512KB FLASH，128KB SRAM
 - **RTOS**：FreeRTOS v10.3.1，heap_4，60KB 堆，1 kHz tick，CMSIS-RTOS V2 API 可用
 - **FPU**：单精度硬浮点（`-mfpu=fpv4-sp-d16 -mfloat-abi=hard`）
-- **链接脚本**：`STM32F411XX_FLASH.ld` — 120KB 用户 RAM + 8KB RTT RAM
+- **链接脚本**：`STM32F411XX_FLASH.ld` — 112 KB 用户 RAM (`RAM`, `0x20000000`) + 16 KB RTT RAM (`RTT_RAM`, `0x2001C000`)
 
 ### 关键引脚分配（`Core/Inc/main.h`）
 
@@ -197,7 +197,7 @@ W25Q64 物理        LVGL local      内容
 01_APP/User_Sensor/storage/
 ├── storage_manager_task.c       ← BSP async API 包成阻塞 Read/Write_LvglData
 ├── storage_assets.c             ← _ext lv_img_dsc_t 描述符 + bootstrap
-└── inc/user_externflash_manage.h
+└── inc/service_storage_facade.h
 
 02_Middleware_Platform/lv-gl/lvgl_port/
 └── lv_port_extflash.c           ← 自定义 LVGL decoder，行级 streaming biaopan1

@@ -70,6 +70,13 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 /* USART1_IRQHandler moved to 02_MCU_Platform/MCU_Core_UART/uart_port/src/
    mcu_uart_port.c — vector handlers for managed peripherals live in their
    MCU port. HAL_UART_RxCpltCallback / HAL_UARTEx_RxEventCallback moved
-   there too, so all USART1 ISR machinery is in one place. */
+   there too, so all USART1 ISR machinery is in one place.
+
+   TODO(v5): mirror the same move for I2C — HAL_I2C_MemRxCpltCallback +
+   HAL_GPIO_EXTI_Callback dispatch above should live in MCU_Core_IIC and
+   a dedicated MCU_Core_GPIO port respectively, with per-bus / per-pin
+   state tables exposing a clean register-callback API. Once done, this
+   file can drop its `i2c.h` include and become purely "APP-owned sensor
+   ISR fan-out" — no more CubeMX handle peek. */
 
 //******************************* Functions *********************************//

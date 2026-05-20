@@ -84,6 +84,8 @@
 #define USER_TASK_WT588_TEST            0
 #define USER_TASK_W25Q64_MOCK           0
 #define USER_TASK_W25Q64_HAL_TEST       0
+#define USER_TASK_ST7789_HAL_TEST       0
+#define USER_TASK_CST816T_HAL_TEST      0
 #define USER_TASK_EM7028_HAL_TEST       0
 /* IIC_HAL_TEST, JSCOPE_CAPTURE, and HEART_RATE all consume the handler
  * frame queue (single-consumer queue) -- enable at most one at a time. */

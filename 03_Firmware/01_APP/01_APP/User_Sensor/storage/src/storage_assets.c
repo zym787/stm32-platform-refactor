@@ -2,7 +2,7 @@
  * @file storage_assets.c
  *
  * @par dependencies
- * - user_externflash_manage.h
+ * - service_storage_facade.h
  * - cfg_storage.h
  * - lvgl.h
  *
@@ -34,7 +34,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include "user_externflash_manage.h"
+#include "service_storage_facade.h"
 #include "cfg_storage.h"
 #include "lv_port_extflash.h"
 

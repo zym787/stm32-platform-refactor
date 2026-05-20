@@ -56,7 +56,7 @@
 #include "user_task_reso_config.h"
 #include "bsp_wrapper_display.h"
 #include "bsp_wrapper_touch.h"
-#include "user_externflash_manage.h"
+#include "service_storage_facade.h"
 #include "Debug.h"
 
 #include "lvgl.h"
