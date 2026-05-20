@@ -1,25 +1,25 @@
 /******************************************************************************
- * Copyright (C) 2024 EternalChip, Inc.(Gmbh) or its affiliates.
- * 
+ *
+ *
  * All Rights Reserved.
- * 
+ *
  * @file W25Q_Handler.h
- * 
- * @par dependencies 
+ *
+ * @par dependencies
  * - W25Q_Handler.h
- * 
- * @author Jack | R&D Dept. | EternalChip 立芯嵌入式
- * 
+ *
+ * @author  Ethan-Hang |   |
+ *
  * @brief Functions related to reading and writing in the chip's flash area.
- * 
+ *
  * Processing flow:
- * 
+ *
  * call directly.
- * 
+ *
  * @version V1.0 2024-09-13
  *
  * @note 1 tab == 4 spaces!
- * 
+ *
  *****************************************************************************/
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __W25Q_HANDLER_H
@@ -33,28 +33,28 @@
 一个扇区 = 16个Pag = 4096 byte
 一个块 = 16个扇区 = 64KB
 */
-typedef struct 
+typedef struct
 {
-    u8  databuf[4096];           //按找4096个数据进行读写设置
+    u8 databuf[4096]; // 按找4096个数据进行读写设置
     u16 write_databuf_index;
     u32 write_index;
-    u8  write_sector_index;      //4096
+    u8 write_sector_index; // 4096
     u32 read_index;
-    u8  read_sector_index;
-}st_W25Q_Handler;
+    u8 read_sector_index;
+} st_W25Q_Handler;
 
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 #define EXTERN_Flash
 
-#define BLOCK_1         0
-#define BLOCK_2         1
+#define BLOCK_1 0
+#define BLOCK_2 1
 /* Reserve 512KB per OTA slot to fit the 464KB APP image (plus AES padding).
    Two slots × 512KB = 1MB matches MEMORY_OTA_START_ADDRESS..MEMORY_OTA_END_ADDRESS
    in 01_APP/User_Sensor/storage/inc/user_externflash_manage.h (0x000000..0x0FFFFF). */
-#define BLOCK_SIZE      0x80000UL
+#define BLOCK_SIZE 0x80000UL
 /* Exported functions ------------------------------------------------------- */
-void SetBlockParmeter(u8 block_index,uint32_t app_size);
+void SetBlockParmeter(u8 block_index, uint32_t app_size);
 uint32_t Read_BlockSize(u8 block_index);
 void W25Q64_Init(void);
 u8 W25Q64_EraseChip(void);

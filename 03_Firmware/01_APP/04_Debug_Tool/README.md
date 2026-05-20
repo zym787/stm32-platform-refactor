@@ -1,16 +1,51 @@
-# 调试工具与测试模块 Debug Tool
+# 04_Debug_Tool — 调试 / 日志 / 追踪
 
-## 📌 模块定位
-用于辅助调试与测试的代码模块，包括日志、断言、调试命令、在线配置等。
+集中放调试期工具（日志、追踪、保护），统一通过 `DEBUG_OUT(level, tag, fmt, ...)` 宏输出，按 tag 路由到不同物理通道。
 
-## 📁 典型模块
-- Debug_Log
-- Debug_Assert
-- Debug_CLI
-- UnitTestStub
+完整 RTT 通道分配 + 新增 tag 步骤见 [`../CLAUDE.md`](../CLAUDE.md) "调试日志路由"节。
 
-## ✅ 命名规范
-- 模块前缀建议使用 `Dbg_` 或 `Test_`
+## 子模块
 
-## 👥 责任人
-- 调试工具负责人：@XXX
+| 子目录 | 内容 |
+|---|---|
+| `Debug_Log/` | `Debug.h` 定义 `DEBUG_OUT` 宏 + tag 常量；`Debug.c` 实现 tag 过滤 + RTT/ITM 路由；底层走 EasyLogger（[`../02_Middleware_Platform/EasyLogger/`](../02_Middleware_Platform/EasyLogger/)） |
+| `Systemview/` | SEGGER SystemView + RTT 控制块（`SEGGER_RTT.h/.c`）。RTT_RAM 段独立放在 `0x2001C000`，16 KB |
+| `SWO_Trace/` | `itm_trace.h` —— ITM stimulus port 0 输出，给 ITM-only tag 走 `printf` → SWO Viewer / Ozone SWO 终端 |
+| `MPU_Protect/` | `mpu.h` —— MPU region 配置（栈溢出 / 空指针解引用防护） |
+
+## 两路输出共存
+
+```
+DEBUG_OUT(level, tag, ...)
+   │
+   ├── 一般 tag → EasyLogger → SEGGER_RTT_SetTerminal() → RTT 通道 0  → RTT Viewer
+   │                                                       (按 Terminal Tab 分组 0-8)
+   └── ITM-only tag (debug_is_itm_tag()) → printf → __io_putchar() → ITM port 0 → SWO Viewer
+```
+
+RTT Terminal 分组（`DEBUG_RTT_CH_*`）：
+
+| Terminal | 覆盖 tag |
+|---|---|
+| 0 | 默认（未显式路由） |
+| 1 | AHT21 / 温湿度 |
+| 2 | WT588 handler / 测试 |
+| 3 | MPU6050 / 数据解析 |
+| 4 | ST7789 TFT-LCD |
+| 5 | CST816T 触摸 |
+| 6 | W25Q64 SPI NOR |
+| 7 | EM7028 PPG 心率 |
+| 8 | 栈水位监控 |
+
+## 新增 tag
+
+1. `Debug.h` 中定义 `*_LOG_TAG` 常量
+2. 加入 `debug_is_tag_allowed()`（启用输出）
+3. `debug_tag_to_rtt_channel()` 指定 Terminal，**或**加入 `debug_is_itm_tag()` 走 ITM 路径
+
+ITM-only tag 只需 (1) + 加入 `debug_is_itm_tag()`，无需改 `elog_port.c`。
+
+## 注意
+
+- `elog_port_init()` 调 `SEGGER_RTT_Init()` 会无条件重置 `WrOff/RdOff` —— Bootloader 在 `jump_to_app()` 前 `delay_ms(200)` 留给 RTT Viewer 轮询，否则最后一行日志被 APP 抹掉。
+- `_SEGGER_RTT` 控制块固定在 `0x2001C000`，APP 与 Bootloader 共享同一物理地址才能让 RTT Viewer 不切换。

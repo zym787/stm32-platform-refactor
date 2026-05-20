@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (C) 2024 EternalChip, Inc.(Gmbh) or its affiliates.
+ *
  *
  * All Rights Reserved.
  *
@@ -8,7 +8,7 @@
  * @par dependencies
  * - W25Q_Handler.h
  *
- * @author Jack | R&D Dept. | EternalChip
+ * @author  Ethan-Hang |   |
  *
  * @brief Functions related to reading and writing in the chip's flash area.
  *
@@ -48,14 +48,14 @@ static const sfud_flash *W25Q64_GetReadyFlash(void)
 
 void SetBlockParmeter(u8 block_index, uint32_t app_size)
 {
-    const uint32_t subsector_size               = W25QXXXX_SUBSECTOR_SIZE;
+    const uint32_t subsector_size = W25QXXXX_SUBSECTOR_SIZE;
 
     s_ast_W25Q_Handler[block_index].write_index = app_size;
     s_ast_W25Q_Handler[block_index].write_databuf_index =
         (u16)(app_size % subsector_size);
     s_ast_W25Q_Handler[block_index].write_sector_index =
         (u8)(app_size / subsector_size);
-    s_ast_W25Q_Handler[block_index].read_index        = 0;
+    s_ast_W25Q_Handler[block_index].read_index = 0;
     s_ast_W25Q_Handler[block_index].read_sector_index = 0;
 }
 
@@ -73,7 +73,7 @@ void W25Q64_Init(void)
 void Erase_Flash_Block(u8 block_index)
 {
     uint32_t erase_addr = block_index * BLOCK_SIZE;
-    uint32_t erase_end  = erase_addr + BLOCK_SIZE;
+    uint32_t erase_end = erase_addr + BLOCK_SIZE;
 
     while (erase_addr < erase_end)
     {
@@ -92,9 +92,9 @@ u8 W25Q64_EraseChip(void)
 
 u8 W25Q64_WriteData(u8 block_index, u8 *data, u32 length)
 {
-    const uint32_t    subsector_size = W25QXXXX_SUBSECTOR_SIZE;
-    const sfud_flash *flash          = W25Q64_GetReadyFlash();
-    u16               index          = 0;
+    const uint32_t subsector_size = W25QXXXX_SUBSECTOR_SIZE;
+    const sfud_flash *flash = W25Q64_GetReadyFlash();
+    u16 index = 0;
 
     if ((flash == NULL) || (data == NULL) || (length == 0U))
     {
@@ -176,10 +176,10 @@ u8 W25Q64_WriteData_End(u8 block_index)
  */
 u8 W25Q64_ReadData(u8 block_index, u8 *data, u16 *length)
 {
-    const uint32_t    subsector_size = W25QXXXX_SUBSECTOR_SIZE;
-    const sfud_flash *flash          = W25Q64_GetReadyFlash();
-    uint32_t          remain         = 0;
-    uint32_t          read_addr      = 0;
+    const uint32_t subsector_size = W25QXXXX_SUBSECTOR_SIZE;
+    const sfud_flash *flash = W25Q64_GetReadyFlash();
+    uint32_t remain = 0;
+    uint32_t read_addr = 0;
 
     if ((flash == NULL) || (data == NULL) || (length == NULL))
     {

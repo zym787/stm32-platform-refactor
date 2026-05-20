@@ -58,17 +58,20 @@ make flash-assets   # SEGGER JFlash CLI + 自定义 .FLM → W25Q64 LVGL 分区
 严格分层，上层只依赖下层：
 
 ```
-01_APP/                 业务逻辑、FreeRTOS 任务定义、传感器验证测试
+01_APP/                 业务逻辑、FreeRTOS 任务定义、传感器验证、ISR 派发
+01_SERVICE/             业务无关 service 抽象（OTA / storage 门面）
 02_OS_Platform/         OSAL 封装（替换 OS_Implementation 即可换 RTOS）
 02_BSP_Platform/        外设驱动（BSP 适配器模式，见下文）
-02_MCU_Platform/        芯片级 I2C/SPI 总线驱动 + 总线互斥锁
-02_Middleware_Platform/ EasyLogger 异步日志 + LetterShell 嵌入式 CLI + LVGL v8.3 GUI 库
-03_Config/              项目级宏开关（CFG_ 前缀，待扩展）
-04_Common_Utils/        硬件无关工具库（StrUtils、CRC16、MemPool 等）
-04_Debug_Tool/          SEGGER SystemView、RTT 日志、ITM/SWO 追踪
+02_MCU_Platform/        芯片级 I2C/SPI/UART/IFlash/Watchdog 总线 + 互斥锁
+02_Middleware_Platform/ EasyLogger / LetterShell（已停用） / Ymodem / LVGL v8.3 / 心率算法
+03_Config/              项目级宏开关（CFG_ 前缀，含 cfg_storage.h / cfg_ota.h）
+04_Common_Utils/        硬件无关工具（StrUtils、CRC16、MemPool、自定义 .FLM 等）
+04_Debug_Tool/          SEGGER SystemView、RTT 日志、ITM/SWO 追踪、MPU 保护
 ST HAL / FreeRTOS       厂商中间件
 ARM CMSIS / 硬件寄存器
 ```
+
+> **01_SERVICE/** 是与 01_APP/ 平级的新抽象层，承载 OTA 升级链路、storage_manager 异步门面等"业务无关、跨 APP 复用"的服务。详见 [CLAUDE.md](CLAUDE.md) "01_SERVICE" 节及 "OTA 升级链路" 节。
 
 ### BSP 适配器模式
 
@@ -82,7 +85,7 @@ Platform_Interface/bsp_adapter_*/   将具体驱动注册到 vtable
 Bsp_Integration/<device>_integration/  组装 input_arg 结构体
 ```
 
-已实现设备：`aht21`（温湿度）、`mpu6050`（运动）、`wt588f02`（音频播报）、`st7789`（LCD 显示）、`cst816t`（触摸屏）。
+已实现设备：`aht21`（温湿度）、`mpu6050`（运动）、`em7028`（PPG 心率，流式 + lifecycle）、`wt588f02`（音频播报）、`st7789`（LCD 显示）、`cst816t`（触摸屏）、`w25q64`（外部 SPI NOR，承载 LVGL 资源 + OTA staging）。
 
 ### 任务管理
 
@@ -113,7 +116,11 @@ RTT Terminal 分组：
 | 1 | AHT21 / 温湿度 |
 | 2 | WT588 音频 |
 | 3 | MPU6050 / 数据解析 |
-| 4 | 任务栈水位监控 |
+| 4 | ST7789 TFT-LCD |
+| 5 | CST816T 触摸 |
+| 6 | W25Q64 SPI NOR |
+| 7 | EM7028 PPG 心率 |
+| 8 | 栈水位监控 |
 
 ### 调试流程
 

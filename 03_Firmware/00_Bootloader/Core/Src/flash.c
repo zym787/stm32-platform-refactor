@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (C) 2024 EternalChip, Inc.(Gmbh) or its affiliates.
+ *
  *
  * All Rights Reserved.
  *
@@ -8,7 +8,7 @@
  * @par dependencies
  * - Flash.h
  *
- * @author Jack | R&D Dept. | EternalChip 立芯嵌入式
+ * @author  Ethan-Hang |   |
  *
  * @brief Functions related to reading and writing in the chip's flash area.
  *
@@ -32,7 +32,7 @@ static uint16_t STMFLASH_GetFlashSector(u32 addr);
 /* Private functions ---------------------------------------------------------*/
 /* extern variables ---------------------------------------------------------*/
 
-const uint32_t  Flash_Sectorsize[12] = {
+const uint32_t Flash_Sectorsize[12] = {
     FLASH_Sector_0,  // Sector1
     FLASH_Sector_1,  // Sector2
     FLASH_Sector_2,  // Sector3
@@ -60,9 +60,9 @@ uint8_t Flash_erase(u32 addr, u32 size)
     /*判断size在几个扇区内*/
     //    FLASH_Status ret = 1;
     uint32_t flash_start_sector = 0;
-    uint32_t flash_end_sector   = 0;
-    flash_start_sector          = STMFLASH_GetFlashSector(addr);
-    flash_end_sector            = STMFLASH_GetFlashSector(addr + size);
+    uint32_t flash_end_sector = 0;
+    flash_start_sector = STMFLASH_GetFlashSector(addr);
+    flash_end_sector = STMFLASH_GetFlashSector(addr + size);
 
     for (uint8_t i = 0; i <= 12; i++)
     {

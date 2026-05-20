@@ -1,22 +1,34 @@
-# 应用层 APP 总体说明
+# 01_APP — 应用业务层
 
-## 📌 模块定位
-本目录用于存放业务逻辑相关的代码，包括场景任务、流程控制、用户交互逻辑等。该层负责 orchestrate（协调）各个平台提供的能力模块。
+业务任务、初始化流程、ISR 派发、任务表登记。**只调用平台抽象 API**（OSAL / BSP wrapper / Middleware），不直接碰 HAL / 寄存器 / 具体外设驱动。
 
-## 📁 建议子目录结构
-- `User_Task_XXX/`：具体应用任务
-- `App_Init/`：应用初始化
-- `App_Config/`：应用配置
+完整架构、ISR 规则、新增外设步骤见 [../CLAUDE.md](../CLAUDE.md)。
 
-## ✅ 命名规范
-- 模块前缀建议使用 `Dbg_` 或 `Test_`
-- 函数命名建议使用 `MCU_设备_操作`，如 `MCU_UART_Send()`
-- 结构体命名建议使用 `MCU_设备_Config_t`，如 `MCU_UART_Config_t`
-- 宏定义建议使用 `MCU_设备_XXX`，如 `MCU_UART_TX_PIN`
+## 目录结构
 
-## 🔄 依赖关系
-- 依赖 Platform 各个平台能力（OS/BSP/MCU/Middleware）
-- 不应包含硬件直接访问代码
+| 子目录 | 内容 |
+|---|---|
+| `User_Init/` | `user_init.c` 启动入口；遍历 `g_user_task_cfg[]` 创建任务；`Platform_IO_Register/` 把硬件 IO 绑定到驱动 adapter |
+| `User_Task_Config/` | `g_user_task_cfg[]` 任务表（名称/栈/优先级/入口/参数）+ `task_higher_water_monitor.c` 运行时栈水位监控 |
+| `User_Isr_handlers/` | ISR 上下文派发：`osal_notify` 唤醒线程，**禁止**在 ISR 内取 IIC 互斥锁 |
+| `User_Sensor/` | 业务侧传感器/外设消费任务：`temp_humi/`、`mpu6050/`、`em7028/`、`audio/`、`display/`、`touch/`、`storage/`（LVGL 资源 bootstrap + 阻塞门面） |
 
-## 👥 责任人
-- 配置层负责人：@XXX
+> `User_OtaManager/` 当前为空 —— OTA 升级链路已迁移到 [`../01_SERVICE/service_ota/`](../01_SERVICE/service_ota/)。
+
+## 任务优先级（`User_Task_Config/inc/user_task_reso_config.h`）
+
+`PRI_EMERGENCY` > `PRI_HARD_REALTIME` > `PRI_SOFT_REALTIME` > `PRI_NORMAL` > `PRI_BACKGROUND`
+
+新增任务 = 在 `g_user_task_cfg[]` 添一项，无需手写 `osal_task_create`。
+
+## 依赖规则
+
+```
+01_APP/  ──>  02_OS_Platform/  (OSAL API)
+         ──>  02_BSP_Platform/Platform_Interface/  (vtable wrapper)
+         ──>  02_Middleware_Platform/  (LVGL / Shell / Log)
+         ──>  04_Common_Utils/  (CRC / StrUtils)
+         ──>  03_Config/  (CFG_ 宏)
+```
+
+**反向依赖被禁止**：service / BSP / MCU / Middleware 不允许 include `01_APP/` 任何头文件。

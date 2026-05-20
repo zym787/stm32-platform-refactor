@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (C) 2024 EternalChip, Inc.(Gmbh) or its affiliates.
+ *  
  *
  * All Rights Reserved.
  *
@@ -8,7 +8,7 @@
  * @par dependencies
  * - Spi.h
  *
- * @author Jack | R&D Dept. | EternalChip 立芯嵌入式
+ * @author  Ethan-Hang |   |       
  *
  * @brief Functions related to reading and writing in the chip's flash area.
  *

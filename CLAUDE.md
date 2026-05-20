@@ -17,13 +17,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | [01_Function_Map/](01_Function_Map/) | 功能规划（当前为空） | — |
 | [04_Software/](04_Software/) | 上位机软件 | 仅 PC 端工作 |
 | [05_Tools/](05_Tools/) | 辅助脚本（当前为空） | — |
-| [lancedb/](lancedb/) | 工具索引数据，**非固件源码** | — |
+| [docs/](docs/) | 仓库级文档（commit 规范等） | 修改提交规范前查阅 |
 
 **重要**：构建命令、Makefile、源码树都在 [03_Firmware/01_APP/](03_Firmware/01_APP/)。`make` 必须在该目录下运行，不是在仓库根目录。
 
 ## 架构核心思想（细节见内层 CLAUDE.md）
 
-以 **APP 为核心、四个能力平台环绕** 的可移植架构：APP 不感知具体 MCU、RTOS、外设、中间件实现，只通过四个平台的抽象 API 调用能力。
+以 **APP / SERVICE 为核心、四个能力平台环绕** 的可移植架构：APP 不感知具体 MCU、RTOS、外设、中间件实现，只通过抽象 API 调用能力。业务无关的 service（OTA / 存储门面 / 后续 FOTA / 配网…）落在和 APP 平级的 `01_SERVICE/`，依然只调下层平台。
 
 ```
                 ┌──────────── OS Platform (OSAL) ────────────┐
@@ -31,9 +31,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
                 └─────────────────────────────────────────────┘
                                     │
    ┌──────────────┐                 ▼               ┌──────────────────┐
-   │ MCU Platform │ ──────────── APP ────────────▶  │ Middleware Plat. │
-   │ I2C/SPI/UART │                ▲                │ Shell/Log/LVGL   │
-   └──────────────┘                │                └──────────────────┘
+   │ MCU Platform │ ──── APP  │  SERVICE ────────▶  │ Middleware Plat. │
+   │ I2C/SPI/UART │           │                     │ LVGL/Log/Ymodem  │
+   │ IFlash/WDog  │           ▲                     └──────────────────┘
+   └──────────────┘           │
                 ┌──────────── BSP Platform ───────────────────┐
                 │   driver / handler / wrapper / adapter      │
                 │   integration（五段式）                      │
@@ -43,7 +44,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 替换粒度：
 - 换 RTOS → 改 `02_OS_Platform/OS_Implementation/`
 - 换 MCU → 改 `02_MCU_Platform/` port 层 + 启动文件
-- 换某个外设 → 替换该外设的 `driver/` + `adapter/`，APP 不动
+- 换某个外设 → 替换该外设的 `driver/` + `adapter/`，APP/Service 不动
+- 换 OTA 传输 → 改 `01_SERVICE/service_ota/adapters/` 单文件，Ymodem / service / MCU 不动
 
 ## 何时去读哪个 CLAUDE.md
 

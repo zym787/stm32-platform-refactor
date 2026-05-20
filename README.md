@@ -26,7 +26,7 @@ A portable embedded firmware architecture organized around an application core s
                 └────────────────────────────────────────────────┘
 ```
 
-**核心思想**：APP 不感知具体硬件、不感知具体 RTOS、不感知具体中间件实现。它只通过四个平台的对外接口调用能力。
+**核心思想**：APP 不感知具体硬件、不感知具体 RTOS、不感知具体中间件实现，只通过四个平台的对外接口调用能力。业务无关的 service（OTA、存储门面等）以 `01_SERVICE/` 落地，与 APP 平级，依然只调下层平台。
 
 | 平台 | 抽象接口 | 当前实现 | 替换粒度 |
 |---|---|---|---|
@@ -54,13 +54,14 @@ A portable embedded firmware architecture organized around an application core s
 
 ```
 01_APP/                   业务逻辑、任务表、IO 注册、ISR 派发
+01_SERVICE/               业务无关 service（OTA 升级链路、storage 异步门面）
 02_OS_Platform/           OSAL 封装 + RTOS 实现映射
-02_MCU_Platform/          I2C / SPI / UART 总线 port + 互斥锁
+02_MCU_Platform/          I2C / SPI / UART / IFlash / Watchdog 总线 port + 互斥锁
 02_BSP_Platform/          driver / handler / wrapper / adapter / integration 五段式
-02_Middleware_Platform/   Shell / Log / GUI / 算法 / 加密 等
-03_Config/                CFG_ 前缀的项目级开关
-04_Common_Utils/          硬件无关工具库
-04_Debug_Tool/            日志、追踪、ITM/RTT
+02_Middleware_Platform/   Log / Ymodem / LVGL / 心率算法（LetterShell 已停用）
+03_Config/                CFG_ 前缀的项目级开关（cfg_storage.h / cfg_ota.h）
+04_Common_Utils/          硬件无关工具库 + 自定义 .FLM
+04_Debug_Tool/            日志、追踪、ITM/RTT、MPU 保护
 ```
 
 ---

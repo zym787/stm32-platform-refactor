@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (C) 2024 EternalChip, Inc.(Gmbh) or its affiliates.
+ *  
  *
  * All Rights Reserved.
  *

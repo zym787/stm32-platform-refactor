@@ -1,25 +1,41 @@
-# 硬件驱动封装层 BSP Platform
+# 02_BSP_Platform — 外设驱动平台
 
-## 📌 模块定位
-封装所有与具体硬件设备相关的底层驱动，如传感器、Flash、IO扩展等。通过标准接口向上提供访问能力，屏蔽芯片差异。
+按"设备类别"对外暴露 vtable，让 APP 不感知具体型号。同类设备替换 = 换 `driver` + `adapter`，APP / Service 不动。
 
-## 📁 模块结构示例
+详细五段式 + 新增外设步骤见 [../CLAUDE.md](../CLAUDE.md) "BSP 适配器模式"节。
+
+## 目录结构
+
 ```
 02_BSP_Platform/
-├── Bsp_Drivers/           ← 放硬件驱动实现（如 sensor、flash、LED）
-├── Platform_Interface/    ← 放上层调用的接口定义（抽象），以及接口实现（适配）
-├── Bsp_Integration/       ← 集成BSP_Drivers需要的接口（来自OS, MCU-Core, Middleware）
-└── README
+├── Bsp_Drivers/<device>/
+│     ├── driver/      ← 裸协议通信（寄存器 / SPI / I2C）。禁止 OSAL 调用
+│     └── handler/     ← Handler 任务：读驱动 → 投队列 / 通知 wrapper
+├── Bsp_Integration/<device>_integration/
+│                       组装 `*_input_arg`（driver fn + OS 资源 + IO 描述符）
+└── Platform_Interface/<category>/
+      ├── bsp_wrapper_<cat>/        向 01_APP 暴露的抽象 vtable API
+      └── bsp_adapter_port_<cat>/   `drv_adapter_<cat>_register()` 把具体驱动挂到 vtable
+```
 
-## ✅ 命名规范
-- 模块前缀建议使用 `Dbg_` 或 `Test_`
-- 函数命名建议使用 `MCU_设备_操作`，如 `MCU_UART_Send()`
-- 结构体命名建议使用 `MCU_设备_Config_t`，如 `MCU_UART_Config_t`
-- 宏定义建议使用 `MCU_设备_XXX`，如 `MCU_UART_TX_PIN`
+## 当前实现
 
-## 🔄 依赖关系
-- 仅依赖 `MCU Platform` 提供的 HAL 层接口
-- 不得直接访问操作系统或APP
+| 设备 | 类别（Platform_Interface） | wrapper API 风格 |
+|---|---|---|
+| `aht21` | `temp_humi/` | sync/async 单次读 |
+| `mpu6050` | `motion/` | 流式 `get_req → get_data_addr → read_data_done` |
+| `em7028` | `heart_rate/` | 流式 + lifecycle（`start/stop/reconfigure`），frame=`wp_ppg_frame_t` |
+| `st7789` | `display/` | LCD 显示 |
+| `cst816t` | `touch/` | 触摸事件 |
+| `wt588f02` | `audio/` | 语音播报 |
+| `w25q64` | `externflash/` | SPI NOR，承载 LVGL 资源分区 + OTA staging |
 
-## 👥 责任人
-- 配置层负责人：@XXX
+## 依赖规则
+
+```
+Bsp_Drivers/  ──>  02_MCU_Platform/  (I2C/SPI/UART/GPIO port)
+Bsp_Drivers/  ──>  02_OS_Platform/   (OSAL，仅 handler 层；driver 层禁止)
+Platform_Interface/  暴露给 01_APP / 01_SERVICE，不允许反向依赖
+```
+
+> **ISR 规则**：driver 层的总线操作必须由 handler 任务（线程上下文）调用，禁止在 ISR 内获取 IIC/SPI 互斥锁——通过 `osal_notify` 唤醒 handler。

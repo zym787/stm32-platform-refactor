@@ -1,17 +1,24 @@
-# 通用工具模块 Common Utils
+# 04_Common_Utils — 通用工具
 
-## 📌 模块定位
-包含项目中广泛使用但与硬件/业务无关的工具代码，如：字符串操作、CRC计算、数据结构工具等。
+硬件/业务无关的辅助产物。**不依赖** OSAL / BSP / MCU，所有层都可复用（或在烧录链路里复用）。
 
-## 📁 典型模块
-- StrUtils
-- CRC16
-- MemPool
-- ByteConverter
+## 当前内容
 
-## 🔄 依赖关系
-- 不依赖平台和业务
-- 所有层可复用
+| 子目录 | 内容 |
+|---|---|
+| `01_Flash_Algorithm/W25Q64_8M_FLM.FLM` | 自定义 JLink Flash 算法（Keil MDK 工程编出），把 W25Q64 SPI bank 挂在 JLink 虚拟地址 `0x90000000`。FLM 内部把 JLink 地址重映射到 W25Q64 物理 `0x300000`（LVGL 分区起点）——`JFlash` / `Ozone` 工具链**只能**写 LVGL 分区，无法误伤 OTA / FlashDB / FATFS。`make flash-assets` 走这个 FLM。源码工程在仓库根的 `std_program_algorithms/`。 |
 
-## 👥 责任人
-- 工具层负责人：@XXX
+## 部署位置
+
+`W25Q64_8M_FLM.FLM` 需复制到 `%APPDATA%\SEGGER\JLinkDevices\ST\STM32F4\`，并在同目录 `Devices.xml` 注册自定义设备 `STM32F411CE_W25Q64`。详见 [`../CLAUDE.md`](../CLAUDE.md) "外部 Flash LVGL 资源 / 烧录工具链"节。
+
+## 扩展方向
+
+后续可在此放：
+
+- `StrUtils/` — 字符串处理
+- `CRC16/` — 校验（Ymodem 已内置 CRC-16/XMODEM；如复用提到此处）
+- `MemPool/` — 静态内存池
+- `ByteConverter/` — 字节序 / 打包
+
+> 加新模块前确认它确实"硬件 / 业务无关"——和 OS 或 BSP 有耦合的请放回对应平台层。
