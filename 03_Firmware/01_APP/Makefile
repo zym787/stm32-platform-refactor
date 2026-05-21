@@ -128,7 +128,7 @@ Core/Src/spi.c \
 02_Middleware_Platform/LetterShell/src/shell_ext.c \
 02_Middleware_Platform/LetterShell/src/shell_port.c \
 02_Middleware_Platform/LetterShell/src/shell.c \
-02_BSP_Platform/Bsp_Drivers/wt588f02/handler/src/linklist.c \
+04_Impl/impl_bsp/Bsp_Drivers/wt588f02/handler/src/linklist.c \
 04_Impl/impl_mcu/MCU_Core_IIC/src/i2c_port.c \
 04_Impl/impl_mcu/MCU_Core_SPI/src/spi_port.c \
 04_Impl/impl_mcu/MCU_Core_GPIO/src/gpio_port.c \
@@ -136,21 +136,21 @@ Core/Src/spi.c \
 04_Impl/impl_mcu/MCU_Core_DWT/src/dwt_port.c \
 04_Impl/impl_mcu/MCU_Core_Watchdog/src/watchdog_port.c \
 04_Impl/impl_mcu/MCU_Core_IFlash/src/iflash_port.c \
-02_BSP_Platform/Bsp_Drivers/aht21/driver/src/bsp_aht21_driver.c \
-02_BSP_Platform/Bsp_Drivers/aht21/handler/src/bsp_temp_humi_xxx_handler.c \
-02_BSP_Platform/Bsp_Drivers/mpu6050/driver/src/bsp_mpuxxxx_driver.c \
-02_BSP_Platform/Bsp_Drivers/mpu6050/driver/src/circular_buffer.c \
-02_BSP_Platform/Bsp_Drivers/mpu6050/handler/src/bsp_mpuxxxx_handler.c \
-02_BSP_Platform/Bsp_Drivers/wt588f02/driver/src/bsp_wt588_driver.c \
-02_BSP_Platform/Bsp_Drivers/wt588f02/driver/src/bsp_wt588_hal_port.c \
-02_BSP_Platform/Bsp_Drivers/wt588f02/handler/src/bsp_wt588_handler.c \
-02_BSP_Platform/Bsp_Drivers/st7789/driver/src/bsp_st7789_driver.c \
-02_BSP_Platform/Bsp_Drivers/st7789/driver/src/fonts.c \
-02_BSP_Platform/Bsp_Drivers/w25q64/driver/src/bsp_w25q64_driver.c \
-02_BSP_Platform/Bsp_Drivers/w25q64/handler/src/bsp_w25q64_handler.c \
-02_BSP_Platform/Bsp_Drivers/cst816t/driver/src/bsp_cst816t_driver.c \
-02_BSP_Platform/Bsp_Drivers/em7028/driver/src/bsp_em7028_driver.c \
-02_BSP_Platform/Bsp_Drivers/em7028/handler/src/bsp_em7028_handler.c \
+04_Impl/impl_bsp/Bsp_Drivers/aht21/driver/src/bsp_aht21_driver.c \
+04_Impl/impl_bsp/Bsp_Drivers/aht21/handler/src/bsp_temp_humi_xxx_handler.c \
+04_Impl/impl_bsp/Bsp_Drivers/mpu6050/driver/src/bsp_mpuxxxx_driver.c \
+04_Impl/impl_bsp/Bsp_Drivers/mpu6050/driver/src/circular_buffer.c \
+04_Impl/impl_bsp/Bsp_Drivers/mpu6050/handler/src/bsp_mpuxxxx_handler.c \
+04_Impl/impl_bsp/Bsp_Drivers/wt588f02/driver/src/bsp_wt588_driver.c \
+04_Impl/impl_bsp/Bsp_Drivers/wt588f02/driver/src/bsp_wt588_hal_port.c \
+04_Impl/impl_bsp/Bsp_Drivers/wt588f02/handler/src/bsp_wt588_handler.c \
+04_Impl/impl_bsp/Bsp_Drivers/st7789/driver/src/bsp_st7789_driver.c \
+04_Impl/impl_bsp/Bsp_Drivers/st7789/driver/src/fonts.c \
+04_Impl/impl_bsp/Bsp_Drivers/w25q64/driver/src/bsp_w25q64_driver.c \
+04_Impl/impl_bsp/Bsp_Drivers/w25q64/handler/src/bsp_w25q64_handler.c \
+04_Impl/impl_bsp/Bsp_Drivers/cst816t/driver/src/bsp_cst816t_driver.c \
+04_Impl/impl_bsp/Bsp_Drivers/em7028/driver/src/bsp_em7028_driver.c \
+04_Impl/impl_bsp/Bsp_Drivers/em7028/handler/src/bsp_em7028_handler.c \
 02_Middleware_Platform/lv-gl/lvgl_port/src/lv_port_disp.c \
 02_Middleware_Platform/lv-gl/lvgl_port/src/lv_port_indev.c \
 02_Middleware_Platform/lv-gl/lvgl_port/src/lv_port_extflash.c \
@@ -167,28 +167,28 @@ Core/Src/spi.c \
 02_Middleware_Platform/lv-gl/lvgl_ui/images/_fen_alpha_70x5.c \
 02_Middleware_Platform/lv-gl/lvgl_ui/images/_miao_alpha_70x5.c \
 02_Middleware_Platform/lv-gl/lvgl_ui/images/_time_alpha_40x5.c \
-02_BSP_Platform/Platform_Interface/temp_humi/bsp_wrapper_temp_humi/src/bsp_wrapper_temp_humi.c \
-02_BSP_Platform/Platform_Interface/temp_humi/bsp_adapter_port_temp_humi/src/bsp_adapter_port_temp_humi.c \
-02_BSP_Platform/Platform_Interface/motion/bsp_wrapper_motion/src/bsp_wrapper_motion.c \
-02_BSP_Platform/Platform_Interface/motion/bsp_adapter_port_motion/src/bsp_adapter_port_motion.c \
-02_BSP_Platform/Platform_Interface/audio/bsp_wrapper_audio/src/bsp_wrapper_audio.c \
-02_BSP_Platform/Platform_Interface/audio/bsp_adapter_port_audio/src/bsp_adapter_port_audio.c \
-02_BSP_Platform/Platform_Interface/display/bsp_wrapper_display/src/bsp_wrapper_display.c \
-02_BSP_Platform/Platform_Interface/display/bsp_adapter_port_display/src/bsp_adapter_port_display.c \
-02_BSP_Platform/Platform_Interface/touch/bsp_wrapper_touch/src/bsp_wrapper_touch.c \
-02_BSP_Platform/Platform_Interface/touch/bsp_adapter_port_touch/src/bsp_adapter_port_touch.c \
-02_BSP_Platform/Platform_Interface/externflash/bsp_wrapper_externflash/src/bsp_wrapper_externflash.c \
-02_BSP_Platform/Platform_Interface/externflash/bsp_adapter_port_externflash/src/bsp_adapter_port_externflash.c \
-02_BSP_Platform/Platform_Interface/heart_rate/bsp_wrapper_heart_rate/src/bsp_wrapper_heart_rate.c \
-02_BSP_Platform/Platform_Interface/heart_rate/bsp_adapter_port_heart_rate/src/bsp_adapter_port_heart_rate.c \
+03_Platform/platform_bsp/temp_humi/bsp_wrapper_temp_humi/src/bsp_wrapper_temp_humi.c \
+04_Impl/impl_bsp/Adapter_Port/temp_humi/src/bsp_adapter_port_temp_humi.c \
+03_Platform/platform_bsp/motion/bsp_wrapper_motion/src/bsp_wrapper_motion.c \
+04_Impl/impl_bsp/Adapter_Port/motion/src/bsp_adapter_port_motion.c \
+03_Platform/platform_bsp/audio/bsp_wrapper_audio/src/bsp_wrapper_audio.c \
+04_Impl/impl_bsp/Adapter_Port/audio/src/bsp_adapter_port_audio.c \
+03_Platform/platform_bsp/display/bsp_wrapper_display/src/bsp_wrapper_display.c \
+04_Impl/impl_bsp/Adapter_Port/display/src/bsp_adapter_port_display.c \
+03_Platform/platform_bsp/touch/bsp_wrapper_touch/src/bsp_wrapper_touch.c \
+04_Impl/impl_bsp/Adapter_Port/touch/src/bsp_adapter_port_touch.c \
+03_Platform/platform_bsp/externflash/bsp_wrapper_externflash/src/bsp_wrapper_externflash.c \
+04_Impl/impl_bsp/Adapter_Port/externflash/src/bsp_adapter_port_externflash.c \
+03_Platform/platform_bsp/heart_rate/bsp_wrapper_heart_rate/src/bsp_wrapper_heart_rate.c \
+04_Impl/impl_bsp/Adapter_Port/heart_rate/src/bsp_adapter_port_heart_rate.c \
 01_APP/User_Init/Platform_IO_Register/src/platform_io_register.c \
-02_BSP_Platform/Bsp_Integration/mpu6050_integration/src/mpu6050_integration.c \
-02_BSP_Platform/Bsp_Integration/aht21_integration/src/aht21_integration.c \
-02_BSP_Platform/Bsp_Integration/wt588_integration/src/wt588_integration.c \
-02_BSP_Platform/Bsp_Integration/st7789_integration/src/st7789_integration.c \
-02_BSP_Platform/Bsp_Integration/cst816t_integration/src/cst816t_integration.c \
-02_BSP_Platform/Bsp_Integration/w25q64_integration/src/w25q64_integration.c \
-02_BSP_Platform/Bsp_Integration/em7028_integration/src/em7028_integration.c \
+04_Impl/impl_bsp/Bsp_Integration/mpu6050_integration/src/mpu6050_integration.c \
+04_Impl/impl_bsp/Bsp_Integration/aht21_integration/src/aht21_integration.c \
+04_Impl/impl_bsp/Bsp_Integration/wt588_integration/src/wt588_integration.c \
+04_Impl/impl_bsp/Bsp_Integration/st7789_integration/src/st7789_integration.c \
+04_Impl/impl_bsp/Bsp_Integration/cst816t_integration/src/cst816t_integration.c \
+04_Impl/impl_bsp/Bsp_Integration/w25q64_integration/src/w25q64_integration.c \
+04_Impl/impl_bsp/Bsp_Integration/em7028_integration/src/em7028_integration.c \
 02_Middleware_Platform/heart_rate_algo/src/hr_algo_simple.c \
 02_Middleware_Platform/heart_rate_algo/src/hr_algo_biquad.c \
 02_Middleware_Platform/Ymodem/src/ymodem.c \
@@ -364,47 +364,47 @@ C_INCLUDES_MW = \
 -I02_Middleware_Platform/heart_rate_algo/inc \
 -I02_Middleware_Platform/Ymodem/inc
 
-# 02_BSP_Platform
+# BSP Platform — drivers (impl)
 C_INCLUDES_BSP_DRV = \
--I02_BSP_Platform/Bsp_Drivers/aht21/driver/inc \
--I02_BSP_Platform/Bsp_Drivers/aht21/handler/inc \
--I02_BSP_Platform/Bsp_Drivers/mpu6050/driver/inc \
--I02_BSP_Platform/Bsp_Drivers/mpu6050/handler/inc \
--I02_BSP_Platform/Bsp_Drivers/wt588f02/driver/inc \
--I02_BSP_Platform/Bsp_Drivers/wt588f02/handler/inc \
--I02_BSP_Platform/Bsp_Drivers/st7789/driver/inc \
--I02_BSP_Platform/Bsp_Drivers/w25q64/driver/inc \
--I02_BSP_Platform/Bsp_Drivers/w25q64/handler/inc \
--I02_BSP_Platform/Bsp_Drivers/cst816t/driver/inc \
--I02_BSP_Platform/Bsp_Drivers/em7028/driver/inc \
--I02_BSP_Platform/Bsp_Drivers/em7028/handler/inc \
+-I04_Impl/impl_bsp/Bsp_Drivers/aht21/driver/inc \
+-I04_Impl/impl_bsp/Bsp_Drivers/aht21/handler/inc \
+-I04_Impl/impl_bsp/Bsp_Drivers/mpu6050/driver/inc \
+-I04_Impl/impl_bsp/Bsp_Drivers/mpu6050/handler/inc \
+-I04_Impl/impl_bsp/Bsp_Drivers/wt588f02/driver/inc \
+-I04_Impl/impl_bsp/Bsp_Drivers/wt588f02/handler/inc \
+-I04_Impl/impl_bsp/Bsp_Drivers/st7789/driver/inc \
+-I04_Impl/impl_bsp/Bsp_Drivers/w25q64/driver/inc \
+-I04_Impl/impl_bsp/Bsp_Drivers/w25q64/handler/inc \
+-I04_Impl/impl_bsp/Bsp_Drivers/cst816t/driver/inc \
+-I04_Impl/impl_bsp/Bsp_Drivers/em7028/driver/inc \
+-I04_Impl/impl_bsp/Bsp_Drivers/em7028/handler/inc \
 
-# 02_BSP_Platform — (wrapper + adapter)
+# BSP Platform — wrapper (interface in 03_Platform) + adapter (impl in 04_Impl)
 C_INCLUDES_BSP_IF = \
--I02_BSP_Platform/Platform_Interface/temp_humi/bsp_wrapper_temp_humi/inc \
--I02_BSP_Platform/Platform_Interface/temp_humi/bsp_adapter_port_temp_humi/inc \
--I02_BSP_Platform/Platform_Interface/motion/bsp_wrapper_motion/inc \
--I02_BSP_Platform/Platform_Interface/motion/bsp_adapter_port_motion/inc \
--I02_BSP_Platform/Platform_Interface/audio/bsp_wrapper_audio/inc \
--I02_BSP_Platform/Platform_Interface/audio/bsp_adapter_port_audio/inc \
--I02_BSP_Platform/Platform_Interface/display/bsp_wrapper_display/inc \
--I02_BSP_Platform/Platform_Interface/display/bsp_adapter_port_display/inc \
--I02_BSP_Platform/Platform_Interface/touch/bsp_wrapper_touch/inc \
--I02_BSP_Platform/Platform_Interface/touch/bsp_adapter_port_touch/inc \
--I02_BSP_Platform/Platform_Interface/externflash/bsp_wrapper_externflash/inc \
--I02_BSP_Platform/Platform_Interface/externflash/bsp_adapter_port_externflash/inc \
--I02_BSP_Platform/Platform_Interface/heart_rate/bsp_wrapper_heart_rate/inc \
--I02_BSP_Platform/Platform_Interface/heart_rate/bsp_adapter_port_heart_rate/inc \
+-I03_Platform/platform_bsp/temp_humi/bsp_wrapper_temp_humi/inc \
+-I04_Impl/impl_bsp/Adapter_Port/temp_humi/inc \
+-I03_Platform/platform_bsp/motion/bsp_wrapper_motion/inc \
+-I04_Impl/impl_bsp/Adapter_Port/motion/inc \
+-I03_Platform/platform_bsp/audio/bsp_wrapper_audio/inc \
+-I04_Impl/impl_bsp/Adapter_Port/audio/inc \
+-I03_Platform/platform_bsp/display/bsp_wrapper_display/inc \
+-I04_Impl/impl_bsp/Adapter_Port/display/inc \
+-I03_Platform/platform_bsp/touch/bsp_wrapper_touch/inc \
+-I04_Impl/impl_bsp/Adapter_Port/touch/inc \
+-I03_Platform/platform_bsp/externflash/bsp_wrapper_externflash/inc \
+-I04_Impl/impl_bsp/Adapter_Port/externflash/inc \
+-I03_Platform/platform_bsp/heart_rate/bsp_wrapper_heart_rate/inc \
+-I04_Impl/impl_bsp/Adapter_Port/heart_rate/inc \
 
-# 02_BSP_Platform
+# BSP Platform — integration (impl)
 C_INCLUDES_BSP_INT = \
--I02_BSP_Platform/Bsp_Integration/aht21_integration/inc \
--I02_BSP_Platform/Bsp_Integration/mpu6050_integration/inc \
--I02_BSP_Platform/Bsp_Integration/wt588_integration/inc \
--I02_BSP_Platform/Bsp_Integration/st7789_integration/inc \
--I02_BSP_Platform/Bsp_Integration/cst816t_integration/inc \
--I02_BSP_Platform/Bsp_Integration/w25q64_integration/inc \
--I02_BSP_Platform/Bsp_Integration/em7028_integration/inc
+-I04_Impl/impl_bsp/Bsp_Integration/aht21_integration/inc \
+-I04_Impl/impl_bsp/Bsp_Integration/mpu6050_integration/inc \
+-I04_Impl/impl_bsp/Bsp_Integration/wt588_integration/inc \
+-I04_Impl/impl_bsp/Bsp_Integration/st7789_integration/inc \
+-I04_Impl/impl_bsp/Bsp_Integration/cst816t_integration/inc \
+-I04_Impl/impl_bsp/Bsp_Integration/w25q64_integration/inc \
+-I04_Impl/impl_bsp/Bsp_Integration/em7028_integration/inc
 
 # 04_Debug_Tool
 C_INCLUDES_DBG = \
