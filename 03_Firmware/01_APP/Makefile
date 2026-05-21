@@ -110,13 +110,13 @@ Core/Src/spi.c \
 03_Platform/platform_os/OS_Wrapper/src/osal_task.c \
 03_Platform/platform_os/OS_Wrapper/src/osal_timer.c \
 03_Platform/platform_os/OS_Wrapper/src/osal_event_group.c \
-04_Debug_Tool/Systemview/src/SEGGER_RTT.c \
-04_Debug_Tool/Systemview/src/SEGGER_RTT_printf.c \
-04_Debug_Tool/Systemview/src/SEGGER_SYSVIEW.c \
-04_Debug_Tool/Systemview/src/SEGGER_SYSVIEW_FreeRTOS.c \
-04_Debug_Tool/Systemview/src/SEGGER_SYSVIEW_Config_FreeRTOS.c \
-04_Debug_Tool/Debug_Log/src/Debug.c \
-04_Debug_Tool/SWO_Trace/src/itm_trace.c \
+05_Debug_Tool/Systemview/src/SEGGER_RTT.c \
+05_Debug_Tool/Systemview/src/SEGGER_RTT_printf.c \
+05_Debug_Tool/Systemview/src/SEGGER_SYSVIEW.c \
+05_Debug_Tool/Systemview/src/SEGGER_SYSVIEW_FreeRTOS.c \
+05_Debug_Tool/Systemview/src/SEGGER_SYSVIEW_Config_FreeRTOS.c \
+05_Debug_Tool/Debug_Log/src/Debug.c \
+05_Debug_Tool/SWO_Trace/src/itm_trace.c \
 04_Impl/impl_middleware/EasyLogger/port/elog_port.c \
 04_Impl/impl_middleware/EasyLogger/src/elog.c \
 04_Impl/impl_middleware/EasyLogger/src/elog_async.c \
@@ -181,7 +181,7 @@ Core/Src/spi.c \
 04_Impl/impl_bsp/Adapter_Port/externflash/src/bsp_adapter_port_externflash.c \
 03_Platform/platform_bsp/heart_rate/bsp_wrapper_heart_rate/src/bsp_wrapper_heart_rate.c \
 04_Impl/impl_bsp/Adapter_Port/heart_rate/src/bsp_adapter_port_heart_rate.c \
-01_APP/User_Init/Platform_IO_Register/src/platform_io_register.c \
+01_App/User_Init/Platform_IO_Register/src/platform_io_register.c \
 04_Impl/impl_bsp/Bsp_Integration/mpu6050_integration/src/mpu6050_integration.c \
 04_Impl/impl_bsp/Bsp_Integration/aht21_integration/src/aht21_integration.c \
 04_Impl/impl_bsp/Bsp_Integration/wt588_integration/src/wt588_integration.c \
@@ -192,35 +192,35 @@ Core/Src/spi.c \
 04_Impl/impl_middleware/heart_rate_algo/src/hr_algo_simple.c \
 04_Impl/impl_middleware/heart_rate_algo/src/hr_algo_biquad.c \
 04_Impl/impl_middleware/Ymodem/src/ymodem.c \
-01_APP/User_Init/user_init.c \
-01_APP/User_Task_Config/src/user_task_reso_config.c \
-01_APP/User_Task_Config/src/task_higher_water_monitor.c \
-01_APP/User_Isr_handlers/src/user_isr_handlers.c \
-01_APP/User_Sensor/mpu6050/src/mpu6050_unpack.c \
-01_APP/User_Sensor/temp_humi/src/temp_humi_concurrency_test.c \
-01_APP/User_Sensor/audio/src/wt588_test_task.c \
-01_APP/User_Sensor/display/src/st7789_mock_test_task.c \
-01_APP/User_Sensor/display/src/st7789_hal_test_task.c \
-01_APP/User_Sensor/display/src/lvgl_display_task.c \
-01_APP/User_Sensor/touch/src/cst816t_mock_test_task.c \
-01_APP/User_Sensor/touch/src/cst816t_hal_test_task.c \
-01_APP/User_Sensor/storage/src/w25q64_mock_test_task.c \
-01_APP/User_Sensor/storage/src/w25q64_handler_mock_test_task.c \
-01_APP/User_Sensor/storage/src/w25q64_hal_test_task.c \
-01_APP/User_Sensor/storage/src/storage_assets.c \
-01_SERVICE/service_storage/src/storage_manager_task.c \
-01_SERVICE/service_ota/src/upgrade_service.c \
-01_SERVICE/service_ota/src/iwdg_feeder_task.c \
-01_SERVICE/service_ota/src/firmware_upgrade_task.c \
-01_SERVICE/service_ota/src/ota_uart_listener.c \
-01_SERVICE/service_ota/adapters/uart1_ota_transport.c \
-01_SERVICE/service_ota/adapters/w25q64_ota_storage.c \
+01_App/User_Init/user_init.c \
+01_App/User_Task_Config/src/user_task_reso_config.c \
+01_App/User_Task_Config/src/task_higher_water_monitor.c \
+01_App/User_Isr_handlers/src/user_isr_handlers.c \
+01_App/User_Sensor/mpu6050/src/mpu6050_unpack.c \
+01_App/User_Sensor/temp_humi/src/temp_humi_concurrency_test.c \
+01_App/User_Sensor/audio/src/wt588_test_task.c \
+01_App/User_Sensor/display/src/st7789_mock_test_task.c \
+01_App/User_Sensor/display/src/st7789_hal_test_task.c \
+01_App/User_Sensor/display/src/lvgl_display_task.c \
+01_App/User_Sensor/touch/src/cst816t_mock_test_task.c \
+01_App/User_Sensor/touch/src/cst816t_hal_test_task.c \
+01_App/User_Sensor/storage/src/w25q64_mock_test_task.c \
+01_App/User_Sensor/storage/src/w25q64_handler_mock_test_task.c \
+01_App/User_Sensor/storage/src/w25q64_hal_test_task.c \
+01_App/User_Sensor/storage/src/storage_assets.c \
+02_Service/service_storage/src/storage_manager_task.c \
+02_Service/service_ota/src/upgrade_service.c \
+02_Service/service_ota/src/iwdg_feeder_task.c \
+02_Service/service_ota/src/firmware_upgrade_task.c \
+02_Service/service_ota/src/ota_uart_listener.c \
+02_Service/service_ota/adapters/uart1_ota_transport.c \
+02_Service/service_ota/adapters/w25q64_ota_storage.c \
 04_Impl/impl_mcu/MCU_Core_UART/src/mcu_uart_port.c \
-01_APP/User_Sensor/em7028/src/em7028_mock_test_task.c \
-01_APP/User_Sensor/em7028/src/em7028_handler_mock_test_task.c \
-01_APP/User_Sensor/em7028/src/em7028_iic_hal_test_task.c \
-01_APP/User_Sensor/em7028/src/em7028_jscope_capture_task.c \
-01_APP/User_Sensor/em7028/src/em7028_heart_rate_task.c
+01_App/User_Sensor/em7028/src/em7028_mock_test_task.c \
+01_App/User_Sensor/em7028/src/em7028_handler_mock_test_task.c \
+01_App/User_Sensor/em7028/src/em7028_iic_hal_test_task.c \
+01_App/User_Sensor/em7028/src/em7028_jscope_capture_task.c \
+01_App/User_Sensor/em7028/src/em7028_heart_rate_task.c
 
 
 #######################################
@@ -273,7 +273,7 @@ startup_stm32f411xe.s
 
 # ASM sources (uppercase .S, preprocessed)
 ASM_SOURCES_S =  \
-04_Debug_Tool/Systemview/inc/SEGGER_RTT_ASM_ARMv7M.S
+05_Debug_Tool/Systemview/inc/SEGGER_RTT_ASM_ARMv7M.S
 
 
 #######################################
@@ -406,29 +406,29 @@ C_INCLUDES_BSP_INT = \
 -I04_Impl/impl_bsp/Bsp_Integration/w25q64_integration/inc \
 -I04_Impl/impl_bsp/Bsp_Integration/em7028_integration/inc
 
-# 04_Debug_Tool
+# 05_Debug_Tool
 C_INCLUDES_DBG = \
--I04_Debug_Tool/Systemview/inc \
--I04_Debug_Tool/Debug_Log/inc \
--I04_Debug_Tool/SWO_Trace/inc \
--I04_Debug_Tool/MPU_Protect/inc
+-I05_Debug_Tool/Systemview/inc \
+-I05_Debug_Tool/Debug_Log/inc \
+-I05_Debug_Tool/SWO_Trace/inc \
+-I05_Debug_Tool/MPU_Protect/inc
 
 # 01_APP
 C_INCLUDES_APP = \
--I01_APP/User_Init \
--I01_APP/User_Init/Platform_IO_Register/inc \
--I01_APP/User_Task_Config/inc \
--I01_APP/User_Isr_handlers/inc \
--I01_APP/User_Sensor/mpu6050/inc
+-I01_App/User_Init \
+-I01_App/User_Init/Platform_IO_Register/inc \
+-I01_App/User_Task_Config/inc \
+-I01_App/User_Isr_handlers/inc \
+-I01_App/User_Sensor/mpu6050/inc
 
 # 01_SERVICE — business-agnostic services (OTA, storage facade, future FOTA/etc)
 C_INCLUDES_SERVICE = \
--I01_SERVICE/service_storage/inc \
--I01_SERVICE/service_ota/inc
+-I02_Service/service_storage/inc \
+-I02_Service/service_ota/inc
 
-# 03_Config
+# 00_Config
 C_INCLUDES_CFG = \
--I03_Config/inc
+-I00_Config/inc
 
 C_INCLUDES = \
 -ICore/Inc \
@@ -567,7 +567,7 @@ ota-image: $(BUILD_DIR)/$(TARGET).bin
 # %APPDATA%/SEGGER/JLinkDevices/ST/STM32F4/{Devices.xml,W25Q64_8M_FLM.FLM} to
 # be in place (Phase 2 setup).
 ASSETS_BIN     := $(BUILD_DIR)/assets.bin
-ASSETS_CFG     := 03_Config/inc/cfg_storage.h
+ASSETS_CFG     := 00_Config/inc/cfg_storage.h
 ASSETS_LV_CONF := 04_Impl/impl_middleware/lvgl/lvgl/lv_conf.h
 ASSETS_DIR     := 04_Impl/impl_middleware/lvgl/lvgl_ui/images
 ASSETS_SRCS    := $(ASSETS_DIR)/_fen_alpha_70x5.c \

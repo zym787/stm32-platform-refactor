@@ -5,7 +5,7 @@ Builds the binary blob that gets programmed into the W25Q64 LVGL sub-region
 via JFlash + the custom .FLM (which remaps JLink address 0x90000000 to W25Q64
 byte offset 0x300000 = LVGL partition start).
 
-Output layout follows ``03_Config/inc/cfg_storage.h``:
+Output layout follows ``00_Config/inc/cfg_storage.h``:
 
     offset 0x000000  CFG_LVGL_ASSET_MAGIC          (4 B, little-endian)
     offset 0x000100  fen sprite                    (1050 B)
