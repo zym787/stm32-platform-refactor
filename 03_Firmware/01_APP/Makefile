@@ -117,17 +117,17 @@ Core/Src/spi.c \
 04_Debug_Tool/Systemview/src/SEGGER_SYSVIEW_Config_FreeRTOS.c \
 04_Debug_Tool/Debug_Log/src/Debug.c \
 04_Debug_Tool/SWO_Trace/src/itm_trace.c \
-02_Middleware_Platform/EasyLogger/port/elog_port.c \
-02_Middleware_Platform/EasyLogger/src/elog.c \
-02_Middleware_Platform/EasyLogger/src/elog_async.c \
-02_Middleware_Platform/EasyLogger/src/elog_buf.c \
-02_Middleware_Platform/EasyLogger/src/elog_utils.c \
-02_Middleware_Platform/LetterShell/src/log.c \
-02_Middleware_Platform/LetterShell/src/shell_cmd_list.c \
-02_Middleware_Platform/LetterShell/src/shell_companion.c \
-02_Middleware_Platform/LetterShell/src/shell_ext.c \
-02_Middleware_Platform/LetterShell/src/shell_port.c \
-02_Middleware_Platform/LetterShell/src/shell.c \
+04_Impl/impl_middleware/EasyLogger/port/elog_port.c \
+04_Impl/impl_middleware/EasyLogger/src/elog.c \
+04_Impl/impl_middleware/EasyLogger/src/elog_async.c \
+04_Impl/impl_middleware/EasyLogger/src/elog_buf.c \
+04_Impl/impl_middleware/EasyLogger/src/elog_utils.c \
+04_Impl/impl_middleware/LetterShell/src/log.c \
+04_Impl/impl_middleware/LetterShell/src/shell_cmd_list.c \
+04_Impl/impl_middleware/LetterShell/src/shell_companion.c \
+04_Impl/impl_middleware/LetterShell/src/shell_ext.c \
+04_Impl/impl_middleware/LetterShell/src/shell_port.c \
+04_Impl/impl_middleware/LetterShell/src/shell.c \
 04_Impl/impl_bsp/Bsp_Drivers/wt588f02/handler/src/linklist.c \
 04_Impl/impl_mcu/MCU_Core_IIC/src/i2c_port.c \
 04_Impl/impl_mcu/MCU_Core_SPI/src/spi_port.c \
@@ -151,22 +151,22 @@ Core/Src/spi.c \
 04_Impl/impl_bsp/Bsp_Drivers/cst816t/driver/src/bsp_cst816t_driver.c \
 04_Impl/impl_bsp/Bsp_Drivers/em7028/driver/src/bsp_em7028_driver.c \
 04_Impl/impl_bsp/Bsp_Drivers/em7028/handler/src/bsp_em7028_handler.c \
-02_Middleware_Platform/lv-gl/lvgl_port/src/lv_port_disp.c \
-02_Middleware_Platform/lv-gl/lvgl_port/src/lv_port_indev.c \
-02_Middleware_Platform/lv-gl/lvgl_port/src/lv_port_extflash.c \
-02_Middleware_Platform/lv-gl/lvgl_ui/gui_guider.c \
-02_Middleware_Platform/lv-gl/lvgl_ui/setup_scr_screen.c \
-02_Middleware_Platform/lv-gl/lvgl_ui/setup_scr_screen_1.c \
-02_Middleware_Platform/lv-gl/lvgl_ui/setup_scr_screen_2.c \
-02_Middleware_Platform/lv-gl/lvgl_ui/widgets_init.c \
-02_Middleware_Platform/lv-gl/lvgl_ui/events_init.c \
-02_Middleware_Platform/lv-gl/lvgl_ui/analogclock/lv_analogclock.c \
-02_Middleware_Platform/lv-gl/lvgl_ui/guider_fonts/lv_font_alimama_12.c \
-02_Middleware_Platform/lv-gl/lvgl_ui/guider_fonts/lv_font_alimama_16.c \
-02_Middleware_Platform/lv-gl/lvgl_ui/guider_fonts/lv_font_alimama_24.c \
-02_Middleware_Platform/lv-gl/lvgl_ui/images/_fen_alpha_70x5.c \
-02_Middleware_Platform/lv-gl/lvgl_ui/images/_miao_alpha_70x5.c \
-02_Middleware_Platform/lv-gl/lvgl_ui/images/_time_alpha_40x5.c \
+04_Impl/impl_middleware/lvgl/lvgl_port/src/lv_port_disp.c \
+04_Impl/impl_middleware/lvgl/lvgl_port/src/lv_port_indev.c \
+04_Impl/impl_middleware/lvgl/lvgl_port/src/lv_port_extflash.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/gui_guider.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/setup_scr_screen.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/setup_scr_screen_1.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/setup_scr_screen_2.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/widgets_init.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/events_init.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/analogclock/lv_analogclock.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/guider_fonts/lv_font_alimama_12.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/guider_fonts/lv_font_alimama_16.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/guider_fonts/lv_font_alimama_24.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/images/_fen_alpha_70x5.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/images/_miao_alpha_70x5.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/images/_time_alpha_40x5.c \
 03_Platform/platform_bsp/temp_humi/bsp_wrapper_temp_humi/src/bsp_wrapper_temp_humi.c \
 04_Impl/impl_bsp/Adapter_Port/temp_humi/src/bsp_adapter_port_temp_humi.c \
 03_Platform/platform_bsp/motion/bsp_wrapper_motion/src/bsp_wrapper_motion.c \
@@ -189,9 +189,9 @@ Core/Src/spi.c \
 04_Impl/impl_bsp/Bsp_Integration/cst816t_integration/src/cst816t_integration.c \
 04_Impl/impl_bsp/Bsp_Integration/w25q64_integration/src/w25q64_integration.c \
 04_Impl/impl_bsp/Bsp_Integration/em7028_integration/src/em7028_integration.c \
-02_Middleware_Platform/heart_rate_algo/src/hr_algo_simple.c \
-02_Middleware_Platform/heart_rate_algo/src/hr_algo_biquad.c \
-02_Middleware_Platform/Ymodem/src/ymodem.c \
+04_Impl/impl_middleware/heart_rate_algo/src/hr_algo_simple.c \
+04_Impl/impl_middleware/heart_rate_algo/src/hr_algo_biquad.c \
+04_Impl/impl_middleware/Ymodem/src/ymodem.c \
 01_APP/User_Init/user_init.c \
 01_APP/User_Task_Config/src/user_task_reso_config.c \
 01_APP/User_Task_Config/src/task_higher_water_monitor.c \
@@ -226,7 +226,7 @@ Core/Src/spi.c \
 #######################################
 # LVGL sources (v8.3 - core, sw rasterizer, widgets, themes, misc)
 #######################################
-LVGL_DIR = 02_Middleware_Platform/lv-gl/lvgl
+LVGL_DIR = 04_Impl/impl_middleware/lvgl/lvgl
 C_SOURCES += $(wildcard $(LVGL_DIR)/src/core/*.c)
 C_SOURCES += $(wildcard $(LVGL_DIR)/src/hal/*.c)
 C_SOURCES += $(wildcard $(LVGL_DIR)/src/misc/*.c)
@@ -348,21 +348,21 @@ C_INCLUDES_MCU = \
 -I03_Platform/platform_mcu/MCU_Core_Watchdog/inc \
 -I03_Platform/platform_mcu/MCU_Core_IFlash/inc
 
-# 02_Middleware_Platform
+# Middleware Platform — all impl under 04_Impl/impl_middleware (含 LVGL 上游)
 C_INCLUDES_MW = \
--I02_Middleware_Platform/EasyLogger/inc \
--I02_Middleware_Platform/LetterShell/inc \
--I02_Middleware_Platform/lv-gl/lvgl \
--I02_Middleware_Platform/lv-gl/lvgl/src \
--I02_Middleware_Platform/lv-gl \
--I02_Middleware_Platform/lv-gl/lvgl_port/inc \
--I02_Middleware_Platform/lv-gl/lvgl_ui \
--I02_Middleware_Platform/lv-gl/lvgl_ui/analogclock \
--I02_Middleware_Platform/lv-gl/lvgl_ui/guider_fonts \
--I02_Middleware_Platform/lv-gl/lvgl_ui/guider_customer_fonts \
--I02_Middleware_Platform/lv-gl/lvgl_ui/images \
--I02_Middleware_Platform/heart_rate_algo/inc \
--I02_Middleware_Platform/Ymodem/inc
+-I04_Impl/impl_middleware/EasyLogger/inc \
+-I04_Impl/impl_middleware/LetterShell/inc \
+-I04_Impl/impl_middleware/lvgl/lvgl \
+-I04_Impl/impl_middleware/lvgl/lvgl/src \
+-I04_Impl/impl_middleware/lvgl \
+-I04_Impl/impl_middleware/lvgl/lvgl_port/inc \
+-I04_Impl/impl_middleware/lvgl/lvgl_ui \
+-I04_Impl/impl_middleware/lvgl/lvgl_ui/analogclock \
+-I04_Impl/impl_middleware/lvgl/lvgl_ui/guider_fonts \
+-I04_Impl/impl_middleware/lvgl/lvgl_ui/guider_customer_fonts \
+-I04_Impl/impl_middleware/lvgl/lvgl_ui/images \
+-I04_Impl/impl_middleware/heart_rate_algo/inc \
+-I04_Impl/impl_middleware/Ymodem/inc
 
 # BSP Platform — drivers (impl)
 C_INCLUDES_BSP_DRV = \
@@ -568,8 +568,8 @@ ota-image: $(BUILD_DIR)/$(TARGET).bin
 # be in place (Phase 2 setup).
 ASSETS_BIN     := $(BUILD_DIR)/assets.bin
 ASSETS_CFG     := 03_Config/inc/cfg_storage.h
-ASSETS_LV_CONF := 02_Middleware_Platform/lv-gl/lvgl/lv_conf.h
-ASSETS_DIR     := 02_Middleware_Platform/lv-gl/lvgl_ui/images
+ASSETS_LV_CONF := 04_Impl/impl_middleware/lvgl/lvgl/lv_conf.h
+ASSETS_DIR     := 04_Impl/impl_middleware/lvgl/lvgl_ui/images
 ASSETS_SRCS    := $(ASSETS_DIR)/_fen_alpha_70x5.c \
                   $(ASSETS_DIR)/_miao_alpha_70x5.c \
                   $(ASSETS_DIR)/_time_alpha_40x5.c \

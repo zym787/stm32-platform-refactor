@@ -4,5 +4,5 @@
         "**/Drivers/**": true,
         "**/Middlewares/**": true
     },
-    "cmake.sourceDirectory": "/home/xch/stm32-platform-refactor/03_Firmware/01_APP/02_Middleware_Platform/lv-gl/lvgl"
+    "cmake.sourceDirectory": "/home/xch/stm32-platform-refactor/03_Firmware/01_APP/04_Impl/impl_middleware/lvgl/lvgl"
 }

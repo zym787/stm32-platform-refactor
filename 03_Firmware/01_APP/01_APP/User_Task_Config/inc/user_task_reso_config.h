@@ -37,8 +37,8 @@
 /* ========== Production tasks ========== */
 
 /* --- Motion (MPU6050) --- */
-#define USER_TASK_MPU6050_HANDLER       0
-#define USER_TASK_UNPACK_TASK           0
+#define USER_TASK_MPU6050_HANDLER       1
+#define USER_TASK_UNPACK_TASK           1
 
 /* --- Temp / Humidity (AHT21) --- */
 #define USER_TASK_TEMP_HUMI_HANDLER     1
@@ -49,7 +49,7 @@
 #define USER_TASK_WT588_HANDLER         0
 
 /* --- Display (LVGL / ST7789) --- */
-#define USER_LVGL_TEST_TASK             0
+#define USER_LVGL_TEST_TASK             1
 
 /* --- Storage (W25Q64) --- */
 /* W25Q64_HANDLER + STORAGE_MANAGER are mandatory for the OTA path:
