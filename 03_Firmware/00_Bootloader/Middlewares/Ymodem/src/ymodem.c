@@ -290,11 +290,28 @@ static int32_t Ymodem_RxState_FileInfo(Ymodem_RxContext_t *ctx)
         // elog_info("FileInfo", "Flash erase success");
 
         /**
-        * Pre-erase the staging block in external SPI NOR before streaming
-        * payload into it. W25Q64 sector erase is the slow step (~50 ms per
-        * 4 KB sector), doing it once here keeps the data-packet path fast.
+        * No pre-erase here. The original code called
+        * Erase_Flash_Block(BLOCK_1) intending to "front-load" the W25Q
+        * erase to keep the data-packet path fast, but that comment was
+        * wrong on two counts:
+        *
+        *   1. BLOCK_SIZE = 0x80000 (512 KB), so Erase_Flash_Block was
+        *      erasing 128 sub-sectors back-to-back — ~6.4 s of solid
+        *      Flash-busy that stalled the OTA dialog right after block 0
+        *      and before block 1 (the "Bootloader hangs after starting"
+        *      symptom).
+        *
+        *   2. W25Q64_WriteData -> sfud_erase_write already does
+        *      sfud_erase() per 4 KB chunk before each sub-sector write
+        *      (see sfud.c:823). The upfront block erase was therefore a
+        *      complete double-erase — wasted ~6.4 s AND doubled the
+        *      Flash wear for nothing.
+        *
+        * Removing the call gives back the 6.4 s and halves the erase
+        * count on every OTA cycle. The data-packet path stays exactly
+        * as fast as before because sfud_erase_write was always doing
+        * the real per-sub-sector erase anyway.
         **/
-        Erase_Flash_Block(BLOCK_1);
 
         /**
         * ACK + 'C' tells the sender "filename received, please start data,
@@ -493,6 +510,24 @@ int32_t Ymodem_Receive(uint8_t *buf)
 
     DEBUG_OUT(i, YMODEM_LOG_TAG, "Starting reception... (buf @0x%08x)",
               (uint32_t)buf);
+
+    /**
+    * Kick-start: invite the sender with 'C' immediately so PC ymodem-rb
+    * starts shipping block 0 without first having to wait out NAK_TIMEOUT
+    * (which is ~100–500 ms of busy-poll on this bare-metal bootloader —
+    * the unit of NAK_TIMEOUT is "FIFO probe iterations", not ms, and a
+    * full loop at 0x100000 burns hundreds of ms of CPU at the F411 core
+    * clock). The inner-loop default branch already sends 'C' on every
+    * subsequent timeout, so this is just collapsing the first 'C' to t=0
+    * — pure latency win, no semantic change.
+    *
+    * APP doesn't need this because its OTA tooling uses a magic-byte
+    * pre-handshake (0x11 22 33) and starts block 0 unprompted, so the
+    * APP-side Receive_Byte wakes on the first DMA-idle callback without
+    * waiting on NAK_TIMEOUT. Standard ymodem-rb against this bootloader
+    * does wait for 'C', hence this kick-start.
+    **/
+    Send_Byte(CRC16);
 
     while (1)
     {
