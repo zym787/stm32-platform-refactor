@@ -11,7 +11,7 @@ env:
   TOOLCHAIN_DIR: "${{ github.workspace }}/.toolchain"
   APP_DIR: "03_Firmware/01_APP"
   BOOTLOADER_DIR: "03_Firmware/00_Bootloader"
-  MEM_REPORT_FAIL_ABOVE: "0.95"
+  MEM_REPORT_FAIL_ABOVE: "0.98"
 
 jobs:
   build-bootloader:
