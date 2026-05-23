@@ -149,6 +149,7 @@ Core/Src/spi.c \
 04_Impl/impl_bsp/Bsp_Drivers/w25q64/driver/src/bsp_w25q64_driver.c \
 04_Impl/impl_bsp/Bsp_Drivers/w25q64/handler/src/bsp_w25q64_handler.c \
 04_Impl/impl_bsp/Bsp_Drivers/cst816t/driver/src/bsp_cst816t_driver.c \
+04_Impl/impl_bsp/Bsp_Drivers/cst816t/calibration/src/bsp_cst816t_calibration.c \
 04_Impl/impl_bsp/Bsp_Drivers/em7028/driver/src/bsp_em7028_driver.c \
 04_Impl/impl_bsp/Bsp_Drivers/em7028/handler/src/bsp_em7028_handler.c \
 04_Impl/impl_middleware/lvgl/lvgl_port/src/lv_port_disp.c \
@@ -161,6 +162,7 @@ Core/Src/spi.c \
 04_Impl/impl_middleware/lvgl/lvgl_ui/widgets_init.c \
 04_Impl/impl_middleware/lvgl/lvgl_ui/events_init.c \
 04_Impl/impl_middleware/lvgl/lvgl_ui/analogclock/lv_analogclock.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/touch_calibration/src/touch_calibration_ui.c \
 04_Impl/impl_middleware/lvgl/lvgl_ui/guider_fonts/lv_font_alimama_12.c \
 04_Impl/impl_middleware/lvgl/lvgl_ui/guider_fonts/lv_font_alimama_16.c \
 04_Impl/impl_middleware/lvgl/lvgl_ui/guider_fonts/lv_font_alimama_24.c \
@@ -204,6 +206,7 @@ Core/Src/spi.c \
 01_App/User_Sensor/display/src/lvgl_display_task.c \
 01_App/User_Sensor/touch/src/cst816t_mock_test_task.c \
 01_App/User_Sensor/touch/src/cst816t_hal_test_task.c \
+01_App/User_Sensor/touch/src/touch_calibration_boot.c \
 01_App/User_Sensor/storage/src/w25q64_mock_test_task.c \
 01_App/User_Sensor/storage/src/w25q64_handler_mock_test_task.c \
 01_App/User_Sensor/storage/src/w25q64_hal_test_task.c \
@@ -358,6 +361,7 @@ C_INCLUDES_MW = \
 -I04_Impl/impl_middleware/lvgl/lvgl_port/inc \
 -I04_Impl/impl_middleware/lvgl/lvgl_ui \
 -I04_Impl/impl_middleware/lvgl/lvgl_ui/analogclock \
+-I04_Impl/impl_middleware/lvgl/lvgl_ui/touch_calibration/inc \
 -I04_Impl/impl_middleware/lvgl/lvgl_ui/guider_fonts \
 -I04_Impl/impl_middleware/lvgl/lvgl_ui/guider_customer_fonts \
 -I04_Impl/impl_middleware/lvgl/lvgl_ui/images \
@@ -376,6 +380,7 @@ C_INCLUDES_BSP_DRV = \
 -I04_Impl/impl_bsp/Bsp_Drivers/w25q64/driver/inc \
 -I04_Impl/impl_bsp/Bsp_Drivers/w25q64/handler/inc \
 -I04_Impl/impl_bsp/Bsp_Drivers/cst816t/driver/inc \
+-I04_Impl/impl_bsp/Bsp_Drivers/cst816t/calibration/inc \
 -I04_Impl/impl_bsp/Bsp_Drivers/em7028/driver/inc \
 -I04_Impl/impl_bsp/Bsp_Drivers/em7028/handler/inc \
 
@@ -419,7 +424,8 @@ C_INCLUDES_APP = \
 -I01_App/User_Init/Platform_IO_Register/inc \
 -I01_App/User_Task_Config/inc \
 -I01_App/User_Isr_handlers/inc \
--I01_App/User_Sensor/mpu6050/inc
+-I01_App/User_Sensor/mpu6050/inc \
+-I01_App/User_Sensor/touch/inc
 
 # 01_SERVICE — business-agnostic services (OTA, storage facade, future FOTA/etc)
 C_INCLUDES_SERVICE = \

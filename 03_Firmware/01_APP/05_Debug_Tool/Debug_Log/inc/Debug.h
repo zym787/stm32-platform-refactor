@@ -86,6 +86,8 @@
 #define ST7789_MOCK_LOG_TAG                   "ST7789_MOCK"
 #define CST816T_LOG_TAG                           "CST816T"
 #define CST816T_ERR_LOG_TAG                   "CST816T_ERR"
+#define TOUCH_CALIB_LOG_TAG                   "TOUCH_CALIB"
+#define TOUCH_CALIB_ERR_LOG_TAG           "TOUCH_CALIB_ERR"
 #define W25Q64_LOG_TAG                             "W25Q64"
 #define W25Q64_ERR_LOG_TAG                     "W25Q64_ERR"
 #define W25Q64_MOCK_LOG_TAG                   "W25Q64_MOCK"

@@ -48,12 +48,22 @@
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
-/* ── W25Q64 byte-offset memory map (mirrors the reference firmware) ────── */
+/* ── W25Q64 byte-offset memory map (mirrors the reference firmware) ────── *
+ * The CALIB sub-region is carved out of what used to be the front of the
+ * FLASHDB reserved region.  4 KB is the W25Q64 erase granularity, which is
+ * also the smallest unit we can rewrite — so one sector is the natural fit
+ * for the ~40-byte touch calibration record (rest stays 0xFF).  FLASHDB has
+ * no consumer yet; if it gains one it must declare its base at the post-
+ * CALIB address below. */
 #define MEMORY_OTA_START_ADDRESS         (0x000000UL)
 #define MEMORY_OTA_END_ADDRESS           (0x0FFFFFUL)
 #define MEMORY_OTA_REGION_SIZE           (MEMORY_OTA_END_ADDRESS - \
                                           MEMORY_OTA_START_ADDRESS + 1U)
-#define MEMORY_FLASHDB_START_ADDRESS     (0x100000UL)
+#define MEMORY_CALIB_START_ADDRESS       (0x100000UL)
+#define MEMORY_CALIB_END_ADDRESS         (0x100FFFUL)
+#define MEMORY_CALIB_REGION_SIZE         (MEMORY_CALIB_END_ADDRESS - \
+                                          MEMORY_CALIB_START_ADDRESS + 1U)
+#define MEMORY_FLASHDB_START_ADDRESS     (0x101000UL)
 #define MEMORY_FLASHDB_END_ADDRESS       (0x1FFFFFUL)
 #define MEMORY_FATFS_START_ADDRESS       (0x200000UL)
 #define MEMORY_FATFS_END_ADDRESS         (0x2FFFFFUL)
@@ -68,6 +78,8 @@
 #define EVENT_FATFS        (1UL << 2)
 #define EVENT_LVGL_R       (1UL << 3)
 #define EVENT_LVGL_W       (1UL << 4)
+#define EVENT_CALIB_R      (1UL << 5)
+#define EVENT_CALIB_W      (1UL << 6)
 //******************************** Defines **********************************//
 
 //******************************** Typedefs *********************************//
@@ -149,6 +161,43 @@ ext_flash_status_t Read_OtaData(uint32_t  addr,
 ext_flash_status_t Write_OtaData(uint32_t        addr,
                                  uint32_t        size,
                                  const uint8_t  *in_buf);
+
+/**
+ * @brief Blocking read from the calibration sub-region of the external flash.
+ *
+ *        The calibration sub-region is a single 4-KB sector dedicated to the
+ *        touch panel's saved affine coefficients (see cfg_touch.h for the
+ *        in-region layout).  Callers typically only need the first ~40 bytes,
+ *        but the underlying erase granularity means any write rewrites the
+ *        whole sector.
+ *
+ * @param[in]  addr     Byte offset INSIDE the calibration sub-region
+ *                      (0 .. CALIB_REGION_SIZE - 1).
+ * @param[in]  size     Number of bytes to read.
+ * @param[out] out_buf  Destination buffer.
+ *
+ * @return EXT_FLASH_OK on success, error code otherwise.
+ */
+ext_flash_status_t Read_CalibData (uint32_t  addr,
+                                   uint32_t  size,
+                                   uint8_t  *out_buf);
+
+/**
+ * @brief Blocking write (with sector auto-erase) into the calibration sub-region.
+ *
+ *        Each write erases the full 4-KB sector before programming, so the
+ *        recommended usage pattern is "stage the whole sector buffer, then
+ *        write once" rather than multiple sub-sector writes.
+ *
+ * @param[in] addr    Byte offset INSIDE the calibration sub-region.
+ * @param[in] size    Number of bytes to write.
+ * @param[in] in_buf  Source buffer.
+ *
+ * @return EXT_FLASH_OK on success, error code otherwise.
+ */
+ext_flash_status_t Write_CalibData(uint32_t        addr,
+                                   uint32_t        size,
+                                   const uint8_t  *in_buf);
 
 /**
  * @brief Storage manager task entry.  Drains the event group and dispatches

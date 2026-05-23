@@ -64,6 +64,8 @@
 #include "lv_port_indev.h"
 #include "lv_port_extflash.h"
 #include "gui_guider.h"
+
+#include "touch_calibration_boot.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
@@ -184,6 +186,21 @@ void lvgl_display_task(void *argument)
      *     the image widget, LVGL's first render walks the decoder list to
      *     identify the image source. */
     lv_port_extflash_init();
+
+    /* 5c. Touch-panel calibration.  Loads saved coefficients from W25Q64
+     *     if valid; otherwise drives the 9-point on-screen UI synchronously
+     *     before the main UI is shown.  Skipped when the touch probe failed
+     *     above (calibration requires a working panel). */
+    if (touch_ok)
+    {
+        const calibration_status_t calib_st = touch_calibration_boot_apply();
+        if (CALIBRATION_SUCCESS != calib_st)
+        {
+            DEBUG_OUT(w, TOUCH_CALIB_LOG_TAG,
+                      "calib boot: skipped/failed st=%d — raw indev",
+                      (int)calib_st);
+        }
+    }
 
     /* 6. Hand off to gui_guider's generated UI. */
     setup_ui(&guider_ui);

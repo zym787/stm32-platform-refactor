@@ -54,7 +54,9 @@
                                    EVENT_FLASHDB  | \
                                    EVENT_FATFS    | \
                                    EVENT_LVGL_R   | \
-                                   EVENT_LVGL_W)
+                                   EVENT_LVGL_W   | \
+                                   EVENT_CALIB_R  | \
+                                   EVENT_CALIB_W)
 //******************************** Defines **********************************//
 
 //******************************** Typedefs *********************************//
@@ -65,6 +67,8 @@ typedef enum
     STORAGE_OP_LVGL_WRITE,
     STORAGE_OP_OTA_READ,
     STORAGE_OP_OTA_WRITE,
+    STORAGE_OP_CALIB_READ,
+    STORAGE_OP_CALIB_WRITE,
 } storage_op_t;
 
 typedef struct
@@ -290,6 +294,78 @@ ext_flash_status_t Write_OtaData(uint32_t        addr,
                                  STORAGE_OP_OTA_WRITE);
 }
 
+/**
+ * @brief Calibration-region twin of lvgl_blocking_dispatch.
+ *
+ *        Identical handshake (mutex, request publish, event-bit, wait sem)
+ *        but range-checks against MEMORY_CALIB_REGION_SIZE so a caller
+ *        cannot accidentally write past the 4-KB block.  storage_manager_task
+ *        rebases s_pending.addr to MEMORY_CALIB_START_ADDRESS at dispatch.
+ */
+static ext_flash_status_t calib_blocking_dispatch(uint32_t      addr,
+                                                  uint32_t      size,
+                                                  uint8_t      *buf,
+                                                  storage_op_t  op,
+                                                  uint32_t  event_bit)
+{
+    if ((NULL == buf) || (0U == size))
+    {
+        return EXT_FLASH_ERRORPARAMETER;
+    }
+
+    if ((size > MEMORY_CALIB_REGION_SIZE) ||
+        ((addr + size) > MEMORY_CALIB_REGION_SIZE))
+    {
+        return EXT_FLASH_ERRORNOMEMORY;
+    }
+
+    if ((NULL == s_caller_mutex) ||
+        (NULL == s_evgrp)        ||
+        (NULL == s_done_sem))
+    {
+        return EXT_FLASH_ERRORRESOURCE;
+    }
+
+    if (OSAL_SUCCESS != osal_mutex_take(s_caller_mutex, OSAL_MAX_DELAY))
+    {
+        return EXT_FLASH_ERROR;
+    }
+
+    s_pending.addr        = addr;
+    s_pending.size        = size;
+    s_pending.buf         = buf;
+    s_pending.op          = op;
+    s_pending.last_status = WP_EXTERNFLASH_ERROR;
+
+    (void)osal_event_group_set_bits(s_evgrp, event_bit);
+
+    (void)osal_sema_take(s_done_sem, OSAL_MAX_DELAY);
+
+    ext_flash_status_t ret = translate_status(s_pending.last_status);
+
+    (void)osal_mutex_give(s_caller_mutex);
+    return ret;
+}
+
+ext_flash_status_t Read_CalibData(uint32_t  addr,
+                                  uint32_t  size,
+                                  uint8_t  *out_buf)
+{
+    return calib_blocking_dispatch(addr, size, out_buf,
+                                   STORAGE_OP_CALIB_READ, EVENT_CALIB_R);
+}
+
+ext_flash_status_t Write_CalibData(uint32_t        addr,
+                                   uint32_t        size,
+                                   const uint8_t  *in_buf)
+{
+    /* externflash_drv_write needs a non-const pointer; the underlying SPI
+     * write path only reads from this buffer, and the API is blocking, so
+     * casting away const is safe here. */
+    return calib_blocking_dispatch(addr, size, (uint8_t *)in_buf,
+                                   STORAGE_OP_CALIB_WRITE, EVENT_CALIB_W);
+}
+
 void storage_manager_task(void *argument)
 {
     (void)argument;
@@ -331,6 +407,22 @@ void storage_manager_task(void *argument)
         else if (0U != (bits_set & EVENT_LVGL_W))
         {
             const uint32_t addr_phy = MEMORY_LVGL_START_ADDRESS +
+                                      s_pending.addr;
+            st = externflash_drv_write(addr_phy, s_pending.buf, s_pending.size,
+                                       on_done_cb, NULL);
+            handled = true;
+        }
+        else if (0U != (bits_set & EVENT_CALIB_R))
+        {
+            const uint32_t addr_phy = MEMORY_CALIB_START_ADDRESS +
+                                      s_pending.addr;
+            st = externflash_drv_read(addr_phy, s_pending.buf, s_pending.size,
+                                      on_done_cb, NULL);
+            handled = true;
+        }
+        else if (0U != (bits_set & EVENT_CALIB_W))
+        {
+            const uint32_t addr_phy = MEMORY_CALIB_START_ADDRESS +
                                       s_pending.addr;
             st = externflash_drv_write(addr_phy, s_pending.buf, s_pending.size,
                                        on_done_cb, NULL);

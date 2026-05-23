@@ -4,6 +4,8 @@
  * @par dependencies
  * - lvgl.h
  * - bsp_wrapper_touch.h
+ * - bsp_cst816t_calibration.h
+ * - cfg_touch.h
  *
  * @author Ethan-Hang
  *
@@ -11,15 +13,27 @@
  *
  * Processing flow:
  *   LVGL polls indev_read_cb every LV_INDEV_DEF_READ_PERIOD ms (10 ms by
- *   default) -> we call touch_get_finger_num / touch_get_xy on the wrapper
- *   and translate the result to lv_indev_data_t {state, point}.  Gestures
- *   are not consumed here — the app uses LVGL's own click / long-press /
- *   swipe events on top.
+ *   default) -> we call touch_get_finger_num / touch_get_xy on the wrapper,
+ *   feed the raw panel pixel value through touch_calibration_apply_matrix
+ *   when a calibration is loaded, then clamp and emit the result as the
+ *   LVGL pointer state.
+ *
+ *   When the calibration UI is running it temporarily flips the bypass
+ *   flag via lv_port_indev_set_bypass(true) so the UI's LV_EVENT_PRESSED
+ *   handler can sample the raw (uncorrected) coordinate via
+ *   lv_indev_get_point().
  *
  * @version V1.0 2026-04-25
  * @version V2.0 2026-04-26
+ * @version V3.0 2026-05-23
  * @upgrade 2.0: Removed the direct bsp_cst816t_driver_t coupling; reads now
  *               flow through bsp_wrapper_touch.
+ * @upgrade 3.0: Apply calibration affine transform via
+ *               touch_calibration_apply_matrix() when calibrated.  Panel
+ *               geometry is now sourced from cfg_touch.h (single source of
+ *               truth) instead of local PANEL_* macros.  Added
+ *               lv_port_indev_set_bypass() so the calibration UI can take
+ *               raw samples.
  *
  * @note 1 tab == 4 spaces!
  *
@@ -32,20 +46,29 @@
 
 #include "lvgl.h"
 #include "bsp_wrapper_touch.h"
+#include "bsp_cst816t_calibration.h"
+#include "cfg_touch.h"
 #include "Debug.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
-#define LV_PORT_INDEV_PANEL_WIDTH       240u
-#define LV_PORT_INDEV_PANEL_HEIGHT      280u
+/* Panel rectangle (single source of truth lives in cfg_touch.h). */
+#define LV_PORT_INDEV_PANEL_WIDTH     (CFG_TOUCH_PANEL_WIDTH)
+#define LV_PORT_INDEV_PANEL_HEIGHT    (CFG_TOUCH_PANEL_HEIGHT)
 //******************************** Defines **********************************//
 
 //******************************* Declaring *********************************//
 static lv_indev_drv_t         s_indev_drv;
-static lv_point_t             s_last_point = {0, 0};
+static lv_point_t             s_last_point        = {0, 0};
+static volatile bool          s_bypass_calibration = false;
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
+void lv_port_indev_set_bypass(bool bypass)
+{
+    s_bypass_calibration = bypass;
+}
+
 /**
  * @brief      LVGL indev read callback.  Polled every 10 ms by lv_timer.
  *
@@ -87,6 +110,26 @@ static void lv_port_indev_read_cb(lv_indev_drv_t *drv, lv_indev_data_t *data)
     if (WP_TOUCH_OK != st)
     {
         return;
+    }
+
+    /**
+     * Apply the calibration affine transform unless we're inside the
+     * calibration UI itself (which needs raw samples to feed into
+     * touch_calibration_add_point).  apply_matrix is a no-op pass-through
+     * when no calibration is loaded.
+     **/
+    if (!s_bypass_calibration && touch_calibration_is_calibrated())
+    {
+        uint16_t cal_x = 0u;
+        uint16_t cal_y = 0u;
+        if (CALIBRATION_SUCCESS ==
+                touch_calibration_apply_matrix(touch_calibration_get_instance(),
+                                               x_pos, y_pos,
+                                               &cal_x, &cal_y))
+        {
+            x_pos = cal_x;
+            y_pos = cal_y;
+        }
     }
 
     /**

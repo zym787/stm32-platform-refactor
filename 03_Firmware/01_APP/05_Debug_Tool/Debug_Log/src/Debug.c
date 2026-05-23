@@ -85,7 +85,7 @@ int debug_is_tag_allowed(const char *tag)
 
     return\
             (strcmp(    RTOS_TRACE_TASK_OUT_TAG, tag) == 0)                  ||
-            (strcmp(             UNPACK_LOG_TAG, tag) == 0)                  ||
+            // (strcmp(             UNPACK_LOG_TAG, tag) == 0)                  ||
             (strcmp(      WT588_HANDLER_LOG_TAG, tag) == 0)                  ||
             (strcmp(        MPUXXXX_ERR_LOG_TAG, tag) == 0)                  ||
             (strcmp(              WT588_LOG_TAG, tag) == 0)                  ||
@@ -116,6 +116,8 @@ int debug_is_tag_allowed(const char *tag)
             (strcmp(         ST7789_ERR_LOG_TAG, tag) == 0)                  ||
             (strcmp(        CST816T_ERR_LOG_TAG, tag) == 0)                  ||
             (strcmp(            CST816T_LOG_TAG, tag) == 0)                  ||
+            (strcmp(    TOUCH_CALIB_ERR_LOG_TAG, tag) == 0)                  ||
+            (strcmp(        TOUCH_CALIB_LOG_TAG, tag) == 0)                  ||
             (strcmp(             W25Q64_LOG_TAG, tag) == 0)                  ||
             (strcmp(         W25Q64_ERR_LOG_TAG, tag) == 0)                  ||
             // (strcmp(       W25Q64_MOCK_LOG_TAG, tag) == 0)                  ||
@@ -203,10 +205,12 @@ uint8_t debug_tag_to_rtt_channel(const char *tag)
         return DEBUG_RTT_CH_DISPLAY;
     }
 
-    /* === Terminal 6 : CST816T capacitive touch driver === */
+    /* === Terminal 6 : CST816T capacitive touch driver + calibration === */
     if (
             (strcmp(            CST816T_LOG_TAG, tag) == 0)                  ||
-            (strcmp(        CST816T_ERR_LOG_TAG, tag) == 0)
+            (strcmp(        CST816T_ERR_LOG_TAG, tag) == 0)                  ||
+            (strcmp(        TOUCH_CALIB_LOG_TAG, tag) == 0)                  ||
+            (strcmp(    TOUCH_CALIB_ERR_LOG_TAG, tag) == 0)
        )
     {
         return DEBUG_RTT_CH_TOUCH;
