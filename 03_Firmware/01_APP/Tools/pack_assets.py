@@ -8,15 +8,21 @@ byte offset 0x300000 = LVGL partition start).
 Output layout follows ``00_Config/inc/cfg_storage.h``:
 
     offset 0x000000  CFG_LVGL_ASSET_MAGIC          (4 B, little-endian)
-    offset 0x000100  fen sprite                    (1050 B)
-    offset 0x000600  miao sprite                   (1050 B)
-    offset 0x000B00  time sprite                   ( 600 B)
-    offset 0x002000  biaopan1 background           (172800 B = 240x240x3)
+    offset 0x000100  fen sprite                    (1920 B = 80x8x3)
+    offset 0x000900  miao sprite                   (1050 B = 70x5x3)
+    offset 0x000E00  time sprite                   (1200 B = 50x8x3)
+    offset 0x002000  MDLBG background              (201600 B = 240x280x3)
+    offset 0x034000  biaopan1 background           (120000 B = 200x200x3)
     ...              0xFF padding to next sector
 
 Sprite + background bytes are extracted from the LVGL-converter
-``_<name>_alpha_*.c`` files, picking the ``#if LV_COLOR_DEPTH == ...``
-branch that matches lv_conf.h.
+``_<name>_alpha_*.c`` files (and ``_biaopan1_200x200.c`` for the dial),
+picking the ``#if LV_COLOR_DEPTH == ...`` branch that matches lv_conf.h.
+
+The two large backgrounds (MDLBG / biaopan1) are NOT shipped in firmware
+.rodata; the .c files live only in ``project/test_01/generated/images/``
+which this script reads as the source of truth.  Three sprite .c files
+live alongside this script's `--image-dir` (the regular lvgl_ui/images/).
 """
 
 import argparse
@@ -24,12 +30,18 @@ import re
 import sys
 from pathlib import Path
 
-# (cfg_macro_stem, c_filename, array_var_name)
+# (cfg_macro_stem, c_filename, array_var_name, source_dir_kind)
+#   source_dir_kind: "image-dir" → uses --image-dir
+#                    "ext-dir"   → uses --ext-image-dir (the SquareLine project)
 ASSETS = [
-    ("FEN",      "_fen_alpha_70x5.c",       "_fen_alpha_70x5_map"),
-    ("MIAO",     "_miao_alpha_70x5.c",      "_miao_alpha_70x5_map"),
-    ("TIME",     "_time_alpha_40x5.c",      "_time_alpha_40x5_map"),
-    ("BIAOPAN1", "_biaopan1_alpha_240x240.c", "_biaopan1_alpha_240x240_map"),
+    ("FEN",         "_fen_alpha_80x8.c",         "_fen_alpha_80x8_map",         "image-dir"),
+    ("MIAO",        "_miao_alpha_70x5.c",        "_miao_alpha_70x5_map",        "image-dir"),
+    ("TIME",        "_time_alpha_50x8.c",        "_time_alpha_50x8_map",        "image-dir"),
+    ("MDLBG",       "_MDLBG_alpha_240x280.c",    "_MDLBG_alpha_240x280_map",    "ext-dir"),
+    ("BIAOPAN1",    "_biaopan1_200x200.c",       "_biaopan1_200x200_map",       "ext-dir"),
+    ("WATCHDIGHT1", "_watchdight1_alpha_60x60.c","_watchdight1_alpha_60x60_map","image-dir"),
+    ("WATCHDIGHT2", "_watchdight2_alpha_60x60.c","_watchdight2_alpha_60x60_map","image-dir"),
+    ("WATCHDIGHT3", "_watchdight3_alpha_60x60.c","_watchdight3_alpha_60x60_map","image-dir"),
 ]
 
 _CFG_RE = re.compile(
@@ -95,10 +107,13 @@ def extract_array_bytes(c_file: Path, var: str, depth: int, swap: int) -> bytes:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--config",    required=True, type=Path)
-    ap.add_argument("--lv-conf",   required=True, type=Path)
-    ap.add_argument("--image-dir", required=True, type=Path)
-    ap.add_argument("--output",    required=True, type=Path)
+    ap.add_argument("--config",        required=True, type=Path)
+    ap.add_argument("--lv-conf",       required=True, type=Path)
+    ap.add_argument("--image-dir",     required=True, type=Path,
+                    help="lvgl_ui/images dir (sprite .c files compiled into firmware)")
+    ap.add_argument("--ext-image-dir", required=True, type=Path,
+                    help="project/test_01/generated/images dir (large bg .c files)")
+    ap.add_argument("--output",        required=True, type=Path)
     args = ap.parse_args()
 
     cfg = parse_macros(args.config)
@@ -107,38 +122,42 @@ def main() -> None:
         magic_off   = cfg["CFG_LVGL_ASSET_MAGIC_OFFSET"]
         magic_size  = cfg["CFG_LVGL_ASSET_MAGIC_SIZE"]
         sector_size = cfg["CFG_W25Q64_SECTOR_SIZE"]
-        bp1_off     = cfg["CFG_LVGL_ASSET_BIAOPAN1_OFFSET"]
-        bp1_w       = cfg["CFG_LVGL_ASSET_BIAOPAN1_W"]
-        bp1_h       = cfg["CFG_LVGL_ASSET_BIAOPAN1_H"]
-        bp1_px      = cfg["CFG_LVGL_ASSET_BIAOPAN1_PX_SIZE"]
     except KeyError as e:
         sys.exit(f"missing macro {e} in {args.config}")
     if magic_size != 4:
         sys.exit("magic must be 4 bytes")
 
-    # cfg_storage.h defines CFG_LVGL_ASSET_BIAOPAN1_SIZE as W*H*PX_SIZE.  The
-    # parser only resolves literal-valued macros, so synthesise it here so
-    # the per-asset lookup loop below finds the expected size.
-    cfg["CFG_LVGL_ASSET_BIAOPAN1_SIZE"] = bp1_w * bp1_h * bp1_px
+    # cfg_storage.h defines per-asset SIZE as W*H*PX_SIZE.  The macro parser
+    # only resolves literal-valued macros, so synthesise composite SIZEs here.
+    for name, *_ in ASSETS:
+        w = cfg.get(f"CFG_LVGL_ASSET_{name}_W")
+        h = cfg.get(f"CFG_LVGL_ASSET_{name}_H")
+        px = cfg.get(f"CFG_LVGL_ASSET_{name}_PX_SIZE")
+        if w is not None and h is not None and px is not None:
+            cfg[f"CFG_LVGL_ASSET_{name}_SIZE"] = w * h * px
 
     depth, swap = read_lv_color(args.lv_conf)
 
     # Round footprint up to sector — JFlash erases per sector, predictable size.
-    footprint = bp1_off + cfg["CFG_LVGL_ASSET_BIAOPAN1_SIZE"]
+    last_off = max(cfg[f"CFG_LVGL_ASSET_{name}_OFFSET"] for name, *_ in ASSETS)
+    last_name = next(name for name, *_ in ASSETS
+                     if cfg[f"CFG_LVGL_ASSET_{name}_OFFSET"] == last_off)
+    footprint = last_off + cfg[f"CFG_LVGL_ASSET_{last_name}_SIZE"]
     aligned = -(-footprint // sector_size) * sector_size
     buf = bytearray(b"\xff" * aligned)
     buf[magic_off:magic_off + 4] = magic.to_bytes(4, "little")
 
     print(f"  LV_COLOR_DEPTH={depth}, LV_COLOR_16_SWAP={swap}", file=sys.stderr)
     print(f"  magic 0x{magic:08x} @ 0x{magic_off:06x}  4 B", file=sys.stderr)
-    for name, fname, var in ASSETS:
+    for name, fname, var, src_kind in ASSETS:
         offset = cfg[f"CFG_LVGL_ASSET_{name}_OFFSET"]
         size   = cfg[f"CFG_LVGL_ASSET_{name}_SIZE"]
-        data   = extract_array_bytes(args.image_dir / fname, var, depth, swap)
+        src_dir = args.image_dir if src_kind == "image-dir" else args.ext_image_dir
+        data   = extract_array_bytes(src_dir / fname, var, depth, swap)
         if len(data) != size:
             sys.exit(f"{name}: extracted {len(data)} bytes, expected {size}")
         buf[offset:offset + size] = data
-        print(f"  {name.lower():<5} @ 0x{offset:06x}  {size:5d} B  ({fname})",
+        print(f"  {name.lower():<8} @ 0x{offset:06x}  {size:6d} B  ({fname})",
               file=sys.stderr)
 
     args.output.parent.mkdir(parents=True, exist_ok=True)

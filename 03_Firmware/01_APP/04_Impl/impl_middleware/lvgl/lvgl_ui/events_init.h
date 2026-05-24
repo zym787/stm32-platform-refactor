@@ -18,8 +18,9 @@ extern "C" {
 
 void events_init(lv_ui *ui);
 
-void events_init_screen(lv_ui *ui);
-void events_init_screen_1(lv_ui *ui);
+void events_init_Clock_1(lv_ui *ui);
+void events_init_Clock_2(lv_ui *ui);
+void events_init_Clock_3(lv_ui *ui);
 
 #ifdef __cplusplus
 }

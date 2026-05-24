@@ -156,19 +156,28 @@ Core/Src/spi.c \
 04_Impl/impl_middleware/lvgl/lvgl_port/src/lv_port_indev.c \
 04_Impl/impl_middleware/lvgl/lvgl_port/src/lv_port_extflash.c \
 04_Impl/impl_middleware/lvgl/lvgl_ui/gui_guider.c \
-04_Impl/impl_middleware/lvgl/lvgl_ui/setup_scr_screen.c \
-04_Impl/impl_middleware/lvgl/lvgl_ui/setup_scr_screen_1.c \
-04_Impl/impl_middleware/lvgl/lvgl_ui/setup_scr_screen_2.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/setup_scr_Clock_1.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/setup_scr_Clock_2.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/setup_scr_Clock_3.c \
 04_Impl/impl_middleware/lvgl/lvgl_ui/widgets_init.c \
 04_Impl/impl_middleware/lvgl/lvgl_ui/events_init.c \
 04_Impl/impl_middleware/lvgl/lvgl_ui/analogclock/lv_analogclock.c \
 04_Impl/impl_middleware/lvgl/lvgl_ui/touch_calibration/src/touch_calibration_ui.c \
 04_Impl/impl_middleware/lvgl/lvgl_ui/guider_fonts/lv_font_alimama_12.c \
 04_Impl/impl_middleware/lvgl/lvgl_ui/guider_fonts/lv_font_alimama_16.c \
-04_Impl/impl_middleware/lvgl/lvgl_ui/guider_fonts/lv_font_alimama_24.c \
-04_Impl/impl_middleware/lvgl/lvgl_ui/images/_fen_alpha_70x5.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/guider_fonts/lv_font_interttf_10.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/guider_fonts/lv_font_interttf_24.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/images/_sheshidu_alpha_10x10.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/images/_wather16x16_alpha_16x16.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/images/_heart16x16_alpha_16x16.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/images/_KLL16x16_alpha_16x16.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/images/_foot16x16_alpha_16x16.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/images/_time_alpha_50x8.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/images/_fen_alpha_80x8.c \
 04_Impl/impl_middleware/lvgl/lvgl_ui/images/_miao_alpha_70x5.c \
-04_Impl/impl_middleware/lvgl/lvgl_ui/images/_time_alpha_40x5.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/images/_Ellipse_alpha_40x40.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/images/_Stime_alpha_16x8.c \
+04_Impl/impl_middleware/lvgl/lvgl_ui/images/_Sfen_alpha_21x6.c \
 03_Platform/platform_bsp/temp_humi/bsp_wrapper_temp_humi/src/bsp_wrapper_temp_humi.c \
 04_Impl/impl_bsp/Adapter_Port/temp_humi/src/bsp_adapter_port_temp_humi.c \
 03_Platform/platform_bsp/motion/bsp_wrapper_motion/src/bsp_wrapper_motion.c \
@@ -576,10 +585,14 @@ ASSETS_BIN     := $(BUILD_DIR)/assets.bin
 ASSETS_CFG     := 00_Config/inc/cfg_storage.h
 ASSETS_LV_CONF := 04_Impl/impl_middleware/lvgl/lvgl/lv_conf.h
 ASSETS_DIR     := 04_Impl/impl_middleware/lvgl/lvgl_ui/images
-ASSETS_SRCS    := $(ASSETS_DIR)/_fen_alpha_70x5.c \
+# Large backgrounds (MDLBG 240x280, biaopan1 200x200) are NOT compiled into
+# firmware; their .c files live only in the SquareLine project export.
+ASSETS_EXT_DIR := project/test_01/generated/images
+ASSETS_SRCS    := $(ASSETS_DIR)/_fen_alpha_80x8.c \
                   $(ASSETS_DIR)/_miao_alpha_70x5.c \
-                  $(ASSETS_DIR)/_time_alpha_40x5.c \
-                  $(ASSETS_DIR)/_biaopan1_alpha_240x240.c
+                  $(ASSETS_DIR)/_time_alpha_50x8.c \
+                  $(ASSETS_EXT_DIR)/_MDLBG_alpha_240x280.c \
+                  $(ASSETS_EXT_DIR)/_biaopan1_200x200.c
 JFLASH_PRJ     := Tools/segger/jflash/411_w25q64.jflash
 # Absolute path is used because SEGGER's installer doesn't add JFlash.exe to
 # Windows PATH.  Override with `make flash-assets JFLASH_EXE=...` if installed
@@ -590,10 +603,11 @@ pack-assets: $(ASSETS_BIN)
 
 $(ASSETS_BIN): Tools/pack_assets.py $(ASSETS_CFG) $(ASSETS_LV_CONF) $(ASSETS_SRCS) | $(BUILD_DIR)
 	@cd Tools && uv run pack_assets.py \
-	    --config   "../$(ASSETS_CFG)" \
-	    --lv-conf  "../$(ASSETS_LV_CONF)" \
-	    --image-dir "../$(ASSETS_DIR)" \
-	    --output   "../$@"
+	    --config        "../$(ASSETS_CFG)" \
+	    --lv-conf       "../$(ASSETS_LV_CONF)" \
+	    --image-dir     "../$(ASSETS_DIR)" \
+	    --ext-image-dir "../$(ASSETS_EXT_DIR)" \
+	    --output        "../$@"
 
 flash-assets: $(ASSETS_BIN)
 	@PRJ=$$(wslpath -w "$(JFLASH_PRJ)" 2>/dev/null || echo "$(JFLASH_PRJ)"); \

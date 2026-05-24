@@ -61,6 +61,7 @@
 static lv_indev_drv_t         s_indev_drv;
 static lv_point_t             s_last_point        = {0, 0};
 static volatile bool          s_bypass_calibration = false;
+static bool                   s_prev_pressed       = false;
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
@@ -101,6 +102,18 @@ static void lv_port_indev_read_cb(lv_indev_drv_t *drv, lv_indev_data_t *data)
     }
     if (0u == finger_num)
     {
+        /**
+         * Release edge: log once when the finger lifts.  Skipped if we
+         * never reported a press to begin with — keeps the line count
+         * proportional to real user actions, not the 10 ms poll cadence.
+         **/
+        if (s_prev_pressed)
+        {
+            DEBUG_OUT(i, CST816T_LOG_TAG,
+                      "tp release @ (%d,%d)",
+                      (int)s_last_point.x, (int)s_last_point.y);
+            s_prev_pressed = false;
+        }
         return;
     }
 
@@ -111,6 +124,11 @@ static void lv_port_indev_read_cb(lv_indev_drv_t *drv, lv_indev_data_t *data)
     {
         return;
     }
+
+    /* Capture the raw value before calibration so the press-edge log can
+     * report both raw and calibrated coordinates side by side. */
+    const uint16_t raw_x = x_pos;
+    const uint16_t raw_y = y_pos;
 
     /**
      * Apply the calibration affine transform unless we're inside the
@@ -150,6 +168,21 @@ static void lv_port_indev_read_cb(lv_indev_drv_t *drv, lv_indev_data_t *data)
     s_last_point.y = (lv_coord_t)y_pos;
     data->state    = LV_INDEV_STATE_PRESSED;
     data->point    = s_last_point;
+
+    /**
+     * Press edge: log once per finger-down.  bypass=1 means the calibration
+     * UI is sampling raw values, so calling out the bypass state in the
+     * line keeps the trace unambiguous when reading RTT after the fact.
+     **/
+    if (!s_prev_pressed)
+    {
+        DEBUG_OUT(i, CST816T_LOG_TAG,
+                  "tp press  raw(%u,%u) -> screen(%d,%d) [bypass=%u]",
+                  (unsigned)raw_x, (unsigned)raw_y,
+                  (int)s_last_point.x, (int)s_last_point.y,
+                  (unsigned)s_bypass_calibration);
+        s_prev_pressed = true;
+    }
 }
 
 bool lv_port_indev_init(void)

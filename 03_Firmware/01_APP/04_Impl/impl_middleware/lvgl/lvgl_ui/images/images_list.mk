@@ -1,1 +1,1 @@
-GEN_CSRCS += _biaopan1_alpha_240x240.c _time_alpha_40x5.c _fen_alpha_70x5.c _miao_alpha_70x5.c
+GEN_CSRCS += _sheshidu_alpha_10x10.c _wather16x16_alpha_16x16.c _heart16x16_alpha_16x16.c _KLL16x16_alpha_16x16.c _foot16x16_alpha_16x16.c _time_alpha_50x8.c _fen_alpha_80x8.c _miao_alpha_70x5.c _Ellipse_alpha_40x40.c _Stime_alpha_16x8.c _Sfen_alpha_21x6.c

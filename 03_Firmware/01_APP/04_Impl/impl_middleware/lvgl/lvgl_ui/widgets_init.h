@@ -15,10 +15,6 @@ extern "C" {
 
 #include "lvgl.h"
 #include "gui_guider.h"
-/* Pull lv_analogclock.h here so every translation unit that includes
- * widgets_init.h (e.g. setup_scr_screen.c) sees lv_analogclock_create and
- * gets LV_USE_ANALOGCLOCK predefined to 1 by the analogclock header. */
-#include "lv_analogclock.h"
 
 __attribute__((unused)) void kb_event_cb(lv_event_t *e);
 __attribute__((unused)) void ta_event_cb(lv_event_t *e);
@@ -27,7 +23,7 @@ void clock_count(int *hour, int *min, int *sec);
 #endif
 
 
-void screen_analog_clock_1_timer(lv_timer_t *timer);
+void Clock_3_analog_clock_1_timer(lv_timer_t *timer);
 
 #ifdef __cplusplus
 }

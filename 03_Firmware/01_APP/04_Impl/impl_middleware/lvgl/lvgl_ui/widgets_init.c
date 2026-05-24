@@ -10,7 +10,9 @@
 #include "lvgl.h"
 #include "gui_guider.h"
 #include "widgets_init.h"
+#include "lv_analogclock.h"
 #include <stdlib.h>
+#include <string.h>
 
 
 __attribute__((unused)) void kb_event_cb (lv_event_t *e) {
@@ -77,16 +79,16 @@ void clock_count(int *hour, int *min, int *sec)
 
 
 
-extern int screen_analog_clock_1_hour_value;
-extern int screen_analog_clock_1_min_value;
-extern int screen_analog_clock_1_sec_value;
+extern int Clock_3_analog_clock_1_hour_value;
+extern int Clock_3_analog_clock_1_min_value;
+extern int Clock_3_analog_clock_1_sec_value;
 
-void screen_analog_clock_1_timer(lv_timer_t *timer)
+void Clock_3_analog_clock_1_timer(lv_timer_t *timer)
 {
-    clock_count(&screen_analog_clock_1_hour_value, &screen_analog_clock_1_min_value, &screen_analog_clock_1_sec_value);
-    if (lv_obj_is_valid(guider_ui.screen_analog_clock_1))
+    clock_count(&Clock_3_analog_clock_1_hour_value, &Clock_3_analog_clock_1_min_value, &Clock_3_analog_clock_1_sec_value);
+    if (lv_obj_is_valid(guider_ui.Clock_3_analog_clock_1))
     {
-        lv_analogclock_set_time(guider_ui.screen_analog_clock_1, screen_analog_clock_1_hour_value, screen_analog_clock_1_min_value, screen_analog_clock_1_sec_value);
+        lv_analogclock_set_time(guider_ui.Clock_3_analog_clock_1, Clock_3_analog_clock_1_hour_value, Clock_3_analog_clock_1_min_value, Clock_3_analog_clock_1_sec_value);
     }
 }
 

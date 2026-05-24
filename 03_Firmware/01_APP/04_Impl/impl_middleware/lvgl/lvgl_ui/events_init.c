@@ -16,56 +16,7 @@
 #endif
 
 
-static void screen_event_handler (lv_event_t *e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
-    switch (code) {
-    case LV_EVENT_LONG_PRESSED:
-    {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_1, guider_ui.screen_1_del, &guider_ui.screen_del, setup_scr_screen_1, LV_SCR_LOAD_ANIM_NONE, 200, 200, false, true);
-        break;
-    }
-    default:
-        break;
-    }
-}
-
-static void screen_img_1_event_handler (lv_event_t *e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
-    switch (code) {
-    case LV_EVENT_LONG_PRESSED:
-    {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_1, guider_ui.screen_1_del, &guider_ui.screen_del, setup_scr_screen_1, LV_SCR_LOAD_ANIM_NONE, 200, 200, false, true);
-        break;
-    }
-    default:
-        break;
-    }
-}
-
-static void screen_analog_clock_1_event_handler (lv_event_t *e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
-    switch (code) {
-    case LV_EVENT_LONG_PRESSED:
-    {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_1, guider_ui.screen_1_del, &guider_ui.screen_del, setup_scr_screen_1, LV_SCR_LOAD_ANIM_NONE, 200, 200, false, true);
-        break;
-    }
-    default:
-        break;
-    }
-}
-
-void events_init_screen (lv_ui *ui)
-{
-    lv_obj_add_event_cb(ui->screen, screen_event_handler, LV_EVENT_ALL, ui);
-    lv_obj_add_event_cb(ui->screen_img_1, screen_img_1_event_handler, LV_EVENT_ALL, ui);
-    lv_obj_add_event_cb(ui->screen_analog_clock_1, screen_analog_clock_1_event_handler, LV_EVENT_ALL, ui);
-}
-
-static void screen_1_event_handler (lv_event_t *e)
+static void Clock_1_event_handler (lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     switch (code) {
@@ -76,7 +27,7 @@ static void screen_1_event_handler (lv_event_t *e)
         case LV_DIR_RIGHT:
         {
             lv_indev_wait_release(lv_indev_get_act());
-            ui_load_scr_animation(&guider_ui, &guider_ui.screen_2, guider_ui.screen_2_del, &guider_ui.screen_1_del, setup_scr_screen_2, LV_SCR_LOAD_ANIM_NONE, 200, 200, false, true);
+            ui_load_scr_animation(&guider_ui, &guider_ui.Clock_2, guider_ui.Clock_2_del, &guider_ui.Clock_1_del, setup_scr_Clock_2, LV_SCR_LOAD_ANIM_OVER_RIGHT, 200, 0, true, true);
             break;
         }
         default:
@@ -89,9 +40,68 @@ static void screen_1_event_handler (lv_event_t *e)
     }
 }
 
-void events_init_screen_1 (lv_ui *ui)
+void events_init_Clock_1 (lv_ui *ui)
 {
-    lv_obj_add_event_cb(ui->screen_1, screen_1_event_handler, LV_EVENT_ALL, ui);
+    lv_obj_add_event_cb(ui->Clock_1, Clock_1_event_handler, LV_EVENT_ALL, ui);
+}
+
+static void Clock_2_event_handler (lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    switch (code) {
+    case LV_EVENT_GESTURE:
+    {
+        lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
+        switch(dir) {
+        case LV_DIR_RIGHT:
+        {
+            lv_indev_wait_release(lv_indev_get_act());
+            ui_load_scr_animation(&guider_ui, &guider_ui.Clock_3, guider_ui.Clock_3_del, &guider_ui.Clock_2_del, setup_scr_Clock_3, LV_SCR_LOAD_ANIM_OVER_RIGHT, 200, 0, true, true);
+            break;
+        }
+        default:
+            break;
+        }
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+void events_init_Clock_2 (lv_ui *ui)
+{
+    lv_obj_add_event_cb(ui->Clock_2, Clock_2_event_handler, LV_EVENT_ALL, ui);
+}
+
+static void Clock_3_event_handler (lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    switch (code) {
+    case LV_EVENT_GESTURE:
+    {
+        lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
+        switch(dir) {
+        case LV_DIR_RIGHT:
+        {
+            lv_indev_wait_release(lv_indev_get_act());
+
+            ui_load_scr_animation(&guider_ui, &guider_ui.Clock_1, guider_ui.Clock_1_del, &guider_ui.Clock_3_del, setup_scr_Clock_1, LV_SCR_LOAD_ANIM_OVER_RIGHT, 200, 2, false, false);
+            break;
+        }
+        default:
+            break;
+        }
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+void events_init_Clock_3 (lv_ui *ui)
+{
+    lv_obj_add_event_cb(ui->Clock_3, Clock_3_event_handler, LV_EVENT_ALL, ui);
 }
 
 

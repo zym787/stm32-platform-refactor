@@ -10,6 +10,8 @@
 #include "lvgl.h"
 #include <stdio.h>
 #include "gui_guider.h"
+#include "widgets_init.h"
+
 #if LV_USE_GUIDER_SIMULATOR && LV_USE_FREEMASTER
 #include "gg_external_data.h"
 #endif
@@ -73,14 +75,20 @@ void ui_animation(void * var, int32_t duration, int32_t delay, int32_t start_val
 void init_scr_del_flag(lv_ui *ui)
 {
 
-    ui->screen_del = true;
-    ui->screen_1_del = true;
-    ui->screen_2_del = true;
+    ui->Clock_1_del = true;
+    ui->Clock_2_del = true;
+    ui->Clock_3_del = true;
 }
 
 void setup_ui(lv_ui *ui)
 {
     init_scr_del_flag(ui);
-    setup_scr_screen(ui);
-    lv_scr_load(ui->screen);
+    init_keyboard(ui);
+    setup_scr_Clock_1(ui);
+    lv_scr_load(ui->Clock_1);
+}
+
+void init_keyboard(lv_ui *ui)
+{
+
 }
