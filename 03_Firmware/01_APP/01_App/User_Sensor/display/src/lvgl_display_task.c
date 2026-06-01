@@ -19,7 +19,8 @@
  * Processing flow:
  *   display_drv_init -> display_fill_color(BLACK) ->
  *   touch_drv_init  -> touch_get_chip_id (probe) ->
- *   lv_init -> lv_port_disp_init -> lv_port_indev_init ->
+ *   lv_init -> lv_log_register_print_cb (bridge to DEBUG_OUT) ->
+ *   lv_port_disp_init -> lv_port_indev_init ->
  *   setup_ui(&guider_ui) ->
  *   loop { lv_timer_handler; delay 5 ms }
  *
@@ -52,6 +53,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "user_task_reso_config.h"
 #include "bsp_wrapper_display.h"
@@ -87,6 +89,40 @@ lv_ui guider_ui;
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
+
+/**
+ * @brief LVGL log bridge: receives pre-formatted log buffers from LVGL's
+ *        internal _lv_log_add() and routes them through the project's
+ *        centralized DEBUG_OUT → EasyLogger → RTT pipeline.
+ *
+ *        LVGL's buffer ends with '\n'; we strip it because DEBUG_OUT
+ *        (EasyLogger) appends its own line terminator.
+ *
+ * @param[in] buf : NUL-terminated log string from LVGL.
+ */
+static void lvgl_log_output_cb(const char *buf)
+{
+    if (NULL == buf)
+    {
+        return;
+    }
+
+    size_t len = strlen(buf);
+    if ((len > 0U) && ('\n' == buf[len - 1U]))
+    {
+        /* Temporarily strip trailing '\n' on the stack.  The buffer from
+         * LVGL is a stack-local in _lv_log_add(); we restore it after. */
+        char *const mut_buf = (char *const)buf;
+        mut_buf[len - 1U]   = '\0';
+        DEBUG_OUT(i, LVGL_LOG_TAG, "%s", buf);
+        mut_buf[len - 1U]   = '\n';
+    }
+    else
+    {
+        DEBUG_OUT(i, LVGL_LOG_TAG, "%s", buf);
+    }
+}
+
 /**
  * @brief      LVGL + gui_guider task entry: brings up display and touch
  *             through the platform wrapper APIs, then hands control to
@@ -151,6 +187,7 @@ void lvgl_display_task(void *argument)
 
     /* 3. LVGL core + display port. */
     lv_init();
+    lv_log_register_print_cb(lvgl_log_output_cb);
     if (!lv_port_disp_init())
     {
         DEBUG_OUT(e, ST7789_ERR_LOG_TAG, "lvgl disp port init failed");

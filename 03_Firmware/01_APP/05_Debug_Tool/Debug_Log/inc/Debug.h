@@ -104,6 +104,7 @@
 #define YMODEM_FILE_LOG_TAG                   "YMODEM_FILE"
 #define YMODEM_DATA_LOG_TAG                   "YMODEM_DATA"
 #define YMODEM_PACKET_LOG_TAG               "YMODEM_PACKET"
+#define LVGL_LOG_TAG                                 "LVGL"
 /*
  * ──────────────────────── ITM/SWO Tag Assignments ───────────────────────── *
  *                                                                            *

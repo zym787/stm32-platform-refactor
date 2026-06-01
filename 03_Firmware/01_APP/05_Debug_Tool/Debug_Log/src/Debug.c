@@ -133,7 +133,8 @@ int debug_is_tag_allowed(const char *tag)
             (strcmp(             YMODEM_LOG_TAG, tag) == 0)                  ||
             (strcmp(        YMODEM_FILE_LOG_TAG, tag) == 0)                  ||
             (strcmp(        YMODEM_DATA_LOG_TAG, tag) == 0)                  ||
-            (strcmp(      YMODEM_PACKET_LOG_TAG, tag) == 0)
+            (strcmp(      YMODEM_PACKET_LOG_TAG, tag) == 0)                  ||
+            (strcmp(               LVGL_LOG_TAG, tag) == 0)
             ;
 }
 
@@ -199,7 +200,8 @@ uint8_t debug_tag_to_rtt_channel(const char *tag)
     if (
             (strcmp(             ST7789_LOG_TAG, tag) == 0)                  ||
             (strcmp(        ST7789_MOCK_LOG_TAG, tag) == 0)                  ||
-            (strcmp(         ST7789_ERR_LOG_TAG, tag) == 0)
+            (strcmp(         ST7789_ERR_LOG_TAG, tag) == 0)                  
+            // (strcmp(               LVGL_LOG_TAG, tag) == 0)
        )
     {
         return DEBUG_RTT_CH_DISPLAY;
