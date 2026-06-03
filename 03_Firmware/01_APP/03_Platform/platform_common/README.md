@@ -1,6 +1,6 @@
-# 02_Common_Platform
+# platform_common — 公共平台类型
 
-`02_*_Platform` 系列里的"基底层"，给 OS / MCU / BSP / Middleware 四个 platform，以及上面的 APP / SERVICE 提供共同的类型与错误码词汇表。
+`03_Platform/` 系列里的基底层，给 OS / MCU / BSP / Middleware 四个 platform，以及上面的 APP / Service 提供共同的类型与错误码词汇表。
 
 ## 文件
 
@@ -21,7 +21,7 @@
 ## 边界
 
 - **不放** delay / sleep / tick —— OS（osal_task_delay）和 MCU（systick）各自负责。
-- **不放** 日志/断言宏 —— 在 04_Debug_Tool。
+- **不放** 日志/断言宏 —— 在 `05_Debug_Tool/`。
 - **不放** OSAL_* —— `platform_err_t` 是新写代码的统一错误码，OSAL_* 不强制迁移；两者数值上 `OSAL_SUCCESS == PLATFORM_OK == 0`，可在 service 边界相互转换。
 
 ## 为什么不直接用 stdint.h
@@ -37,6 +37,6 @@
 | 教学骨架 | 本工程 |
 |---|---|
 | `04_Impl/impl_board/board_types.h` | 跳过——直接用 stdint.h（项目早期已铺开） |
-| `03_Platform/platform_common/platform_type.h` | `02_Common_Platform/inc/platform_type.h` |
-| `03_Platform/platform_common/platform_error.h` | `02_Common_Platform/inc/platform_error.h` |
-| `03_Platform/platform_common/platform_def.h` | `02_Common_Platform/inc/platform_def.h` |
+| `03_Platform/platform_common/platform_type.h` | `03_Platform/platform_common/inc/platform_type.h` |
+| `03_Platform/platform_common/platform_error.h` | `03_Platform/platform_common/inc/platform_error.h` |
+| `03_Platform/platform_common/platform_def.h` | `03_Platform/platform_common/inc/platform_def.h` |

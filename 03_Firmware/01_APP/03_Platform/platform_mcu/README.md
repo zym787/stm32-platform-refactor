@@ -1,4 +1,4 @@
-# 02_MCU_Platform — MCU 端口抽象
+# platform_mcu — MCU 端口抽象
 
 把"芯片相关"的所有触碰收在这一层（HAL 调用、寄存器、ISR、PRIMASK 关中断）。BSP / Service / APP 一律通过 `mcu_*_port.h` 的稳定 API 操作硬件；换 MCU 只改这一层。
 
@@ -25,7 +25,7 @@
 
 ```
 MCU_Core_*  ──>  ST HAL / CMSIS / 寄存器
-            ──>  02_OS_Platform/  (osal_sema / osal_mutex，仅在 *_port 公开 API 内部)
+            ──>  03_Platform/platform_os/  (osal_sema / osal_mutex，仅在 *_port 公开 API 内部)
 ```
 
-不依赖 `01_APP/`、`01_SERVICE/`、`02_BSP_Platform/`。
+不依赖 `01_App/`、`02_Service/`、`03_Platform/platform_bsp/`。

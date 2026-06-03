@@ -1,26 +1,28 @@
-# 02_BSP_Platform — 外设驱动平台
+# impl_bsp — 外设驱动实现
 
-按"设备类别"对外暴露 vtable，让 APP 不感知具体型号。同类设备替换 = 换 `driver` + `adapter`，APP / Service 不动。
+按"设备类别"对外暴露 vtable，让 APP 不感知具体型号。同类设备替换 = 换 `driver` + `adapter`，APP / Service 不动。公开 wrapper 位于 `03_Platform/platform_bsp/`，具体驱动和 adapter 位于本目录。
 
-详细五段式 + 新增外设步骤见 [../CLAUDE.md](../CLAUDE.md) "BSP 适配器模式"节。
+详细五段式 + 新增外设步骤见 [../../CLAUDE.md](../../CLAUDE.md) "BSP 适配器模式"节。
 
 ## 目录结构
 
 ```
-02_BSP_Platform/
+04_Impl/impl_bsp/
 ├── Bsp_Drivers/<device>/
 │     ├── driver/      ← 裸协议通信（寄存器 / SPI / I2C）。禁止 OSAL 调用
 │     └── handler/     ← Handler 任务：读驱动 → 投队列 / 通知 wrapper
 ├── Bsp_Integration/<device>_integration/
 │                       组装 `*_input_arg`（driver fn + OS 资源 + IO 描述符）
-└── Platform_Interface/<category>/
-      ├── bsp_wrapper_<cat>/        向 01_APP 暴露的抽象 vtable API
-      └── bsp_adapter_port_<cat>/   `drv_adapter_<cat>_register()` 把具体驱动挂到 vtable
+└── Adapter_Port/<category>/
+      └── `drv_adapter_<cat>_register()` 把具体驱动挂到 vtable
+
+03_Platform/platform_bsp/<category>/
+└── bsp_wrapper_<cat>/              向 01_App / 02_Service 暴露的抽象 vtable API
 ```
 
 ## 当前实现
 
-| 设备 | 类别（Platform_Interface） | wrapper API 风格 |
+| 设备 | 类别（platform_bsp） | wrapper API 风格 |
 |---|---|---|
 | `aht21` | `temp_humi/` | sync/async 单次读 |
 | `mpu6050` | `motion/` | 流式 `get_req → get_data_addr → read_data_done` |
@@ -33,9 +35,9 @@
 ## 依赖规则
 
 ```
-Bsp_Drivers/  ──>  02_MCU_Platform/  (I2C/SPI/UART/GPIO port)
-Bsp_Drivers/  ──>  02_OS_Platform/   (OSAL，仅 handler 层；driver 层禁止)
-Platform_Interface/  暴露给 01_APP / 01_SERVICE，不允许反向依赖
+Bsp_Drivers/  ──>  03_Platform/platform_mcu/  (I2C/SPI/UART/GPIO port)
+Bsp_Drivers/  ──>  03_Platform/platform_os/   (OSAL，仅 handler 层；driver 层禁止)
+platform_bsp wrapper 暴露给 01_App / 02_Service，不允许反向依赖
 ```
 
 > **ISR 规则**：driver 层的总线操作必须由 handler 任务（线程上下文）调用，禁止在 ISR 内获取 IIC/SPI 互斥锁——通过 `osal_notify` 唤醒 handler。

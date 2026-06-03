@@ -1,19 +1,20 @@
-# 02_OS_Platform — OSAL（OS Abstraction Layer）
+# platform_os — OSAL（OS Abstraction Layer）
 
-对 RTOS 内核做统一抽象，APP / Service / BSP / Middleware 只调 `osal_*` API。换 RTOS 只改 `OS_Implementation/`。
+对 RTOS 内核做统一抽象，APP / Service / BSP / Middleware 只调 `osal_*` API。换 RTOS 只改 `04_Impl/impl_os/`。
 
 ## 目录结构
 
 ```
-02_OS_Platform/
+03_Platform/platform_os/
 ├── OS_Wrapper/        ← 公开 API（osal_task / sema / mutex / queue / timer / heap / notify / event_group）
 │   ├── inc/osal_*.h
 │   ├── inc/osal_wrapper_adapter.h   ← 总入口，业务 include 这一个
-│   └── src/osal_*.c                 ← 转调 OS_Implementation
-├── OS_Implementation/ ← 当前 = FreeRTOS 映射
-│   ├── inc/os_freertos.h、osal_internal_*.h、osal_macros.h、osal_config.h
-│   └── src/os_impl_{task,sema,mutex,queue,timer,heap,notify,event_group}.c
+│   └── src/osal_*.c                 ← 转调 04_Impl/impl_os
 └── OSAL_Common/inc/   ← 项目共享类型（osal_task_handle_t / queue_handle_t / mutex_handle_t / tick_type_t…）
+
+04_Impl/impl_os/
+├── inc/os_freertos.h、osal_internal_*.h、osal_macros.h、osal_config.h
+└── src/os_impl_{task,sema,mutex,queue,timer,heap,notify,event_group}.c
 ```
 
 ## 当前能力
@@ -35,8 +36,8 @@
 ## 依赖规则
 
 ```
-OS_Wrapper        ──>  OS_Implementation  (转调)
-OS_Implementation ──>  FreeRTOS kernel    (本项目当前唯一实现)
+OS_Wrapper       ──>  04_Impl/impl_os/  (转调)
+04_Impl/impl_os  ──>  FreeRTOS kernel   (本项目当前唯一实现)
 ```
 
-换 RTOS = 重写 `OS_Implementation/src/os_impl_*.c` 与 `inc/os_*.h`，wrapper API 不动。
+换 RTOS = 重写 `04_Impl/impl_os/src/os_impl_*.c` 与 `inc/os_*.h`，wrapper API 不动。

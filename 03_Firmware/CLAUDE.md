@@ -104,9 +104,9 @@ APP 槽位无效（SP 不在 `0x20000000~0x2001FFFF`）会落 "APP slot invalid"
 
 要点速览（细节见上述文件）：
 
-- 严格分层：`01_APP` → `02_*_Platform`（OS / BSP / MCU / Middleware）→ ST HAL / FreeRTOS → CMSIS / 寄存器
+- 严格分层：`01_APP/01_App` / `01_APP/02_Service` → `01_APP/03_Platform`（接口）→ `01_APP/04_Impl`（实现）→ ST HAL / FreeRTOS → CMSIS / 寄存器
 - BSP 五段式：`driver/`（裸协议）+ `handler/`（任务）+ `bsp_wrapper_*`（vtable API）+ `bsp_adapter_port_*`（注册）+ `Bsp_Integration/`（input_arg 组装）
-- 所有任务集中登记在 `01_APP/User_Task_Config/src/user_task_reso_config.c` 的 `g_user_task_cfg[]`
+- 所有任务集中登记在 `01_APP/01_App/User_Task_Config/src/user_task_reso_config.c` 的 `g_user_task_cfg[]`
 - ISR 不可获取 IIC 总线互斥锁——通过 `osal_notify` 唤醒 handler 任务在线程上下文操作
 - 日志：`DEBUG_OUT(level, tag, fmt, ...)` 按 tag 路由到 RTT Terminal（0–8）或 ITM/SWO
 - LVGL 资源（指针小图 + 240×240 表盘背景）在外部 W25Q64 上：sprite 由 firmware self-bootstrap 从 `.rodata` 写入；240×240 背景太大不进 `.rodata`，必须由 `make flash-assets` 经自定义 .FLM 写入

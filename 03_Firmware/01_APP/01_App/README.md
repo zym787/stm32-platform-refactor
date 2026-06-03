@@ -1,4 +1,4 @@
-# 01_APP — 应用业务层
+# 01_App — 应用业务层
 
 业务任务、初始化流程、ISR 派发、任务表登记。**只调用平台抽象 API**（OSAL / BSP wrapper / Middleware），不直接碰 HAL / 寄存器 / 具体外设驱动。
 
@@ -13,7 +13,7 @@
 | `User_Isr_handlers/` | ISR 上下文派发：`osal_notify` 唤醒线程，**禁止**在 ISR 内取 IIC 互斥锁 |
 | `User_Sensor/` | 业务侧传感器/外设消费任务：`temp_humi/`、`mpu6050/`、`em7028/`、`audio/`、`display/`、`touch/`、`storage/`（LVGL 资源 bootstrap + 阻塞门面） |
 
-> `User_OtaManager/` 当前为空 —— OTA 升级链路已迁移到 [`../01_SERVICE/service_ota/`](../01_SERVICE/service_ota/)。
+> `User_OtaManager/` 当前为空 —— OTA 升级链路已迁移到 [`../02_Service/service_ota/`](../02_Service/service_ota/)。
 
 ## 任务优先级（`User_Task_Config/inc/user_task_reso_config.h`）
 
@@ -24,11 +24,11 @@
 ## 依赖规则
 
 ```
-01_APP/  ──>  02_OS_Platform/  (OSAL API)
-         ──>  02_BSP_Platform/Platform_Interface/  (vtable wrapper)
-         ──>  02_Middleware_Platform/  (LVGL / Shell / Log)
-         ──>  04_Common_Utils/  (CRC / StrUtils)
-         ──>  03_Config/  (CFG_ 宏)
+01_App/  ──>  03_Platform/platform_os/   (OSAL API)
+         ──>  03_Platform/platform_bsp/  (vtable wrapper)
+         ──>  04_Impl/impl_middleware/   (LVGL / Log / Ymodem)
+         ──>  05_Common_Utils/           (FLM / 后续通用工具)
+         ──>  00_Config/                 (CFG_ 宏)
 ```
 
-**反向依赖被禁止**：service / BSP / MCU / Middleware 不允许 include `01_APP/` 任何头文件。
+**反向依赖被禁止**：service / BSP / MCU / Middleware 不允许 include `01_App/` 任何头文件。

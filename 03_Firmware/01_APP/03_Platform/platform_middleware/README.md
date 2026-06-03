@@ -5,7 +5,7 @@
 ## 设计意图
 
 按 `03_Platform/` (接口) + `04_Impl/` (实现) 分树原则，中间件理论上也应该有
-"接口"和"实现"的物理隔离。但当前 02_Middleware_Platform/ 时代的中间件
+"接口"和"实现"的物理隔离。但当前中间件
 （EasyLogger / Ymodem / heart_rate_algo / lvgl_port / LetterShell）大多
 是**直接包含上游代码 + 项目适配 port**的混合体，本身就没有清晰的接口/实现
 切分点：
@@ -13,7 +13,7 @@
 - **EasyLogger**：上游 + `port/elog_port.c` 适配。port 是实现，没有公开
   "elog interface" 给上层选择性绑定。
 - **Ymodem**：项目自有协议实现，依赖 `ota_transport_*` 抽象（这才是真正
-  的接口，放在 `01_SERVICE/service_ota/inc/`）。
+  的接口，放在 `02_Service/service_ota/inc/`）。
 - **LVGL**：上游 + lvgl_port + lvgl_ui，port 直接调 BSP，无独立接口层。
 - **heart_rate_algo**：纯算法，无 OS / BSP 依赖。
 

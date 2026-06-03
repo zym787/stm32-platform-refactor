@@ -1,4 +1,4 @@
-# 04_Debug_Tool — 调试 / 日志 / 追踪
+# 05_Debug_Tool — 调试 / 日志 / 追踪
 
 集中放调试期工具（日志、追踪、保护），统一通过 `DEBUG_OUT(level, tag, fmt, ...)` 宏输出，按 tag 路由到不同物理通道。
 
@@ -8,7 +8,7 @@
 
 | 子目录 | 内容 |
 |---|---|
-| `Debug_Log/` | `Debug.h` 定义 `DEBUG_OUT` 宏 + tag 常量；`Debug.c` 实现 tag 过滤 + RTT/ITM 路由；底层走 EasyLogger（[`../02_Middleware_Platform/EasyLogger/`](../02_Middleware_Platform/EasyLogger/)） |
+| `Debug_Log/` | `Debug.h` 定义 `DEBUG_OUT` 宏 + tag 常量；`Debug.c` 实现 tag 过滤 + RTT/ITM 路由；底层走 EasyLogger（[`../04_Impl/impl_middleware/EasyLogger/`](../04_Impl/impl_middleware/EasyLogger/)） |
 | `Systemview/` | SEGGER SystemView + RTT 控制块（`SEGGER_RTT.h/.c`）。RTT_RAM 段独立放在 `0x2001C000`，16 KB |
 | `SWO_Trace/` | `itm_trace.h` —— ITM stimulus port 0 输出，给 ITM-only tag 走 `printf` → SWO Viewer / Ozone SWO 终端 |
 | `MPU_Protect/` | `mpu.h` —— MPU region 配置（栈溢出 / 空指针解引用防护） |

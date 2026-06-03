@@ -10,51 +10,60 @@ make                # 完整构建 → build/helloworld.{elf,hex,bin,mxxx}
                     # Tools/ota_encrypt.py (uv run) 产出
 make clean          # 删除 build/ 目录
 make mem-report     # 内存占用报告（Tools/mem_report.py，含 link region 占用图）
-make OPT=-O2        # 覆盖优化等级（默认 -Os；DEBUG=1 时切到 -Os 才能放下 .rodata）
+make OPT=-O2        # 覆盖优化等级（Makefile 当前默认 -Og）
 make ota-image      # 单独触发 OTA 镜像生成（默认 all 已包含）
 
 make pack-assets    # 仅打包 LVGL 资源 → build/assets.bin（不动 firmware）
 make flash-assets   # pack + JFlash CLI 烧 W25Q64 LVGL 分区（详见 "外部 Flash 资源" 节）
 ```
 
-目标芯片：STM32F411xE（Cortex-M4F），工具链：`arm-none-eabi-gcc`，默认编译选项：`-Os -g -gdwarf-2`。
+目标芯片：STM32F411xE（Cortex-M4F），工具链：`arm-none-eabi-gcc`，默认编译选项：`-Og -g -gdwarf-2`。
 
-无正式测试框架。应用级验证任务位于 `01_APP/User_Sensor/`，在目标硬件上运行（如 `temp_humi_test_task_a/b` 用于并发读取验证）。
+无正式测试框架。应用级验证任务位于 `01_App/User_Sensor/`，在目标硬件上运行（如 `temp_humi_test_task_a/b` 用于并发读取验证）。
 
 ## 架构总览
 
 严格的分层依赖——上层只依赖下层：
 
 ```
-01_APP                  ← 业务逻辑、任务定义、传感器测试
-02_*_Platform           ← 四个能力层（见下文）
+00_Config              ← 项目级宏开关、地址、状态字
+01_App                 ← 业务逻辑、任务定义、传感器测试
+02_Service             ← OTA / storage 等业务无关服务
+03_Platform            ← OS / BSP / MCU / Middleware / Common 稳定接口
+04_Impl                ← OS / BSP / MCU / Middleware 具体实现
+05_Common_Utils        ← 工具与自定义 .FLM
+05_Debug_Tool          ← 日志、追踪、MPU 保护
 ST HAL / FreeRTOS       ← 厂商中间件
 ARM CMSIS / 硬件        ← 寄存器级
 ```
 
-### 平台层（`02_*/`）
+### 平台层（`03_Platform/` + `04_Impl/`）
 
 | 目录 | 职责 |
 |---|---|
-| `02_OS_Platform/` | 对 FreeRTOS 的 OSAL 封装。`OS_Wrapper/inc/` 是公开 API；`OS_Implementation/` 包含 FreeRTOS 映射实现。替换 `OS_Implementation` 即可切换 RTOS。 |
-| `02_BSP_Platform/` | 使用适配器模式的传感器/外设驱动（详见下文）。 |
-| `02_MCU_Platform/` | 芯片级 port 层：`MCU_Core_IIC/SPI/GPIO/Systick/DWT` 总线与时钟、`MCU_Core_Watchdog/`（`mcu_watchdog_refresh()`）、`MCU_Core_IFlash/`（`mcu_iflash_erase_sector + program_words`，函数体内 `__disable_irq()` 包裹整段防 F411 单 bank flash 取指死锁）。所有寄存器级触碰都收在此层，service / APP 不直接调 HAL。同时支持硬件 I2C（HAL）和软件 I2C 位操作（SCL=PB14，SDA=PB15）。 |
-| `02_Middleware_Platform/` | EasyLogger（异步日志），LetterShell（嵌入式 CLI），LVGL v8.3（GUI 库）。 |
+| `03_Platform/platform_os/` + `04_Impl/impl_os/` | 对 FreeRTOS 的 OSAL 封装。`OS_Wrapper/inc/` 是公开 API；`04_Impl/impl_os/` 包含 FreeRTOS 映射实现。替换 `impl_os` 即可切换 RTOS。 |
+| `03_Platform/platform_bsp/` + `04_Impl/impl_bsp/` | 使用适配器模式的传感器/外设驱动（详见下文）。Wrapper API 在 platform，具体 driver/handler/adapter 在 impl。 |
+| `03_Platform/platform_mcu/` + `04_Impl/impl_mcu/` | 芯片级 port 层：`MCU_Core_IIC/SPI/GPIO/Systick/DWT/UART` 总线与时钟、`MCU_Core_Watchdog/`（`mcu_watchdog_refresh()`）、`MCU_Core_IFlash/`（`mcu_iflash_erase_sector + program_words`，函数体内 `__disable_irq()` 包裹整段防 F411 单 bank flash 取指死锁）。所有寄存器级触碰都收在此层，service / APP 不直接调 HAL。同时支持硬件 I2C（HAL）和软件 I2C 位操作（SCL=PB14，SDA=PB15）。 |
+| `03_Platform/platform_middleware/` + `04_Impl/impl_middleware/` | 当前 middleware 接口层为空，占位给 v5；EasyLogger、LetterShell、Ymodem、LVGL v8.3、heart_rate_algo 在 `04_Impl/impl_middleware/`。 |
 
-### BSP 适配器模式（`02_BSP_Platform/`）
+### BSP 适配器模式（`03_Platform/platform_bsp/` + `04_Impl/impl_bsp/`）
 
 每个外设遵循以下三层结构：
 
 ```
-Bsp_Drivers/<device>/driver/    ← 原始寄存器/协议通信，禁止调用 OSAL
-Bsp_Drivers/<device>/handler/   ← Handler 线程逻辑（读取驱动，投递到队列）
-Platform_Interface/<category>/
-  bsp_wrapper_<cat>/            ← 向 01_APP 暴露的抽象 vtable API
-  bsp_adapter_port_<cat>/       ← 将具体驱动注册到 wrapper vtable
-Bsp_Integration/<device>_integration/  ← 将驱动+OS 资源组装为 input_arg 结构体
+03_Platform/platform_bsp/<category>/bsp_wrapper_<cat>/
+                                ← 向 01_App / 02_Service 暴露的抽象 vtable API
+04_Impl/impl_bsp/Bsp_Drivers/<device>/driver/
+                                ← 原始寄存器/协议通信，禁止调用 OSAL
+04_Impl/impl_bsp/Bsp_Drivers/<device>/handler/
+                                ← Handler 线程逻辑（读取驱动，投递到队列）
+04_Impl/impl_bsp/Adapter_Port/<category>/
+                                ← 将具体驱动注册到 wrapper vtable
+04_Impl/impl_bsp/Bsp_Integration/<device>_integration/
+                                ← 将驱动+OS 资源组装为 input_arg 结构体
 ```
 
-`bsp_wrapper_*` 头文件定义公开 API 及 vtable 结构体。`bsp_adapter_port_*` 头文件仅暴露 `drv_adapter_<cat>_register()`。集成层负责组装传递给 handler 线程的 `*_input_arg` 结构体。
+`bsp_wrapper_*` 头文件定义公开 API 及 vtable 结构体。`Adapter_Port/<category>/` 头文件仅暴露 `drv_adapter_<cat>_register()`。集成层负责组装传递给 handler 线程的 `*_input_arg` 结构体。
 
 Wrapper API 风格按设备类型选择：
 
@@ -65,7 +74,7 @@ Wrapper API 风格按设备类型选择：
 
 现有设备：`aht21`（温湿度）、`mpu6050`（运动）、`wt588f02`（音频）、`st7789`（LCD 显示）、`cst816t`（触摸屏）、`w25q64`（外部 SPI NOR，五段已完成，承载 LVGL 资源分区）、`em7028`（PPG 心率，category=`heart_rate`，流式 + lifecycle，frame 类型 `wp_ppg_frame_t`）。
 
-### 应用层（`01_APP/`）
+### 应用层（`01_App/`）
 
 - **任务表**：`User_Task_Config/src/user_task_reso_config.c` — 定义 `g_user_task_cfg[]`，包含所有应用任务的名称、栈大小、优先级、入口函数和参数。
 - **任务优先级**（定义于 `user_task_reso_config.h`）：`PRI_EMERGENCY`、`PRI_HARD_REALTIME`、`PRI_SOFT_REALTIME`、`PRI_NORMAL`、`PRI_BACKGROUND`。
@@ -74,9 +83,9 @@ Wrapper API 风格按设备类型选择：
 - **ISR 派发**：`User_Isr_handlers/` — ISR 通过 OSAL notify 唤醒任务，避免在中断上下文中阻塞（防止 IIC 互斥锁死锁）。
 - **栈水位监控**：`User_Task_Config/src/task_higher_water_monitor.c` — 运行时任务栈占用监控。
 
-### 服务层（`01_SERVICE/`）
+### 服务层（`02_Service/`）
 
-业务无关 service 抽象，与 `01_APP/` 平级。Service 只能向下调 `02_*_Platform` / `04_Common_Utils` / `03_Config`，**禁止反向依赖 `01_APP/` 任何代码**。
+业务无关 service 抽象，与 `01_App/` 平级。Service 只能向下调 `03_Platform/` / `04_Impl/` 的公开接口、`05_Common_Utils/`、`00_Config/`，**禁止反向依赖 `01_App/` 任何代码**。
 
 | 子模块 | 职责 |
 |---|---|
@@ -85,19 +94,19 @@ Wrapper API 风格按设备类型选择：
 
 后续 FOTA、配网、电池策略等 service 都进这一层。
 
-### OSAL 层（`02_OS_Platform/`）
+### OSAL 层（`03_Platform/platform_os/`）
 
 `OSAL_Common/inc/osal_common_types.h` 定义项目全局共用类型：`osal_task_handle_t`、`osal_queue_handle_t`、`osal_mutex_handle_t`、`osal_tick_type_t` 等。始终通过 `osal_wrapper_adapter.h` 包含。
 
-### 通用工具层（`04_Common_Utils/`）
+### 通用工具层（`05_Common_Utils/`）
 
 与硬件/业务无关的工具代码（StrUtils、CRC16、MemPool、ByteConverter 等），所有层均可复用，不依赖 OSAL 或 BSP。
 
-### 配置层（`03_Config/`）
+### 配置层（`00_Config/`）
 
 用于项目级宏开关（`CFG_` 前缀）：功能特性开关、板级 IO 映射、RTOS 资源大小。当前包含 `cfg_storage.h`（W25Q64 LVGL 子分区 magic + 资源 offset/size）和 `cfg_ota.h`（OTA flag 结构 + magic + 状态宏，与 bootloader `Tasks/Bootmanager/inc/ota_flag.h` 必须保持字节兼容）。
 
-### 调试工具（`04_Debug_Tool/`）
+### 调试工具（`05_Debug_Tool/`）
 
 #### 日志系统（`Debug.h`，`DEBUG_OUT` 宏）
 
@@ -180,7 +189,7 @@ LVGL 指针小图 + 240×240 表盘背景**全部托管在 W25Q64 上**，省下
 `storage_manager_task` 做 `LVGL → W25Q64`：`addr + MEMORY_LVGL_START_ADDRESS (0x300000)`。  
 `W25Q64_8M_FLM.FLM` 做 `JLink → W25Q64`：`adr - 0x90000000 + 0x300000`。**FLM 范围被锁在 LVGL 分区内**，工具链根本无法触碰 OTA / FlashDB / FATFS / Reserved。
 
-### 分区布局（`03_Config/inc/cfg_storage.h`）
+### 分区布局（`00_Config/inc/cfg_storage.h`）
 
 ```
 W25Q64 物理        LVGL local      内容
@@ -194,12 +203,14 @@ W25Q64 物理        LVGL local      内容
 ### 软件链路
 
 ```
-01_APP/User_Sensor/storage/
-├── storage_manager_task.c       ← BSP async API 包成阻塞 Read/Write_LvglData
+01_App/User_Sensor/storage/
 ├── storage_assets.c             ← _ext lv_img_dsc_t 描述符 + bootstrap
-└── inc/service_storage_facade.h
 
-02_Middleware_Platform/lv-gl/lvgl_port/
+02_Service/service_storage/
+├── inc/service_storage_facade.h
+└── src/storage_manager_task.c    ← BSP async API 包成阻塞 Read/Write_LvglData
+
+04_Impl/impl_middleware/lvgl/lvgl_port/
 └── lv_port_extflash.c           ← 自定义 LVGL decoder，行级 streaming biaopan1
 ```
 
@@ -223,15 +234,15 @@ JLink 设备 `STM32F411CE_W25Q64` 注册在 `%APPDATA%\SEGGER\JLinkDevices\ST\ST
 
 PC → UART1 → APP（Ymodem 收 + 写 W25Q64 OTA 分区）→ NVIC_SystemReset → Bootloader（AES-256-CBC 解密 + BLOCK_1→BLOCK_2→内部 Flash + 回滚兜底）。**触发不走 shell**，靠 UART 魔术字 `0x11 22 33`（启动）/ `0x77 88 99`（应用）。
 
-### 分层（v4 — MCU port 接管 HAL，adapter 进 SERVICE）
+### 分层（v4 — MCU port 接管 HAL，adapter 进 Service）
 
 ```
-02_MCU_Platform/MCU_Core_UART/          ← UART 在 MCU 端口（与 IIC/SPI/IFlash 同辈）
-  uart_port/inc/mcu_uart_port.h         稳定 API（uart_id 参数化）
-  uart_port/src/mcu_uart_port.c         STM32 HAL + ISR dispatch
+03_Platform/platform_mcu/MCU_Core_UART/ ← UART 在 MCU 端口（与 IIC/SPI/IFlash 同辈）
+  inc/mcu_uart_port.h                   稳定 API（uart_id 参数化）
+04_Impl/impl_mcu/MCU_Core_UART/         STM32 HAL + ISR dispatch
                                         + USART1_IRQHandler 也在这
 
-01_SERVICE/service_ota/                 ← OTA 业务 + 板级适配同位
+02_Service/service_ota/                 ← OTA 业务 + 板级适配同位
   inc/ota_transport.h                   抽象（不绑定具体 UART id）
   inc/ota_storage.h                     抽象
   inc/firmware_upgrade.h                服务入口 / 任务声明
@@ -247,7 +258,7 @@ PC → UART1 → APP（Ymodem 收 + 写 W25Q64 OTA 分区）→ NVIC_SystemReset
                                           (NVIC_SystemReset，待 MCU_Core_Reset)
     w25q64_ota_storage.c                ota_storage_* → service_storage Write/Read_OtaData
 
-02_Middleware_Platform/Ymodem/          ← 中间件，0 HAL include
+04_Impl/impl_middleware/Ymodem/         ← 中间件，0 HAL include
   src/ymodem.c                          调 ota_transport_* 走全链路
 ```
 
@@ -314,7 +325,7 @@ build/helloworld.mxxx
 
 bootloader 的 `exA_to_exB_AES` 解密首块取 bytes[12..15] 当 LE uint32 = app_size。
 
-### 关键地址与状态字（`03_Config/inc/cfg_ota.h`）
+### 关键地址与状态字（`00_Config/inc/cfg_ota.h`）
 
 | 项 | 值 | 说明 |
 |---|---|---|
@@ -346,12 +357,12 @@ APP `user_init` 看到 `0x33` 或 `0x44` 都 auto-confirm 写 `0x00`；若 IWDG 
 ## 新增外设驱动步骤
 
 遵循现有 BSP 适配器模式：
-1. `02_BSP_Platform/Bsp_Drivers/<device>/driver/` — 原始设备通信（禁止 OSAL）
-2. `02_BSP_Platform/Bsp_Drivers/<device>/handler/` — 读取驱动的 handler 线程
-3. `02_BSP_Platform/Platform_Interface/<category>/bsp_wrapper_<cat>/` — 抽象 vtable API
-4. `02_BSP_Platform/Platform_Interface/<category>/bsp_adapter_port_<cat>/` — 将驱动注册到 vtable
-5. `02_BSP_Platform/Bsp_Integration/<device>_integration/` — 组装 `*_input_arg` 结构体
-6. 在 `01_APP/User_Init/Platform_IO_Register/` 中注册硬件 IO
+1. `04_Impl/impl_bsp/Bsp_Drivers/<device>/driver/` — 原始设备通信（禁止 OSAL）
+2. `04_Impl/impl_bsp/Bsp_Drivers/<device>/handler/` — 读取驱动的 handler 线程
+3. `03_Platform/platform_bsp/<category>/bsp_wrapper_<cat>/` — 抽象 vtable API
+4. `04_Impl/impl_bsp/Adapter_Port/<category>/` — 将驱动注册到 vtable
+5. `04_Impl/impl_bsp/Bsp_Integration/<device>_integration/` — 组装 `*_input_arg` 结构体
+6. 在 `01_App/User_Init/Platform_IO_Register/` 中注册硬件 IO
 7. 在 `User_Task_Config/src/user_task_reso_config.c` 的 `g_user_task_cfg[]` 中添加任务项
 8. 将所有新增 `.c` 文件加入 `Makefile` 的 `C_SOURCES`
 
@@ -365,4 +376,4 @@ APP `user_init` 看到 `0x33` 或 `0x44` 都 auto-confirm 写 `0x00`；若 IWDG 
 | `Core/Inc/stm32f4xx_hal_conf.h` | 编译哪些 ST HAL 模块 |
 | `STM32F411XX_FLASH.ld` | 内存映射、段放置 |
 | `Core/Inc/main.h` | 引脚定义、全局包含 |
-| `02_MCU_Platform/MCU_Core_IIC/i2c_port/inc/i2c_port.h` | I2C 总线类型（硬件/软件）、互斥锁超时 |
+| `03_Platform/platform_mcu/MCU_Core_IIC/inc/i2c_port.h` | I2C 总线类型（硬件/软件）、互斥锁超时 |
