@@ -10,6 +10,8 @@
 #include "lvgl.h"
 #endif
 
+#include "lv_port_extfont.h"
+
 #ifndef LV_FONT_INTERTTF_24
 #define LV_FONT_INTERTTF_24 1
 #endif
@@ -21,6 +23,7 @@
  *----------------*/
 
 /*Store the image of the glyphs*/
+#if 0 /* Stored in W25Q64 by pack_assets.py. */
 static LV_ATTRIBUTE_LARGE_CONST const uint8_t glyph_bitmap[] = {
     /* U+0020 " " */
 
@@ -3611,6 +3614,9 @@ static LV_ATTRIBUTE_LARGE_CONST const uint8_t glyph_bitmap[] = {
     0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x4a, 0x20,
     0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0
 };
+#else
+static LV_ATTRIBUTE_LARGE_CONST const uint8_t glyph_bitmap[] = { 0x00 };
+#endif
 
 
 /*---------------------
@@ -3847,7 +3853,7 @@ const lv_font_t lv_font_interttf_24 = {
 lv_font_t lv_font_interttf_24 = {
 #endif
     .get_glyph_dsc = lv_font_get_glyph_dsc_fmt_txt,    /*Function pointer to get glyph's data*/
-    .get_glyph_bitmap = lv_font_get_bitmap_fmt_txt,    /*Function pointer to get glyph's bitmap*/
+    .get_glyph_bitmap = lv_port_extfont_get_bitmap_lv_font_interttf_24,    /*Function pointer to get glyph's bitmap*/
     .line_height = 24,          /*The maximum line height required by the font*/
     .base_line = 3,             /*Baseline measured from the bottom of the line*/
 #if !(LVGL_VERSION_MAJOR == 6 && LVGL_VERSION_MINOR == 0)

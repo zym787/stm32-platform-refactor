@@ -1,15 +1,21 @@
 
+
+OpenDocument="port.c", FilePath="/home/xch/stm32-platform-refactor/03_Firmware/01_APP/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.c", Line=408
+OpenDocument="freertos.c", FilePath="/home/xch/stm32-platform-refactor/03_Firmware/01_APP/Core/Src/freertos.c", Line=89
+OpenDocument="tasks.c", FilePath="/home/xch/stm32-platform-refactor/03_Firmware/01_APP/Middlewares/Third_Party/FreeRTOS/Source/tasks.c", Line=3001
+OpenDocument="lv_mem.c", FilePath="/home/xch/stm32-platform-refactor/03_Firmware/01_APP/04_Impl/impl_middleware/lvgl/lvgl/src/misc/lv_mem.c", Line=301
+OpenDocument="main.c", FilePath="/home/xch/stm32-platform-refactor/03_Firmware/01_APP/Core/Src/main.c", Line=96
 OpenToolbar="Debug", Floating=0, x=0, y=0
-OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=1, w=487, h=455, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
-OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=0, w=487, h=271, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Memory 1", DockArea=BOTTOM, x=1, y=0, w=1056, h=323, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, EditorAddress=0x2001DC60
-OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=1, w=340, h=353, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Functions", DockArea=LEFT, x=0, y=0, w=340, h=373, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Console", DockArea=BOTTOM, x=0, y=0, w=759, h=323, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=1, w=487, h=459, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
+OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=0, w=487, h=267, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Memory 1", DockArea=BOTTOM, x=1, y=0, w=1064, h=323, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, EditorAddress=0x2001DC60
+OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=1, w=340, h=368, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Functions", DockArea=LEFT, x=0, y=0, w=340, h=358, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Console", DockArea=BOTTOM, x=0, y=0, w=751, h=323, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
 SmartViewPlugin="", Page="", Toolbar="Hidden", Window="SmartView 1"
 TableHeader="Functions", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Address";"Size";"#Insts";"Source"], ColWidths=[1372;100;100;100;476]
+TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[228;125;110;100]
 TableHeader="Power Sampling", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
 TableHeader="Registers 1", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Description"], ColWidths=[156;159;259]
-TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[228;125;110;100]
 TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
-TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[200;100;100;887]
+TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[200;100;100;908]

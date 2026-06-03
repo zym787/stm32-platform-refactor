@@ -141,8 +141,8 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
     [USER_LVGL_TEST_TASK_IDX] = {
         .task_name    = "lvgl_display_task",
         .func_pointer = lvgl_display_task,
-        .stack_depth  = 768,    /* observed peak 427 W (current UI); was 2048 (21% used). Bump back to 1024+ if SquareLine 复杂动画 / 大字号字体回归后 peak 上升 */
-        .priority     = PRI_SOFT_REALTIME,
+        .stack_depth  = 1024,    /* observed peak 427 W (current UI); was 2048 (21% used). Bump back to 1024+ if SquareLine 复杂动画 / 大字号字体回归后 peak 上升 */
+        .priority     = PRI_HARD_REALTIME,
         .task_handle  = NULL,
         .argument     = NULL
     },

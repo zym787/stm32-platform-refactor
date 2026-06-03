@@ -78,6 +78,8 @@ void init_scr_del_flag(lv_ui *ui)
     ui->Clock_1_del = true;
     ui->Clock_2_del = true;
     ui->Clock_3_del = true;
+    ui->top_lap_del = true;
+    ui->under_up_del = true;
 }
 
 void setup_ui(lv_ui *ui)

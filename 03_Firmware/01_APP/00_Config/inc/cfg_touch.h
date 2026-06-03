@@ -49,26 +49,26 @@
  * is re-flashed to a different geometry.  The ST7789 driver init must be
  * updated to match — this header does not drive the controller registers. */
 #ifndef CFG_TOUCH_PANEL_WIDTH
-#define CFG_TOUCH_PANEL_WIDTH        (240U)
+#define CFG_TOUCH_PANEL_WIDTH (240U)
 #endif
 #ifndef CFG_TOUCH_PANEL_HEIGHT
-#define CFG_TOUCH_PANEL_HEIGHT       (284U)
+#define CFG_TOUCH_PANEL_HEIGHT (284U)
 #endif
 
-_Static_assert(CFG_TOUCH_PANEL_WIDTH  <= 240U,
+_Static_assert(CFG_TOUCH_PANEL_WIDTH <= 240U,
                "CFG_TOUCH_PANEL_WIDTH exceeds CST816T addressable range");
 _Static_assert(CFG_TOUCH_PANEL_HEIGHT <= 320U,
                "CFG_TOUCH_PANEL_HEIGHT exceeds ST7789 / CST816T range");
-_Static_assert(CFG_TOUCH_PANEL_WIDTH  >= 80U,
+_Static_assert(CFG_TOUCH_PANEL_WIDTH >= 80U,
                "CFG_TOUCH_PANEL_WIDTH too small for a sane calibration grid");
 _Static_assert(CFG_TOUCH_PANEL_HEIGHT >= 80U,
                "CFG_TOUCH_PANEL_HEIGHT too small for a sane calibration grid");
 
 /* === 9-point calibration geometry (all derived from W/H + margin) ======== */
-#define CFG_TOUCH_CALIB_POINT_COUNT  (9U)        /* 3 x 3 grid              */
-#define CFG_TOUCH_CALIB_MARGIN       (30U)       /* px from edge to outer    */
-                                                 /* row / column             */
-#define CFG_TOUCH_CALIB_TIMEOUT_MS   (30000U)    /* per-point timeout        */
+#define CFG_TOUCH_CALIB_POINT_COUNT (9U)     /* 3 x 3 grid              */
+#define CFG_TOUCH_CALIB_MARGIN      (30U)    /* px from edge to outer    */
+                                             /* row / column             */
+#define CFG_TOUCH_CALIB_TIMEOUT_MS  (30000U) /* per-point timeout        */
 
 /* Sanity: margin must leave room for the cross + a safety pad. */
 _Static_assert(CFG_TOUCH_CALIB_MARGIN * 2U + 40U <= CFG_TOUCH_PANEL_WIDTH,
@@ -79,9 +79,9 @@ _Static_assert(CFG_TOUCH_CALIB_MARGIN * 2U + 40U <= CFG_TOUCH_PANEL_HEIGHT,
 /* === Persistence (W25Q64 calibration block) ============================== *
  * Region base is service_storage's MEMORY_CALIB_START_ADDRESS; this header
  * only defines the in-region layout and the validation tokens. */
-#define CFG_TOUCH_CALIB_MAGIC        (0xCABCABCAUL)
-#define CFG_TOUCH_CALIB_SCHEMA_VER   (0x0001U)
-#define CFG_TOUCH_CALIB_OFFSET       (0x000000UL) /* offset in CALIB region   */
+#define CFG_TOUCH_CALIB_MAGIC      (0xCABCABCAUL)
+#define CFG_TOUCH_CALIB_SCHEMA_VER (0x0001U)
+#define CFG_TOUCH_CALIB_OFFSET     (0x000000UL) /* offset in CALIB region   */
 
 /* === Debug / bring-up: force calibration on every boot =================== *
  * Set to 1 to make touch_calibration_boot_apply() skip the storage load and
@@ -89,7 +89,7 @@ _Static_assert(CFG_TOUCH_CALIB_MARGIN * 2U + 40U <= CFG_TOUCH_PANEL_HEIGHT,
  * there is no runtime way to invalidate the saved coefficients.  Leave at 0
  * for normal operation: the UI only fires on magic / CRC / panel mismatch. */
 #ifndef CFG_TOUCH_CALIB_FORCE_ON_BOOT
-#define CFG_TOUCH_CALIB_FORCE_ON_BOOT  (1)
+#define CFG_TOUCH_CALIB_FORCE_ON_BOOT (1)
 #endif
 //******************************** Defines **********************************//
 

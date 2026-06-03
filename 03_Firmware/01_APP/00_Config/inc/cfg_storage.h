@@ -9,7 +9,8 @@
  * @brief Project-level configuration for the external flash storage layer.
  *
  *        Holds:
- *          - User-tunable runtime sizes (LVGL transient buffer cap)
+ *          - User-tunable runtime sizes (LVGL transient buffer cap,
+ *            LVGL font glyph scratch buffer)
  *          - Layout of the LVGL sub-region of W25Q64 (asset offsets / sizes)
  *          - Bootstrap magic used to detect a freshly-erased chip
  *
@@ -17,7 +18,7 @@
  *        sub-region (MEMORY_LVGL_START_ADDRESS); callers add the absolute
  *        sub-region base when invoking driver-level APIs.
  *
- * @version V1.1 2026-05-24  Switch to new SquareLine watch UI assets.
+ * @version V1.2 2026-06-03  Move refreshed LVGL images/fonts to W25Q64.
  *
  * @note 1 tab == 4 spaces!
  *
@@ -59,7 +60,15 @@
  *        UI assets) → 0xA55A5AA7 (3 watchdight 60×60 moved off .rodata onto
  *        W25Q64).
  */
-#define CFG_LVGL_ASSET_MAGIC         (0xA55A5AA7UL)
+#define CFG_LVGL_ASSET_MAGIC         (0xA55A5AA8UL)
+
+/**
+ * @brief Scratch buffer used by the W25Q64-backed LVGL font callback.
+ *        Sized for the largest glyph in the current 82 px 4-bpp custom font.
+ */
+#ifndef CFG_LVGL_FONT_GLYPH_BUFFER_SIZE
+#define CFG_LVGL_FONT_GLYPH_BUFFER_SIZE (8192U)
+#endif
 
 /* ── LVGL sub-region asset layout (offsets within the LVGL sub-region) ────
  *
@@ -72,6 +81,8 @@
  *   0x052000  watchdight1_60x60    (10800 B)   -- Clock_3 step icon frame 1
  *   0x055000  watchdight2_60x60    (10800 B)   -- Clock_3 step icon frame 2
  *   0x058000  watchdight3_60x60    (10800 B)   -- Clock_3 step icon frame 3
+ *   0x05B000  refreshed UI images  (sector-aligned entries)
+ *   0x07F000  custom font bitmaps  (sector-aligned entries)
  *   ...       (free)
  *
  * Sprites (fen / miao / time) are kept in firmware .rodata as a fallback
@@ -162,12 +173,236 @@
                                             CFG_LVGL_ASSET_WATCHDIGHT3_H * \
                                             CFG_LVGL_ASSET_WATCHDIGHT3_PX_SIZE)
 
+#define CFG_LVGL_ASSET_SHESHIDU_OFFSET      (0x05B000UL)
+#define CFG_LVGL_ASSET_SHESHIDU_W           (10U)
+#define CFG_LVGL_ASSET_SHESHIDU_H           (10U)
+#define CFG_LVGL_ASSET_SHESHIDU_PX_SIZE     (3U)
+#define CFG_LVGL_ASSET_SHESHIDU_SIZE        (CFG_LVGL_ASSET_SHESHIDU_W * \
+                                            CFG_LVGL_ASSET_SHESHIDU_H * \
+                                            CFG_LVGL_ASSET_SHESHIDU_PX_SIZE)
+
+#define CFG_LVGL_ASSET_WATHER16X16_OFFSET   (0x05C000UL)
+#define CFG_LVGL_ASSET_WATHER16X16_W        (16U)
+#define CFG_LVGL_ASSET_WATHER16X16_H        (16U)
+#define CFG_LVGL_ASSET_WATHER16X16_PX_SIZE  (3U)
+#define CFG_LVGL_ASSET_WATHER16X16_SIZE     (CFG_LVGL_ASSET_WATHER16X16_W * \
+                                            CFG_LVGL_ASSET_WATHER16X16_H * \
+                                            CFG_LVGL_ASSET_WATHER16X16_PX_SIZE)
+
+#define CFG_LVGL_ASSET_HEART16X16_OFFSET    (0x05D000UL)
+#define CFG_LVGL_ASSET_HEART16X16_W         (16U)
+#define CFG_LVGL_ASSET_HEART16X16_H         (16U)
+#define CFG_LVGL_ASSET_HEART16X16_PX_SIZE   (3U)
+#define CFG_LVGL_ASSET_HEART16X16_SIZE      (CFG_LVGL_ASSET_HEART16X16_W * \
+                                            CFG_LVGL_ASSET_HEART16X16_H * \
+                                            CFG_LVGL_ASSET_HEART16X16_PX_SIZE)
+
+#define CFG_LVGL_ASSET_KLL16X16_OFFSET      (0x05E000UL)
+#define CFG_LVGL_ASSET_KLL16X16_W           (16U)
+#define CFG_LVGL_ASSET_KLL16X16_H           (16U)
+#define CFG_LVGL_ASSET_KLL16X16_PX_SIZE     (3U)
+#define CFG_LVGL_ASSET_KLL16X16_SIZE        (CFG_LVGL_ASSET_KLL16X16_W * \
+                                            CFG_LVGL_ASSET_KLL16X16_H * \
+                                            CFG_LVGL_ASSET_KLL16X16_PX_SIZE)
+
+#define CFG_LVGL_ASSET_FOOT16X16_OFFSET     (0x05F000UL)
+#define CFG_LVGL_ASSET_FOOT16X16_W          (16U)
+#define CFG_LVGL_ASSET_FOOT16X16_H          (16U)
+#define CFG_LVGL_ASSET_FOOT16X16_PX_SIZE    (3U)
+#define CFG_LVGL_ASSET_FOOT16X16_SIZE       (CFG_LVGL_ASSET_FOOT16X16_W * \
+                                            CFG_LVGL_ASSET_FOOT16X16_H * \
+                                            CFG_LVGL_ASSET_FOOT16X16_PX_SIZE)
+
+#define CFG_LVGL_ASSET_BT32_OFFSET          (0x060000UL)
+#define CFG_LVGL_ASSET_BT32_W               (32U)
+#define CFG_LVGL_ASSET_BT32_H               (32U)
+#define CFG_LVGL_ASSET_BT32_PX_SIZE         (3U)
+#define CFG_LVGL_ASSET_BT32_SIZE            (CFG_LVGL_ASSET_BT32_W * \
+                                            CFG_LVGL_ASSET_BT32_H * \
+                                            CFG_LVGL_ASSET_BT32_PX_SIZE)
+
+#define CFG_LVGL_ASSET_MIANTI_0_OFFSET      (0x061000UL)
+#define CFG_LVGL_ASSET_MIANTI_0_W           (32U)
+#define CFG_LVGL_ASSET_MIANTI_0_H           (32U)
+#define CFG_LVGL_ASSET_MIANTI_0_PX_SIZE     (3U)
+#define CFG_LVGL_ASSET_MIANTI_0_SIZE        (CFG_LVGL_ASSET_MIANTI_0_W * \
+                                            CFG_LVGL_ASSET_MIANTI_0_H * \
+                                            CFG_LVGL_ASSET_MIANTI_0_PX_SIZE)
+
+#define CFG_LVGL_ASSET_ZHENGDONG_0_OFFSET   (0x062000UL)
+#define CFG_LVGL_ASSET_ZHENGDONG_0_W        (32U)
+#define CFG_LVGL_ASSET_ZHENGDONG_0_H        (32U)
+#define CFG_LVGL_ASSET_ZHENGDONG_0_PX_SIZE  (3U)
+#define CFG_LVGL_ASSET_ZHENGDONG_0_SIZE     (CFG_LVGL_ASSET_ZHENGDONG_0_W * \
+                                            CFG_LVGL_ASSET_ZHENGDONG_0_H * \
+                                            CFG_LVGL_ASSET_ZHENGDONG_0_PX_SIZE)
+
+#define CFG_LVGL_ASSET_COPESSS_OFFSET       (0x063000UL)
+#define CFG_LVGL_ASSET_COPESSS_W            (32U)
+#define CFG_LVGL_ASSET_COPESSS_H            (32U)
+#define CFG_LVGL_ASSET_COPESSS_PX_SIZE      (3U)
+#define CFG_LVGL_ASSET_COPESSS_SIZE         (CFG_LVGL_ASSET_COPESSS_W * \
+                                            CFG_LVGL_ASSET_COPESSS_H * \
+                                            CFG_LVGL_ASSET_COPESSS_PX_SIZE)
+
+#define CFG_LVGL_ASSET_WEATER32X32_OFFSET   (0x064000UL)
+#define CFG_LVGL_ASSET_WEATER32X32_W        (32U)
+#define CFG_LVGL_ASSET_WEATER32X32_H        (32U)
+#define CFG_LVGL_ASSET_WEATER32X32_PX_SIZE  (3U)
+#define CFG_LVGL_ASSET_WEATER32X32_SIZE     (CFG_LVGL_ASSET_WEATER32X32_W * \
+                                            CFG_LVGL_ASSET_WEATER32X32_H * \
+                                            CFG_LVGL_ASSET_WEATER32X32_PX_SIZE)
+
+#define CFG_LVGL_ASSET_ELLIPSE_OFFSET       (0x065000UL)
+#define CFG_LVGL_ASSET_ELLIPSE_W            (40U)
+#define CFG_LVGL_ASSET_ELLIPSE_H            (40U)
+#define CFG_LVGL_ASSET_ELLIPSE_PX_SIZE      (3U)
+#define CFG_LVGL_ASSET_ELLIPSE_SIZE         (CFG_LVGL_ASSET_ELLIPSE_W * \
+                                            CFG_LVGL_ASSET_ELLIPSE_H * \
+                                            CFG_LVGL_ASSET_ELLIPSE_PX_SIZE)
+
+#define CFG_LVGL_ASSET_STIME_OFFSET         (0x067000UL)
+#define CFG_LVGL_ASSET_STIME_W              (16U)
+#define CFG_LVGL_ASSET_STIME_H              (8U)
+#define CFG_LVGL_ASSET_STIME_PX_SIZE        (3U)
+#define CFG_LVGL_ASSET_STIME_SIZE           (CFG_LVGL_ASSET_STIME_W * \
+                                            CFG_LVGL_ASSET_STIME_H * \
+                                            CFG_LVGL_ASSET_STIME_PX_SIZE)
+
+#define CFG_LVGL_ASSET_SFEN_OFFSET          (0x068000UL)
+#define CFG_LVGL_ASSET_SFEN_W               (21U)
+#define CFG_LVGL_ASSET_SFEN_H               (6U)
+#define CFG_LVGL_ASSET_SFEN_PX_SIZE         (3U)
+#define CFG_LVGL_ASSET_SFEN_SIZE            (CFG_LVGL_ASSET_SFEN_W * \
+                                            CFG_LVGL_ASSET_SFEN_H * \
+                                            CFG_LVGL_ASSET_SFEN_PX_SIZE)
+
+#define CFG_LVGL_ASSET_POWER_HIGHT_OFFSET   (0x069000UL)
+#define CFG_LVGL_ASSET_POWER_HIGHT_W        (32U)
+#define CFG_LVGL_ASSET_POWER_HIGHT_H        (32U)
+#define CFG_LVGL_ASSET_POWER_HIGHT_PX_SIZE  (3U)
+#define CFG_LVGL_ASSET_POWER_HIGHT_SIZE     (CFG_LVGL_ASSET_POWER_HIGHT_W * \
+                                            CFG_LVGL_ASSET_POWER_HIGHT_H * \
+                                            CFG_LVGL_ASSET_POWER_HIGHT_PX_SIZE)
+
+#define CFG_LVGL_ASSET_LOCATION_OFFSET      (0x06A000UL)
+#define CFG_LVGL_ASSET_LOCATION_W           (32U)
+#define CFG_LVGL_ASSET_LOCATION_H           (32U)
+#define CFG_LVGL_ASSET_LOCATION_PX_SIZE     (3U)
+#define CFG_LVGL_ASSET_LOCATION_SIZE        (CFG_LVGL_ASSET_LOCATION_W * \
+                                            CFG_LVGL_ASSET_LOCATION_H * \
+                                            CFG_LVGL_ASSET_LOCATION_PX_SIZE)
+
+#define CFG_LVGL_ASSET_TAIWAN_OFFSET        (0x06B000UL)
+#define CFG_LVGL_ASSET_TAIWAN_W             (32U)
+#define CFG_LVGL_ASSET_TAIWAN_H             (32U)
+#define CFG_LVGL_ASSET_TAIWAN_PX_SIZE       (3U)
+#define CFG_LVGL_ASSET_TAIWAN_SIZE          (CFG_LVGL_ASSET_TAIWAN_W * \
+                                            CFG_LVGL_ASSET_TAIWAN_H * \
+                                            CFG_LVGL_ASSET_TAIWAN_PX_SIZE)
+
+#define CFG_LVGL_ASSET_NFC_OFFSET           (0x06C000UL)
+#define CFG_LVGL_ASSET_NFC_W                (32U)
+#define CFG_LVGL_ASSET_NFC_H                (32U)
+#define CFG_LVGL_ASSET_NFC_PX_SIZE          (3U)
+#define CFG_LVGL_ASSET_NFC_SIZE             (CFG_LVGL_ASSET_NFC_W * \
+                                            CFG_LVGL_ASSET_NFC_H * \
+                                            CFG_LVGL_ASSET_NFC_PX_SIZE)
+
+#define CFG_LVGL_ASSET_LIANGDU_OFFSET       (0x06D000UL)
+#define CFG_LVGL_ASSET_LIANGDU_W            (47U)
+#define CFG_LVGL_ASSET_LIANGDU_H            (47U)
+#define CFG_LVGL_ASSET_LIANGDU_PX_SIZE      (3U)
+#define CFG_LVGL_ASSET_LIANGDU_SIZE         (CFG_LVGL_ASSET_LIANGDU_W * \
+                                            CFG_LVGL_ASSET_LIANGDU_H * \
+                                            CFG_LVGL_ASSET_LIANGDU_PX_SIZE)
+
+#define CFG_LVGL_ASSET_ZNZBG_OFFSET         (0x06F000UL)
+#define CFG_LVGL_ASSET_ZNZBG_W              (100U)
+#define CFG_LVGL_ASSET_ZNZBG_H              (100U)
+#define CFG_LVGL_ASSET_ZNZBG_PX_SIZE        (3U)
+#define CFG_LVGL_ASSET_ZNZBG_SIZE           (CFG_LVGL_ASSET_ZNZBG_W * \
+                                            CFG_LVGL_ASSET_ZNZBG_H * \
+                                            CFG_LVGL_ASSET_ZNZBG_PX_SIZE)
+
+#define CFG_LVGL_ASSET_ARW_OFFSET           (0x077000UL)
+#define CFG_LVGL_ASSET_ARW_W                (50U)
+#define CFG_LVGL_ASSET_ARW_H                (40U)
+#define CFG_LVGL_ASSET_ARW_PX_SIZE          (3U)
+#define CFG_LVGL_ASSET_ARW_SIZE             (CFG_LVGL_ASSET_ARW_W * \
+                                            CFG_LVGL_ASSET_ARW_H * \
+                                            CFG_LVGL_ASSET_ARW_PX_SIZE)
+
+#define CFG_LVGL_ASSET_ZNZ_OFFSET           (0x079000UL)
+#define CFG_LVGL_ASSET_ZNZ_W                (50U)
+#define CFG_LVGL_ASSET_ZNZ_H                (50U)
+#define CFG_LVGL_ASSET_ZNZ_PX_SIZE          (3U)
+#define CFG_LVGL_ASSET_ZNZ_SIZE             (CFG_LVGL_ASSET_ZNZ_W * \
+                                            CFG_LVGL_ASSET_ZNZ_H * \
+                                            CFG_LVGL_ASSET_ZNZ_PX_SIZE)
+
+#define CFG_LVGL_ASSET_HEART32X32_OFFSET    (0x07B000UL)
+#define CFG_LVGL_ASSET_HEART32X32_W         (32U)
+#define CFG_LVGL_ASSET_HEART32X32_H         (32U)
+#define CFG_LVGL_ASSET_HEART32X32_PX_SIZE   (3U)
+#define CFG_LVGL_ASSET_HEART32X32_SIZE      (CFG_LVGL_ASSET_HEART32X32_W * \
+                                            CFG_LVGL_ASSET_HEART32X32_H * \
+                                            CFG_LVGL_ASSET_HEART32X32_PX_SIZE)
+
+#define CFG_LVGL_ASSET_TIWEN_OFFSET         (0x07C000UL)
+#define CFG_LVGL_ASSET_TIWEN_W              (32U)
+#define CFG_LVGL_ASSET_TIWEN_H              (32U)
+#define CFG_LVGL_ASSET_TIWEN_PX_SIZE        (3U)
+#define CFG_LVGL_ASSET_TIWEN_SIZE           (CFG_LVGL_ASSET_TIWEN_W * \
+                                            CFG_LVGL_ASSET_TIWEN_H * \
+                                            CFG_LVGL_ASSET_TIWEN_PX_SIZE)
+
+#define CFG_LVGL_ASSET_PA_OFFSET            (0x07D000UL)
+#define CFG_LVGL_ASSET_PA_W                 (32U)
+#define CFG_LVGL_ASSET_PA_H                 (32U)
+#define CFG_LVGL_ASSET_PA_PX_SIZE           (3U)
+#define CFG_LVGL_ASSET_PA_SIZE              (CFG_LVGL_ASSET_PA_W * \
+                                            CFG_LVGL_ASSET_PA_H * \
+                                            CFG_LVGL_ASSET_PA_PX_SIZE)
+
+#define CFG_LVGL_ASSET_LOCATION32X32_OFFSET (0x07E000UL)
+#define CFG_LVGL_ASSET_LOCATION32X32_W      (32U)
+#define CFG_LVGL_ASSET_LOCATION32X32_H      (32U)
+#define CFG_LVGL_ASSET_LOCATION32X32_PX_SIZE (3U)
+#define CFG_LVGL_ASSET_LOCATION32X32_SIZE   (CFG_LVGL_ASSET_LOCATION32X32_W * \
+                                            CFG_LVGL_ASSET_LOCATION32X32_H * \
+                                            CFG_LVGL_ASSET_LOCATION32X32_PX_SIZE)
+
+#define CFG_LVGL_FONT_INTERTTF_24_BITMAP_OFFSET (0x07F000UL)
+#define CFG_LVGL_FONT_INTERTTF_24_BITMAP_SIZE   (25753U)
+
+#define CFG_LVGL_FONT_INTERTTF_10_BITMAP_OFFSET (0x086000UL)
+#define CFG_LVGL_FONT_INTERTTF_10_BITMAP_SIZE   (5051U)
+
+#define CFG_LVGL_FONT_INTERTTF_82_BITMAP_OFFSET (0x088000UL)
+#define CFG_LVGL_FONT_INTERTTF_82_BITMAP_SIZE   (288357U)
+
+#define CFG_LVGL_FONT_ALIMAMA_16_BITMAP_OFFSET  (0x0CF000UL)
+#define CFG_LVGL_FONT_ALIMAMA_16_BITMAP_SIZE    (11848U)
+
+#define CFG_LVGL_FONT_ALIMAMA_36_BITMAP_OFFSET  (0x0D2000UL)
+#define CFG_LVGL_FONT_ALIMAMA_36_BITMAP_SIZE    (53612U)
+
+#define CFG_LVGL_FONT_DIGITALDREAMFATNARROW_36_BITMAP_OFFSET (0x0E0000UL)
+#define CFG_LVGL_FONT_DIGITALDREAMFATNARROW_36_BITMAP_SIZE   (57756U)
+
+#define CFG_LVGL_FONT_ALIMAMA_12_BITMAP_OFFSET  (0x0EF000UL)
+#define CFG_LVGL_FONT_ALIMAMA_12_BITMAP_SIZE    (6637U)
+
+#define CFG_LVGL_FONT_ALIMAMA_10_BITMAP_OFFSET  (0x0F1000UL)
+#define CFG_LVGL_FONT_ALIMAMA_10_BITMAP_SIZE    (5152U)
+
 /**
  * @brief One-past-last byte used by LVGL assets.  Bootstrap erases sectors
  *        up to here on a magic mismatch.
  */
-#define CFG_LVGL_ASSET_FOOTPRINT        (CFG_LVGL_ASSET_WATCHDIGHT3_OFFSET + \
-                                         CFG_LVGL_ASSET_WATCHDIGHT3_SIZE)
+#define CFG_LVGL_ASSET_FOOTPRINT        (CFG_LVGL_FONT_ALIMAMA_10_BITMAP_OFFSET + \
+                                         CFG_LVGL_FONT_ALIMAMA_10_BITMAP_SIZE)
 //******************************** Defines **********************************//
 
 #endif /* __CFG_STORAGE_H__ */

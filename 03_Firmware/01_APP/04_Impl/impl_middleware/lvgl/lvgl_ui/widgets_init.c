@@ -91,4 +91,3 @@ void Clock_3_analog_clock_1_timer(lv_timer_t *timer)
         lv_analogclock_set_time(guider_ui.Clock_3_analog_clock_1, Clock_3_analog_clock_1_hour_value, Clock_3_analog_clock_1_min_value, Clock_3_analog_clock_1_sec_value);
     }
 }
-

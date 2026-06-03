@@ -49,7 +49,7 @@
 #define LV_MEM_CUSTOM 0
 #if LV_MEM_CUSTOM == 0
     /*Size of the memory available for `lv_mem_alloc()` in bytes (>= 2kB)*/
-    #define LV_MEM_SIZE (16U * 1024U)          /*[bytes]*/
+    #define LV_MEM_SIZE (24U * 1024U)          /*[bytes]*/
 
     /*Set an address for the memory pool instead of allocating it as a normal array. Can be in external SRAM too.*/
     #define LV_MEM_ADR 0     /*0: unused*/
@@ -96,7 +96,7 @@
 
 /*Default Dot Per Inch. Used to initialize default sizes such as widgets sized, style paddings.
  *(Not so important, you can adjust it to modify default sizes and spaces)*/
-#define LV_DPI_DEF 130     /*[px/inch]*/
+#define LV_DPI_DEF 100     /*[px/inch]*/
 
 /*=======================
  * FEATURE CONFIGURATION
@@ -230,7 +230,7 @@
  *-----------*/
 
 /*Enable the log module*/
-#define LV_USE_LOG 1
+#define LV_USE_LOG 0
 #if LV_USE_LOG
 
     /*How important log should be added:
@@ -396,7 +396,15 @@
 /*Optionally declare custom fonts here.
  *You can use these fonts as default font too and they will be available globally.
  *E.g. #define LV_FONT_CUSTOM_DECLARE   LV_FONT_DECLARE(my_font_1) LV_FONT_DECLARE(my_font_2)*/
-#define LV_FONT_CUSTOM_DECLARE   LV_FONT_DECLARE(lv_font_alimama_12)
+#define LV_FONT_CUSTOM_DECLARE \
+    LV_FONT_DECLARE(lv_font_alimama_10) \
+    LV_FONT_DECLARE(lv_font_alimama_12) \
+    LV_FONT_DECLARE(lv_font_alimama_16) \
+    LV_FONT_DECLARE(lv_font_alimama_36) \
+    LV_FONT_DECLARE(lv_font_digitaldreamfatnarrow_36) \
+    LV_FONT_DECLARE(lv_font_interttf_10) \
+    LV_FONT_DECLARE(lv_font_interttf_24) \
+    LV_FONT_DECLARE(lv_font_interttf_82)
 
 /*Always set a default font*/
 #define LV_FONT_DEFAULT &lv_font_alimama_12   /* was &lv_font_montserrat_14 */
@@ -471,13 +479,13 @@
 
 /*Documentation of the widgets: https://docs.lvgl.io/latest/en/html/widgets/index.html*/
 
-/* === Watch UI only needs: ARC (Clock_1 arcs), IMG, LABEL,
+/* === Watch UI only needs: ARC (Clock_1 arcs), IMG, LABEL, SLIDER,
  *     lv_analogclock (custom widget, not gated by these macros), and the
  *     base lv_obj used as containers.  Everything else turned off to
  *     reclaim ~40 KB Flash.  Re-enable individually as the UI grows. */
 #define LV_USE_ARC        1
 
-#define LV_USE_BAR        0
+#define LV_USE_BAR        1
 
 #define LV_USE_BTN        1   /* needed by touch_calibration_ui.c (skip / restart buttons) */
 
@@ -504,7 +512,7 @@
     #define LV_ROLLER_INF_PAGES 7 /*Number of extra "pages" when the roller is infinite*/
 #endif
 
-#define LV_USE_SLIDER     0   /*Requires: lv_bar*/
+#define LV_USE_SLIDER     1   /*Requires: lv_bar*/
 
 #define LV_USE_SWITCH     0
 

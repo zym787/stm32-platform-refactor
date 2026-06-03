@@ -47,7 +47,7 @@
 
 //********************************* Defines *********************************//
 
-#define DEBUG                 (1)  /* Enable centralized debug output        */
+#define DEBUG                 (0)  /* Enable centralized debug output        */
 
 
 /*

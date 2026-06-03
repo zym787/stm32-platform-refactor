@@ -1,1 +1,1 @@
-GEN_CSRCS += lv_font_alimama_12.c lv_font_alimama_16.c lv_font_interttf_10.c lv_font_interttf_24.c
+GEN_CSRCS += lv_font_interttf_24.c lv_font_interttf_10.c lv_font_interttf_82.c lv_font_alimama_16.c lv_font_alimama_36.c lv_font_digitaldreamfatnarrow_36.c lv_font_alimama_12.c lv_font_alimama_10.c

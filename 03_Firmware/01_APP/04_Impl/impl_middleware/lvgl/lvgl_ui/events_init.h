@@ -21,6 +21,8 @@ void events_init(lv_ui *ui);
 void events_init_Clock_1(lv_ui *ui);
 void events_init_Clock_2(lv_ui *ui);
 void events_init_Clock_3(lv_ui *ui);
+void events_init_top_lap(lv_ui *ui);
+void events_init_under_up(lv_ui *ui);
 
 #ifdef __cplusplus
 }

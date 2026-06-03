@@ -65,7 +65,7 @@
 #define USER_TASK_EM7028_HEART_RATE     1
 
 /* --- System --- */
-#define USER_TASK_TASK_HIGHER_WATER     1
+#define USER_TASK_TASK_HIGHER_WATER     0
 
 /* --- OTA (01_SERVICE/upgrade) --- */
 /* IWDG feeder runs on EVERY boot because F411 IWDG can't be disabled once

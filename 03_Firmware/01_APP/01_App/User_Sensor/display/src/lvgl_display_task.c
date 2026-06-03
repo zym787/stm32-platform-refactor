@@ -187,7 +187,7 @@ void lvgl_display_task(void *argument)
 
     /* 3. LVGL core + display port. */
     lv_init();
-    lv_log_register_print_cb(lvgl_log_output_cb);
+    // lv_log_register_print_cb(lvgl_log_output_cb);
     if (!lv_port_disp_init())
     {
         DEBUG_OUT(e, ST7789_ERR_LOG_TAG, "lvgl disp port init failed");

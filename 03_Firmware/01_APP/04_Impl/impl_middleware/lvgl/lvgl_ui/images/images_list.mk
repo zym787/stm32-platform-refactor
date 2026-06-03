@@ -1,1 +1,4 @@
-GEN_CSRCS += _sheshidu_alpha_10x10.c _wather16x16_alpha_16x16.c _heart16x16_alpha_16x16.c _KLL16x16_alpha_16x16.c _foot16x16_alpha_16x16.c _time_alpha_50x8.c _fen_alpha_80x8.c _miao_alpha_70x5.c _Ellipse_alpha_40x40.c _Stime_alpha_16x8.c _Sfen_alpha_21x6.c
+# LVGL image pixel arrays are packed into W25Q64 by Tools/pack_assets.py.
+# Keep the .c files on disk as packer inputs, but do not compile them into
+# firmware .rodata.
+GEN_CSRCS +=
