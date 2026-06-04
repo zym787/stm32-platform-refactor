@@ -159,27 +159,36 @@ calibration_status_t touch_calibration_ui_init(void)
      * current point — that's the raw panel coordinate while bypass is on. */
     lv_obj_add_event_cb(s_ui.screen, on_screen_pressed, LV_EVENT_PRESSED, NULL);
 
-    /* Skip / restart buttons are hidden on the happy path; only the error
-     * state surfaces them. */
-    s_ui.btn_skip = lv_btn_create(s_ui.screen);
-    lv_obj_set_size(s_ui.btn_skip, 70, 28);
-    lv_obj_align(s_ui.btn_skip, LV_ALIGN_BOTTOM_LEFT, 12, -12);
-    lv_obj_t *lbl_skip = lv_label_create(s_ui.btn_skip);
-    lv_label_set_text(lbl_skip, "Skip");
-    lv_obj_center(lbl_skip);
-    lv_obj_add_event_cb(s_ui.btn_skip, on_btn_skip_clicked,
-                        LV_EVENT_CLICKED, NULL);
-    lv_obj_add_flag(s_ui.btn_skip, LV_OBJ_FLAG_HIDDEN);
-
+    /* Skip / restart buttons are hidden on the happy path; only the error /
+     * timeout state surfaces them.
+     *
+     * They MUST sit in the central band, not at the panel edges.  When this
+     * screen surfaces, touch is still UNcalibrated and fed raw via bypass
+     * (see lv_port_indev.c), and raw samples only reliably cover the same
+     * MARGIN..(dim - MARGIN) region the 9 calibration crosses live in.
+     * Edge-aligned buttons (the old LV_ALIGN_BOTTOM_* placement) fell partly
+     * outside that reachable area, so a tap on the bottom-most button never
+     * registered and the user was stuck.  Centre + enlarge so an uncalibrated
+     * finger can always land on them.  Restart is primary (top); Skip below. */
     s_ui.btn_restart = lv_btn_create(s_ui.screen);
-    lv_obj_set_size(s_ui.btn_restart, 80, 28);
-    lv_obj_align(s_ui.btn_restart, LV_ALIGN_BOTTOM_RIGHT, -12, -12);
+    lv_obj_set_size(s_ui.btn_restart, 140, 44);
+    lv_obj_align(s_ui.btn_restart, LV_ALIGN_CENTER, 0, -2);
     lv_obj_t *lbl_restart = lv_label_create(s_ui.btn_restart);
     lv_label_set_text(lbl_restart, "Restart");
     lv_obj_center(lbl_restart);
     lv_obj_add_event_cb(s_ui.btn_restart, on_btn_restart_clicked,
                         LV_EVENT_CLICKED, NULL);
     lv_obj_add_flag(s_ui.btn_restart, LV_OBJ_FLAG_HIDDEN);
+
+    s_ui.btn_skip = lv_btn_create(s_ui.screen);
+    lv_obj_set_size(s_ui.btn_skip, 140, 40);
+    lv_obj_align(s_ui.btn_skip, LV_ALIGN_CENTER, 0, 52);
+    lv_obj_t *lbl_skip = lv_label_create(s_ui.btn_skip);
+    lv_label_set_text(lbl_skip, "Skip");
+    lv_obj_center(lbl_skip);
+    lv_obj_add_event_cb(s_ui.btn_skip, on_btn_skip_clicked,
+                        LV_EVENT_CLICKED, NULL);
+    lv_obj_add_flag(s_ui.btn_skip, LV_OBJ_FLAG_HIDDEN);
 
     s_ui.screen_ready = true;
     return CALIBRATION_SUCCESS;

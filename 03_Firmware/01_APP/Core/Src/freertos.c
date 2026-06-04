@@ -61,7 +61,7 @@
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 256 * 4,
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for letter_shell */
@@ -138,7 +138,7 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of letter_shell */
-  // letter_shellHandle = osThreadNew(shellTask, (void*) &shell, &letter_shell_attributes);
+  letter_shellHandle = osThreadNew(shellTask, (void*) &shell, &letter_shell_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   user_apptask_init();

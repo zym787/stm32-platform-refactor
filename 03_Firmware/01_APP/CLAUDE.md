@@ -160,7 +160,7 @@ tag 路由由 `Debug.c` 的 `s_route_table[]` 单表驱动，`debug_route_lookup
 ## 硬件
 
 - **MCU**：STM32F411xE — Cortex-M4F，512KB FLASH，128KB SRAM
-- **RTOS**：FreeRTOS v10.3.1，heap_4，60KB 堆，1 kHz tick，CMSIS-RTOS V2 API 可用
+- **RTOS**：FreeRTOS v10.3.1，heap_4，32 KB 堆（`configTOTAL_HEAP_SIZE`，按任务栈水位实测右尺寸；动态负载实测 ~16 KB），1 kHz tick，CMSIS-RTOS V2 API 可用
 - **FPU**：单精度硬浮点（`-mfpu=fpv4-sp-d16 -mfloat-abi=hard`）
 - **链接脚本**：`STM32F411XX_FLASH.ld` — 121 KB 用户 RAM (`RAM`, `0x20000000`) + 7 KB RTT RAM (`RTT_RAM`, `0x2001E400`)
 

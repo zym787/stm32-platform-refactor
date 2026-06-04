@@ -69,13 +69,13 @@ void ota_service_task(void *argument);
    never fail to start. Each word count must match the matching .stack_depth
    in the table below. */
 #if USER_TASK_W25Q64_HANDLER
-OSAL_TASK_STATIC_DEFINE(s_flash_handler_static, 288);
+OSAL_TASK_STATIC_DEFINE(s_flash_handler_static, 272);
 #endif
 #if USER_TASK_STORAGE_MANAGER
-OSAL_TASK_STATIC_DEFINE(s_storage_manager_static, 192);
+OSAL_TASK_STATIC_DEFINE(s_storage_manager_static, 176);
 #endif
 #if USER_TASK_IWDG_FEEDER
-OSAL_TASK_STATIC_DEFINE(s_iwdg_feeder_static, 128);
+OSAL_TASK_STATIC_DEFINE(s_iwdg_feeder_static, 64);
 #endif
 #if USER_TASK_FIRMWARE_UPGRADE
 OSAL_TASK_STATIC_DEFINE(s_firmware_upgrade_static, 192);
@@ -93,7 +93,7 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
     [USER_TASK_MPU6050_HANDLER_IDX] = {
         .task_name    = "mpu6050_handler_thread",
         .func_pointer = mpuxxxx_handler_thread,
-        .stack_depth  = 288,    /* observed peak 186 W, ~55% headroom */
+        .stack_depth  = 256,    /* observed peak 182 W, ~29% headroom */
         .priority     = PRI_NORMAL + 1,
         .task_handle  = NULL,
         .argument     = &mpu6050_input_args
@@ -104,7 +104,7 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
     [USER_TASK_UNPACK_TASK_IDX] = {
         .task_name    = "unpack_task_thread",
         .func_pointer = unpack_task_thread,
-        .stack_depth  = 192,    /* observed peak 111 W, ~73% headroom -- 512 was 22% utilised */
+        .stack_depth  = 160,    /* observed peak 109 W, ~32% headroom */
         .priority     = PRI_NORMAL,
         .task_handle  = NULL,
         .argument     = NULL
@@ -116,7 +116,7 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
     [USER_TASK_TEMP_HUMI_HANDLER_IDX] = {
         .task_name    = "temp_humi_handler_thread",
         .func_pointer = temp_humi_handler_thread,
-        .stack_depth  = 256,
+        .stack_depth  = 224,    /* observed peak 157 W, ~30% headroom */
         .priority     = PRI_NORMAL,
         .task_handle  = NULL,
         .argument     = &aht21_input_arg
@@ -127,7 +127,7 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
     [USER_TASK_TEMP_HUMI_TEST_A_IDX] = {
         .task_name    = "temp_humi_test_task_a",
         .func_pointer = temp_humi_test_task_a,
-        .stack_depth  = 320,    /* observed peak 206 W, ~55% headroom */
+        .stack_depth  = 320,    /* observed peak 229 W, ~28% headroom (validation task, kept) */
         .priority     = PRI_NORMAL,
         .task_handle  = NULL,
         .argument     = NULL
@@ -162,7 +162,7 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
     [USER_LVGL_TEST_TASK_IDX] = {
         .task_name    = "lvgl_display_task",
         .func_pointer = lvgl_display_task,
-        .stack_depth  = 512,    /* observed peak 427 W (current UI); was 2048 (21% used). Bump back to 1024+ if SquareLine 复杂动画 / 大字号字体回归后 peak 上升 */
+        .stack_depth  = 704,    /* observed peak 498 W -- 512 W left only 14 W free (97% used, near overflow); grown to ~29% headroom. Bump further if SquareLine 复杂动画 / 大字号字体回归后 peak 上升 */
         .priority     = PRI_HARD_REALTIME,
         .task_handle  = NULL,
         .argument     = NULL
@@ -174,7 +174,7 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
     [USER_TASK_W25Q64_HANDLER_IDX] = {
         .task_name      = "flash_handler_thread",
         .func_pointer   = flash_handler_thread,
-        .stack_depth    = 288,    /* observed peak 190 W, ~52% headroom */
+        .stack_depth    = 272,    /* observed peak 185 W, ~32% headroom (must match s_flash_handler_static) */
         .priority       = PRI_NORMAL,
         .task_handle    = NULL,
         .argument       = &w25q64_input_arg,
@@ -187,7 +187,7 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
     [USER_TASK_STORAGE_MANAGER_IDX] = {
         .task_name      = "storage_manager_task",
         .func_pointer   = storage_manager_task,
-        .stack_depth    = 192,    /* observed peak 122 W, ~57% headroom */
+        .stack_depth    = 176,    /* observed peak 119 W, ~32% headroom (must match s_storage_manager_static) */
         .priority       = PRI_NORMAL,
         .task_handle    = NULL,
         .argument       = NULL,
@@ -201,7 +201,7 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
     [USER_TASK_EM7028_HANDLER_IDX] = {
         .task_name    = "em7028_handler_thread",
         .func_pointer = em7028_handler_thread,
-        .stack_depth  = 320,    /* observed peak 208 W, ~54% headroom */
+        .stack_depth  = 304,    /* observed peak 208 W, ~32% headroom */
         .priority     = PRI_NORMAL,
         .task_handle  = NULL,
         .argument     = &em7028_input_arg
@@ -212,7 +212,7 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
     [USER_TASK_EM7028_HEART_RATE_IDX] = {
         .task_name    = "em7028_heart_rate",
         .func_pointer = em7028_heart_rate_task,
-        .stack_depth  = 320,    /* observed peak 204 W, ~57% headroom */
+        .stack_depth  = 288,    /* observed peak 196 W, ~32% headroom */
         .priority     = PRI_NORMAL,
         .task_handle  = NULL,
         .argument     = NULL
@@ -224,7 +224,7 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
     [USER_TASK_TASK_HIGHER_WATER_IDX] = {
         .task_name    = "task_higher_water_thread",
         .func_pointer = task_higher_water_thread,
-        .stack_depth  = 256,
+        .stack_depth  = 240,    /* observed peak 161 W, ~33% headroom */
         .priority     = PRI_NORMAL + 2,
         .task_handle  = NULL,
         .argument     = NULL
@@ -235,7 +235,7 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
     [USER_TASK_IWDG_FEEDER_IDX] = {
         .task_name      = "iwdg_feeder",
         .func_pointer   = iwdg_feeder_task,
-        .stack_depth    = 128,
+        .stack_depth    = 64,    /* observed peak 10 W (refresh-only loop); 64 W keeps ample ISR-nesting margin (must match s_iwdg_feeder_static) */
         .priority       = PRI_BACKGROUND,
         .task_handle    = NULL,
         .argument       = NULL,
@@ -249,7 +249,7 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
     [USER_TASK_FIRMWARE_UPGRADE_IDX] = {
         .task_name      = "firmware_upgrade",
         .func_pointer   = firmware_upgrade_task,
-        .stack_depth    = 192,    /* observed peak 124 W, ~55% headroom */
+        .stack_depth    = 192,    /* idle-scan peak 123 W; kept conservative -- OTA/Ymodem deep path not exercised in the capture */
         .priority       = PRI_SOFT_REALTIME,
         .task_handle    = NULL,
         .argument       = NULL,
@@ -262,7 +262,7 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
     [USER_TASK_OTA_SERVICE_IDX] = {
         .task_name      = "ota_service",
         .func_pointer   = ota_service_task,
-        .stack_depth    = 256,    /* observed peak 120 W, ~110% headroom */
+        .stack_depth    = 256,    /* idle-scan peak 117 W; kept conservative -- Ymodem_Receive deep path not exercised in the capture */
         .priority       = PRI_SOFT_REALTIME,
         .task_handle    = NULL,
         .argument       = NULL,

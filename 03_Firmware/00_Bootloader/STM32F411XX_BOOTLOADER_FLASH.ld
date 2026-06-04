@@ -158,13 +158,14 @@ SECTIONS
     . = ALIGN(8);
   } >RAM
 
-  /* SEGGER RTT control block and channel buffers.  SEGGER_RTT_Conf.h overrides
-     SEGGER_RTT_SECTION to ".RW_RTT" for the control block; the up/down ring
-     buffers stay in the default "RTT_BUFFER" section (SEGGER_RTT.c hard-codes
-     that name before our override has a chance to fan out).  Both names must
-     be matched here so all RTT data lands at RTT_RAM (0x2001E400) and lines up
-     with APP's layout — otherwise J-Link RTT Viewer locks onto whichever
-     address it saw first and misses the other image's logs. */
+  /* SEGGER RTT control block + channel buffers, pinned to RTT_RAM (0x2001E400).
+     SEGGER_RTT_Conf.h overrides SEGGER_RTT_SECTION to ".RW_RTT" for the control
+     block; depending on the SEGGER_RTT.c version the up/down ring buffers land
+     either in ".RW_RTT" (newer) or the hard-coded "RTT_BUFFER" section (older),
+     so BOTH names are matched here.  Bootloader and APP use an identical block
+     so their control blocks share one address — otherwise J-Link RTT Viewer
+     locks onto whichever image booted first and misses the other's logs.
+     (This block must stay byte-identical to 01_APP's RTT block.) */
   .RW_RTT (NOLOAD) :
   {
     . = ALIGN(4);
