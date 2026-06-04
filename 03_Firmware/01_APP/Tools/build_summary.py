@@ -54,28 +54,45 @@ def main():
     t0 = time.time()
 
     cmd = [make_exe, "-C", "..", "--no-print-directory", f"-j{jobs}", target]
-    # On Windows the shell invocation differs; rely on subprocess defaults.
-    proc = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
+
+    # Stream the child's output live (tee-style) instead of capturing it all and
+    # dumping at exit. The old subprocess.run(capture_output=True) buffered the
+    # entire build in memory and re-emitted it in one burst here, which (a) lost
+    # the progressive "watch it compile" output and (b) slammed a large block to
+    # the terminal right before this process exits — racing VSCode's "terminal
+    # will be reused, press any key to close" banner and intermittently
+    # truncating the tail. Reading line-by-line and flushing each line keeps the
+    # output on screen as it happens and leaves nothing buffered at exit.
+    #
+    # stderr is merged into stdout so the on-screen ordering matches a plain
+    # interactive `make` and a single stream is read (no deadlock risk from two
+    # pipes filling up).
+    proc = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        errors="replace",
+        bufsize=1,  # line-buffered
+    )
+
+    captured = []
+    with open(build_log, "a") as f:
+        assert proc.stdout is not None
+        for line in proc.stdout:
+            sys.stdout.write(line)
+            sys.stdout.flush()
+            f.write(line)
+            captured.append(line)
+    returncode = proc.wait()
 
     t1 = time.time()
-
-    # Write captured output to the log  ---------------------------------
-    with open(build_log, "a") as f:
-        f.write(proc.stdout)
-        if proc.stderr:
-            f.write(proc.stderr)
-
     elapsed = int(t1 - t0 + 0.5)
 
     # Count warnings / errors (same regex logic as build_summary.ps1)  --
-    combined = (proc.stdout or "") + "\n" + (proc.stderr or "")
+    combined = "".join(captured)
     warnings = len(re.findall(r"(?im)(^|[^A-Za-z0-9_])warning:", combined))
     errors = len(re.findall(r"(?im)(^|[^A-Za-z0-9_])error:", combined))
-
-    # Also print the captured output so the user sees the build  --------
-    sys.stdout.write(proc.stdout)
-    if proc.stderr:
-        sys.stderr.write(proc.stderr)
 
     mins = elapsed // 60
     secs = elapsed % 60
@@ -85,7 +102,10 @@ def main():
     print(f"Warnings: {warnings}")
     print(f"Errors  : {errors}")
 
-    sys.exit(proc.returncode)
+    # Nothing should be buffered at this point (each line was flushed as read),
+    # but flush once more before exit for good measure.
+    sys.stdout.flush()
+    sys.exit(returncode)
 
 
 if __name__ == "__main__":

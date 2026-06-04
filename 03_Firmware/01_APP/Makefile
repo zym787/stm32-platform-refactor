@@ -35,6 +35,13 @@ BUILD_DIR = build
 BUILD_LOG = $(BUILD_DIR)/build.log
 UV ?= $(shell command -v uv 2>/dev/null || command -v uv.exe 2>/dev/null || echo uv)
 
+# Force unbuffered Python stdout/stderr for the report scripts. Under VSCode's
+# task runner stdout is a pipe (not a TTY), so Python block-buffers and dumps
+# the whole mem-report in one late flush at process exit — the "terminal will
+# be reused, press any key to close" banner then races ahead of the tail and
+# the output looks truncated. Unbuffered output streams it fully before exit.
+PY_UNBUF = PYTHONUNBUFFERED=1
+
 # Cross-platform directory removal command
 ifeq ($(OS),Windows_NT)
 RM_DIR = cmd /C if exist "$(BUILD_DIR)" rmdir /S /Q "$(BUILD_DIR)"
@@ -494,7 +501,7 @@ LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BU
 
 # default action: build all
 all: | $(BUILD_DIR)
-	@cd Tools && $(UV) run build_summary.py --make-exe "$(MAKE)" --build-dir "../$(BUILD_DIR)" --target "build-core"
+	@cd Tools && $(PY_UNBUF) $(UV) run build_summary.py --make-exe "$(MAKE)" --build-dir "../$(BUILD_DIR)" --target "build-core"
 
 build-core: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin mem-report ota-image
 
@@ -546,7 +553,7 @@ MEM_REPORT_EXTRA_ARGS :=
 endif
 
 mem-report: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
-	@cd Tools && $(UV) run mem_report.py --elf "../$(BUILD_DIR)/$(TARGET).elf" --ld "../$(LDSCRIPT)" --size-tool "$(SZ)" $(MEM_REPORT_EXTRA_ARGS)
+	@cd Tools && $(PY_UNBUF) $(UV) run mem_report.py --elf "../$(BUILD_DIR)/$(TARGET).elf" --ld "../$(LDSCRIPT)" --size-tool "$(SZ)" $(MEM_REPORT_EXTRA_ARGS)
 
 #######################################
 # OTA image packaging

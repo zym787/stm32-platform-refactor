@@ -294,6 +294,9 @@ def main():
         }
 
     print()
+    # Flush before returning so the full report reaches the terminal ahead of
+    # the process exit — VSCode's task banner otherwise races a buffered tail.
+    sys.stdout.flush()
 
     try:
         with open(state_file, 'w') as f:
