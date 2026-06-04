@@ -143,7 +143,7 @@ tag 路由由 `Debug.c` 的 `s_route_table[]` 单表驱动，`debug_route_lookup
 
 #### SEGGER SystemView
 
-实时 OS 追踪，通过 RTT 传输。16 KB SRAM 专用于 RTT buffer（链接脚本中 `RTT_RAM` 区域，地址 `0x2001C000`，与 Bootloader 共址）。
+实时 OS 追踪，通过 RTT 传输。`RTT_RAM` 区域 7 KB（链接脚本，地址 `0x2001E400`，与 Bootloader 共址），其中 SystemView 上行 buffer 占 4 KB、调试日志 channel 0 上行 buffer 占 2 KB（`BUFFER_SIZE_UP`）。
 
 ## 调试工作流
 
@@ -162,7 +162,7 @@ tag 路由由 `Debug.c` 的 `s_route_table[]` 单表驱动，`debug_route_lookup
 - **MCU**：STM32F411xE — Cortex-M4F，512KB FLASH，128KB SRAM
 - **RTOS**：FreeRTOS v10.3.1，heap_4，60KB 堆，1 kHz tick，CMSIS-RTOS V2 API 可用
 - **FPU**：单精度硬浮点（`-mfpu=fpv4-sp-d16 -mfloat-abi=hard`）
-- **链接脚本**：`STM32F411XX_FLASH.ld` — 112 KB 用户 RAM (`RAM`, `0x20000000`) + 16 KB RTT RAM (`RTT_RAM`, `0x2001C000`)
+- **链接脚本**：`STM32F411XX_FLASH.ld` — 121 KB 用户 RAM (`RAM`, `0x20000000`) + 7 KB RTT RAM (`RTT_RAM`, `0x2001E400`)
 
 ### 关键引脚分配（`Core/Inc/main.h`）
 

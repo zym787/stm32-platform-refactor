@@ -9,7 +9,7 @@
 | 子目录 | 内容 |
 |---|---|
 | `Debug_Log/` | `Debug.h` 定义 `DEBUG_OUT` 宏 + tag 常量；`Debug.c` 实现 tag 过滤 + RTT/ITM 路由；底层走 EasyLogger（[`../04_Impl/impl_middleware/EasyLogger/`](../04_Impl/impl_middleware/EasyLogger/)） |
-| `Systemview/` | SEGGER SystemView + RTT 控制块（`SEGGER_RTT.h/.c`）。RTT_RAM 段独立放在 `0x2001C000`，16 KB |
+| `Systemview/` | SEGGER SystemView + RTT 控制块（`SEGGER_RTT.h/.c`）。RTT_RAM 段独立放在 `0x2001E400`，7 KB（上行 buffer `BUFFER_SIZE_UP`=2048）|
 | `SWO_Trace/` | `itm_trace.h` —— ITM stimulus port 0 输出，给 ITM-only tag 走 `printf` → SWO Viewer / Ozone SWO 终端 |
 | `MPU_Protect/` | `mpu.h` —— MPU region 配置（栈溢出 / 空指针解引用防护） |
 
@@ -50,4 +50,4 @@ ITM-only tag：定义 `*_ITM_LOG_TAG` 后加一行 `{ TAG, 0, DEBUG_ROUTE_ITM }`
 ## 注意
 
 - `elog_port_init()` 调 `SEGGER_RTT_Init()` 会无条件重置 `WrOff/RdOff` —— Bootloader 在 `jump_to_app()` 前 `delay_ms(200)` 留给 RTT Viewer 轮询，否则最后一行日志被 APP 抹掉。
-- `_SEGGER_RTT` 控制块固定在 `0x2001C000`，APP 与 Bootloader 共享同一物理地址才能让 RTT Viewer 不切换。
+- `_SEGGER_RTT` 控制块固定在 `0x2001E400`，APP 与 Bootloader 共享同一物理地址才能让 RTT Viewer 不切换（改地址需同步两份 ld）。

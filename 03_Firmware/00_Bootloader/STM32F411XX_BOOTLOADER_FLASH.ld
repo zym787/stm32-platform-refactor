@@ -10,8 +10,9 @@
 **  Bootloader and APP share the same RTT control-block address, otherwise
 **  J-Link RTT Viewer would lock onto whichever image booted first):
 **    FLASH   : 0x08000000 (32KB)  — Bootloader code + const
-**    RAM     : 0x20000000 (112KB) — data, bss, heap, stack, NO_INIT
-**    RTT_RAM : 0x2001C000 (16KB)  — SEGGER RTT control block + buffers
+**    RAM     : 0x20000000 (121KB) — data, bss, heap, stack, NO_INIT
+**    RTT_RAM : 0x2001E400 (7KB)   — SEGGER RTT control block + buffers
+**                                   (must match 01_APP/STM32F411XX_FLASH.ld)
 *****************************************************************************
 */
 
@@ -27,8 +28,8 @@ _Min_Stack_Size = 0x400;     /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-RAM     (xrw) : ORIGIN = 0x20000000, LENGTH = 112K
-RTT_RAM (xrw) : ORIGIN = 0x2001C000, LENGTH = 16K
+RAM     (xrw) : ORIGIN = 0x20000000, LENGTH = 121K
+RTT_RAM (xrw) : ORIGIN = 0x2001E400, LENGTH = 7K
 FLASH   (rx)  : ORIGIN = 0x08000000, LENGTH = 32K
 }
 
@@ -161,7 +162,7 @@ SECTIONS
      SEGGER_RTT_SECTION to ".RW_RTT" for the control block; the up/down ring
      buffers stay in the default "RTT_BUFFER" section (SEGGER_RTT.c hard-codes
      that name before our override has a chance to fan out).  Both names must
-     be matched here so all RTT data lands at RTT_RAM (0x2001C000) and lines up
+     be matched here so all RTT data lands at RTT_RAM (0x2001E400) and lines up
      with APP's layout — otherwise J-Link RTT Viewer locks onto whichever
      address it saw first and misses the other image's logs. */
   .RW_RTT (NOLOAD) :

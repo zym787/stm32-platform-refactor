@@ -10,7 +10,7 @@
 |---|---|
 | MCU | STM32F411xE（Cortex-M4F，512KB FLASH，128KB SRAM） |
 | 内部 Flash 布局 | Bootloader 32KB + OTA Flag 16KB + APP 464KB |
-| RAM 布局 | APP RAM 112KB + RTT_RAM 16KB（`0x2001C000`，与 Bootloader 共址） |
+| RAM 布局 | APP RAM 121KB + RTT_RAM 7KB（`0x2001E400`，与 Bootloader 共址） |
 | RTOS | FreeRTOS v10.3.1，heap_4，60KB 堆，1 kHz tick |
 | FPU | 单精度硬浮点（`-mfpu=fpv4-sp-d16 -mfloat-abi=hard`） |
 | 调试接口 | JLink（SWD / RTT / SWO / SystemView） |
@@ -147,7 +147,7 @@ RTT Viewer / SWO Viewer（日志输出）
 | 文件 | 说明 |
 |---|---|
 | `Core/Inc/FreeRTOSConfig.h` | 堆大小、tick、优先级级别 |
-| `STM32F411XX_FLASH.ld` | APP 链接脚本：RAM 112KB + RTT_RAM 16KB + APP Flash 464KB |
+| `STM32F411XX_FLASH.ld` | APP 链接脚本：RAM 121KB + RTT_RAM 7KB + APP Flash 464KB |
 | `Core/Src/system_stm32f4xx.c` | APP vector table offset（`0x0000C000`） |
 | `Core/Inc/main.h` | 引脚定义、全局 include |
 | `03_Platform/platform_mcu/MCU_Core_IIC/inc/i2c_port.h` | I2C 类型切换（HW/SW）、互斥锁超时 |

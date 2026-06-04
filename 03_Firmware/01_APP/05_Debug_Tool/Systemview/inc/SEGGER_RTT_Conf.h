@@ -92,7 +92,7 @@ Revision: $Rev: 21386 $
 #endif
 
 #ifndef   BUFFER_SIZE_UP
-  #define BUFFER_SIZE_UP                            (3072)  // Size of the buffer for terminal output of target, up to host (Default: 1k)
+  #define BUFFER_SIZE_UP                            (2048)  // ch0 up-buffer carries ALL debug logs (multi-terminal via SetTerminal). 2 KB covers init/LVGL bursts; overflow skips lines (NO_BLOCK_SKIP), never blocks. RTT_RAM budget: CB 168 + up 2048 + down 16 + SYSVIEW 4096 = 6328 / 7168.
 #endif
 
 #ifndef   BUFFER_SIZE_DOWN

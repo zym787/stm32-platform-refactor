@@ -92,7 +92,7 @@ Revision: $Rev: 21386 $
 #endif
 
 #ifndef   BUFFER_SIZE_UP
-  #define BUFFER_SIZE_UP                            (8000)  // Size of the buffer for terminal output of target, up to host (Default: 1k)
+  #define BUFFER_SIZE_UP                            (2048)  // Unified with APP (was 8000). Bootloader RTT: CB 168 + up 2048 + down 16 = 2232 / 7168 RTT_RAM. Co-located with APP CB at 0x2001E400.
 #endif
 
 #ifndef   BUFFER_SIZE_DOWN
