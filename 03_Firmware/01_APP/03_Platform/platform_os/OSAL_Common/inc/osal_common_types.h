@@ -93,10 +93,51 @@ typedef void *osal_event_group_handle_t;
  */
 #define OSAL_FALSE ((osal_base_type_t)0)
 
+/**
+ * @brief Word count reserved for one statically-allocated task control block.
+ *
+ * Sized conservatively to hold the underlying RTOS TCB (Cortex-M4
+ * FreeRTOS StaticTask_t is ~88 B = 22 words). The actual fit is verified
+ * by a _Static_assert in the OS impl layer, keeping the RTOS type out of
+ * this public header.
+ */
+#define OSAL_TCB_STORAGE_WORDS (24U)
+
 //******************************** Defines **********************************//
 
 //******************************* Declaring *********************************//
+/**
+ * @brief Task allocation strategy selector.
+ */
+typedef enum
+{
+    OSAL_TASK_ALLOC_DYNAMIC = 0, /**< Stack + TCB from the RTOS heap.       */
+    OSAL_TASK_ALLOC_STATIC  = 1  /**< Caller-provided static storage.       */
+} OsalTaskAlloc;
 
+/**
+ * @brief Opaque storage for one statically-allocated task control block.
+ *
+ * Treated as an opaque blob by callers; the OS impl layer casts it to the
+ * concrete RTOS TCB type.
+ */
+typedef struct
+{
+    uint32_t tcb[OSAL_TCB_STORAGE_WORDS];
+} OsalTaskTcbStorage;
+
+/**
+ * @brief Descriptor binding a static task's stack buffer to its TCB storage.
+ *
+ * Populated once (typically via OSAL_TASK_STATIC_DEFINE) and passed to
+ * osal_task_create_static().
+ */
+typedef struct
+{
+    uint32_t           *p_stack;     /**< Word-aligned stack buffer.        */
+    uint32_t            stack_words; /**< Stack capacity in 32-bit words.   */
+    OsalTaskTcbStorage *p_tcb;       /**< TCB storage.                      */
+} OsalTaskStatic;
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//

@@ -60,6 +60,49 @@ int32_t osal_task_create(osal_task_handle_t *p_task_handle,
 }
 
 /**
+ * @brief Create a task using caller-provided static storage.
+ *
+ * @param[out] p_task_handle Output task handle.
+ * @param[in] p_task_name Task name.
+ * @param[in] p_arg Task entry argument.
+ * @param[in] task_entry Task entry function.
+ * @param[in] stack_depth Stack depth in words; must be <= p_static->stack_words.
+ * @param[in] priority Task priority.
+ * @param[in] p_static Static storage descriptor.
+ *
+ * @return OSAL_SUCCESS on success, OSAL_INVALID_POINTER, OSAL_ERR_INVALID_SIZE
+ *         or lower layer error code.
+ */
+int32_t osal_task_create_static(osal_task_handle_t *p_task_handle,
+                                const char *p_task_name,
+                                void *p_arg,
+                                osal_task_entry_t task_entry,
+                                uint32_t stack_depth,
+                                uint32_t priority,
+                                OsalTaskStatic *p_static)
+{
+    /* Reject NULL handle/name/entry and any incomplete static descriptor;
+       the stack buffer and TCB must both be supplied by the caller. */
+    if ((NULL == p_task_handle) || (NULL == p_task_name) ||
+        (NULL == task_entry) || (NULL == p_static) ||
+        (NULL == p_static->p_stack) || (NULL == p_static->p_tcb))
+    {
+        return OSAL_INVALID_POINTER;
+    }
+
+    /* The provided buffer must be large enough for the requested stack so a
+       table/macro word-count mismatch is caught instead of overflowing. */
+    if ((0U == stack_depth) || (stack_depth > p_static->stack_words))
+    {
+        return OSAL_ERR_INVALID_SIZE;
+    }
+
+    return osal_task_create_static_impl(p_task_handle, p_task_name, p_arg,
+                                        task_entry, stack_depth, priority,
+                                        p_static->p_stack, p_static->p_tcb);
+}
+
+/**
  * @brief Delete task object.
  *
  * @param[in] task_handle Task handle.

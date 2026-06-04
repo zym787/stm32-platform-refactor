@@ -37,8 +37,8 @@
 /* ========== Production tasks ========== */
 
 /* --- Motion (MPU6050) --- */
-#define USER_TASK_MPU6050_HANDLER       0
-#define USER_TASK_UNPACK_TASK           0
+#define USER_TASK_MPU6050_HANDLER       1
+#define USER_TASK_UNPACK_TASK           1
 
 /* --- Temp / Humidity (AHT21) --- */
 #define USER_TASK_TEMP_HUMI_HANDLER     1
@@ -65,7 +65,7 @@
 #define USER_TASK_EM7028_HEART_RATE     1
 
 /* --- System --- */
-#define USER_TASK_TASK_HIGHER_WATER     0
+#define USER_TASK_TASK_HIGHER_WATER     1
 
 /* --- OTA (01_SERVICE/upgrade) --- */
 /* IWDG feeder runs on EVERY boot because F411 IWDG can't be disabled once
@@ -174,6 +174,8 @@ typedef struct
     uint32_t           priority;
     osal_task_handle_t task_handle;
     void              *argument;
+    OsalTaskAlloc      alloc_type;
+    OsalTaskStatic    *static_storage;
 } usertaskcfg_t;
 
 //******************************* Declaring *********************************//

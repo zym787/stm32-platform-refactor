@@ -95,6 +95,7 @@ void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
     (void)pcTaskName;
     /* Stack overflow — spin here so debugger can inspect pcTaskName via call stack */
     taskDISABLE_INTERRUPTS();
+    // DEBUG_OUT(e, USER_INIT_ITM_LOG_TAG, "Stack overflow in task [%s]", pcTaskName);
     for (;;)
     {
     }

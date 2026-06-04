@@ -72,13 +72,30 @@ static void user_init_task_function(void *argument)
 
     for (int8_t i = 0; i < USER_TASK_NUM; i++)
     {
-        ret = osal_task_create(
-                    &g_user_task_cfg[i].task_handle,
-                     g_user_task_cfg[i].task_name,
-                     g_user_task_cfg[i].argument,
-                     g_user_task_cfg[i].func_pointer,
-                     g_user_task_cfg[i].stack_depth,
-                     g_user_task_cfg[i].priority);
+        /* Static tasks bring their own stack + TCB; dynamic tasks fall back
+           to the RTOS heap. alloc_type defaults to DYNAMIC for any entry that
+           does not opt in, so the two paths coexist in one table. */
+        if (OSAL_TASK_ALLOC_STATIC == g_user_task_cfg[i].alloc_type)
+        {
+            ret = osal_task_create_static(
+                        &g_user_task_cfg[i].task_handle,
+                         g_user_task_cfg[i].task_name,
+                         g_user_task_cfg[i].argument,
+                         g_user_task_cfg[i].func_pointer,
+                         g_user_task_cfg[i].stack_depth,
+                         g_user_task_cfg[i].priority,
+                         g_user_task_cfg[i].static_storage);
+        }
+        else
+        {
+            ret = osal_task_create(
+                        &g_user_task_cfg[i].task_handle,
+                         g_user_task_cfg[i].task_name,
+                         g_user_task_cfg[i].argument,
+                         g_user_task_cfg[i].func_pointer,
+                         g_user_task_cfg[i].stack_depth,
+                         g_user_task_cfg[i].priority);
+        }
         if (ret == 0)
         {
             DEBUG_OUT(i, USER_INIT_LOG_TAG,

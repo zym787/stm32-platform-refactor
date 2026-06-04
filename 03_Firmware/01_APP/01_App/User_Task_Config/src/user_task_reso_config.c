@@ -63,6 +63,27 @@ void iwdg_feeder_task(void *argument);
 void firmware_upgrade_task(void *argument);
 void ota_service_task(void *argument);
 
+/* Static storage for the always-on OTA / storage backbone. These tasks are
+   created once at boot and never deleted, so heap allocation buys nothing and
+   only risks failing on a fragmented heap; the IWDG feeder in particular must
+   never fail to start. Each word count must match the matching .stack_depth
+   in the table below. */
+#if USER_TASK_W25Q64_HANDLER
+OSAL_TASK_STATIC_DEFINE(s_flash_handler_static, 288);
+#endif
+#if USER_TASK_STORAGE_MANAGER
+OSAL_TASK_STATIC_DEFINE(s_storage_manager_static, 192);
+#endif
+#if USER_TASK_IWDG_FEEDER
+OSAL_TASK_STATIC_DEFINE(s_iwdg_feeder_static, 128);
+#endif
+#if USER_TASK_FIRMWARE_UPGRADE
+OSAL_TASK_STATIC_DEFINE(s_firmware_upgrade_static, 192);
+#endif
+#if USER_TASK_OTA_SERVICE
+OSAL_TASK_STATIC_DEFINE(s_ota_service_static, 256);
+#endif
+
 usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
 {
     /* ========== Production tasks ========== */
@@ -141,7 +162,7 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
     [USER_LVGL_TEST_TASK_IDX] = {
         .task_name    = "lvgl_display_task",
         .func_pointer = lvgl_display_task,
-        .stack_depth  = 1024,    /* observed peak 427 W (current UI); was 2048 (21% used). Bump back to 1024+ if SquareLine 复杂动画 / 大字号字体回归后 peak 上升 */
+        .stack_depth  = 512,    /* observed peak 427 W (current UI); was 2048 (21% used). Bump back to 1024+ if SquareLine 复杂动画 / 大字号字体回归后 peak 上升 */
         .priority     = PRI_HARD_REALTIME,
         .task_handle  = NULL,
         .argument     = NULL
@@ -151,23 +172,27 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
     /* Storage (W25Q64) */
 #if USER_TASK_W25Q64_HANDLER
     [USER_TASK_W25Q64_HANDLER_IDX] = {
-        .task_name    = "flash_handler_thread",
-        .func_pointer = flash_handler_thread,
-        .stack_depth  = 288,    /* observed peak 190 W, ~52% headroom */
-        .priority     = PRI_NORMAL,
-        .task_handle  = NULL,
-        .argument     = &w25q64_input_arg
+        .task_name      = "flash_handler_thread",
+        .func_pointer   = flash_handler_thread,
+        .stack_depth    = 288,    /* observed peak 190 W, ~52% headroom */
+        .priority       = PRI_NORMAL,
+        .task_handle    = NULL,
+        .argument       = &w25q64_input_arg,
+        .alloc_type     = OSAL_TASK_ALLOC_STATIC,
+        .static_storage = &s_flash_handler_static
     },
 #endif
 
 #if USER_TASK_STORAGE_MANAGER
     [USER_TASK_STORAGE_MANAGER_IDX] = {
-        .task_name    = "storage_manager_task",
-        .func_pointer = storage_manager_task,
-        .stack_depth  = 192,    /* observed peak 122 W, ~57% headroom */
-        .priority     = PRI_NORMAL,
-        .task_handle  = NULL,
-        .argument     = NULL
+        .task_name      = "storage_manager_task",
+        .func_pointer   = storage_manager_task,
+        .stack_depth    = 192,    /* observed peak 122 W, ~57% headroom */
+        .priority       = PRI_NORMAL,
+        .task_handle    = NULL,
+        .argument       = NULL,
+        .alloc_type     = OSAL_TASK_ALLOC_STATIC,
+        .static_storage = &s_storage_manager_static
     },
 #endif
 
@@ -208,35 +233,41 @@ usertaskcfg_t g_user_task_cfg[USER_TASK_NUM] =
 
 #if USER_TASK_IWDG_FEEDER
     [USER_TASK_IWDG_FEEDER_IDX] = {
-        .task_name    = "iwdg_feeder",
-        .func_pointer = iwdg_feeder_task,
-        .stack_depth  = 128,
-        .priority     = PRI_BACKGROUND,
-        .task_handle  = NULL,
-        .argument     = NULL
+        .task_name      = "iwdg_feeder",
+        .func_pointer   = iwdg_feeder_task,
+        .stack_depth    = 128,
+        .priority       = PRI_BACKGROUND,
+        .task_handle    = NULL,
+        .argument       = NULL,
+        .alloc_type     = OSAL_TASK_ALLOC_STATIC,
+        .static_storage = &s_iwdg_feeder_static
     },
 #endif
 
     /* OTA */
 #if USER_TASK_FIRMWARE_UPGRADE
     [USER_TASK_FIRMWARE_UPGRADE_IDX] = {
-        .task_name    = "firmware_upgrade",
-        .func_pointer = firmware_upgrade_task,
-        .stack_depth  = 192,    /* observed peak 124 W, ~55% headroom */
-        .priority     = PRI_SOFT_REALTIME,
-        .task_handle  = NULL,
-        .argument     = NULL
+        .task_name      = "firmware_upgrade",
+        .func_pointer   = firmware_upgrade_task,
+        .stack_depth    = 192,    /* observed peak 124 W, ~55% headroom */
+        .priority       = PRI_SOFT_REALTIME,
+        .task_handle    = NULL,
+        .argument       = NULL,
+        .alloc_type     = OSAL_TASK_ALLOC_STATIC,
+        .static_storage = &s_firmware_upgrade_static
     },
 #endif
 
 #if USER_TASK_OTA_SERVICE
     [USER_TASK_OTA_SERVICE_IDX] = {
-        .task_name    = "ota_service",
-        .func_pointer = ota_service_task,
-        .stack_depth  = 256,    /* observed peak 120 W, ~110% headroom */
-        .priority     = PRI_SOFT_REALTIME,
-        .task_handle  = NULL,
-        .argument     = NULL
+        .task_name      = "ota_service",
+        .func_pointer   = ota_service_task,
+        .stack_depth    = 256,    /* observed peak 120 W, ~110% headroom */
+        .priority       = PRI_SOFT_REALTIME,
+        .task_handle    = NULL,
+        .argument       = NULL,
+        .alloc_type     = OSAL_TASK_ALLOC_STATIC,
+        .static_storage = &s_ota_service_static
     },
 #endif
 
