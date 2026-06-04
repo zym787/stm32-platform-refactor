@@ -129,14 +129,17 @@ RTT Terminal 分组（`DEBUG_RTT_CH_*`）：
 | 7 | `DEBUG_RTT_CH_PPG`     | EM7028 PPG 心率 |
 | 8 | `DEBUG_RTT_CH_STACK`   | 栈水位监控 |
 
-新增 tag 步骤：
+tag 路由由 `Debug.c` 的 `s_route_table[]` 单表驱动，`debug_route_lookup()` 一趟线性扫描同时回答"是否输出 / 走哪个 RTT 终端 / 走不走 ITM"。表里没有的 tag 自动丢弃。
+
+新增 RTT tag 步骤：
 1. 在 `Debug.h` 中定义 `*_LOG_TAG` 字符串常量。
-2. 将其加入 `debug_is_tag_allowed()`（启用输出）。
-3. 在 `debug_tag_to_rtt_channel()` 中指定 Terminal，或加入 `debug_is_itm_tag()` 走 ITM 路径。
+2. 在 `s_route_table[]` 加一行 `{ TAG, DEBUG_RTT_CH_x, DEBUG_ROUTE_RTT }`（`DEBUG_RTT_CH_DEFAULT` 即终端 0）。
 
 新增 ITM-only tag 步骤：
 1. 在 `Debug.h` 中定义 `*_ITM_LOG_TAG` 常量。
-2. 将其加入 `debug_is_itm_tag()`。无需修改 `elog_port.c` 或 RTT 配置。
+2. 在 `s_route_table[]` 加一行 `{ TAG, 0, DEBUG_ROUTE_ITM }`。无需修改 `elog_port.c` 或 RTT 配置。
+
+停用某 tag：从 `s_route_table[]` 删除（或注释）该行即可，不再需要在三处分别维护。
 
 #### SEGGER SystemView
 

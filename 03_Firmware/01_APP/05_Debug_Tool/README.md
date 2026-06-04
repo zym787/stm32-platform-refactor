@@ -20,7 +20,7 @@ DEBUG_OUT(level, tag, ...)
    │
    ├── 一般 tag → EasyLogger → SEGGER_RTT_SetTerminal() → RTT 通道 0  → RTT Viewer
    │                                                       (按 Terminal Tab 分组 0-8)
-   └── ITM-only tag (debug_is_itm_tag()) → printf → __io_putchar() → ITM port 0 → SWO Viewer
+   └── ITM-only tag (route=DEBUG_ROUTE_ITM) → printf → __io_putchar() → ITM port 0 → SWO Viewer
 ```
 
 RTT Terminal 分组（`DEBUG_RTT_CH_*`）：
@@ -39,11 +39,13 @@ RTT Terminal 分组（`DEBUG_RTT_CH_*`）：
 
 ## 新增 tag
 
-1. `Debug.h` 中定义 `*_LOG_TAG` 常量
-2. 加入 `debug_is_tag_allowed()`（启用输出）
-3. `debug_tag_to_rtt_channel()` 指定 Terminal，**或**加入 `debug_is_itm_tag()` 走 ITM 路径
+tag 路由由 `Debug.c` 的 `s_route_table[]` 单表驱动，`debug_route_lookup()` 一趟扫描定路由；表里没有的 tag 自动丢弃。
 
-ITM-only tag 只需 (1) + 加入 `debug_is_itm_tag()`，无需改 `elog_port.c`。
+1. `Debug.h` 中定义 `*_LOG_TAG` 常量
+2. 在 `s_route_table[]` 加一行 `{ TAG, DEBUG_RTT_CH_x, DEBUG_ROUTE_RTT }`（`DEBUG_RTT_CH_DEFAULT` 即终端 0）
+
+ITM-only tag：定义 `*_ITM_LOG_TAG` 后加一行 `{ TAG, 0, DEBUG_ROUTE_ITM }`，无需改 `elog_port.c`。
+停用某 tag：删除/注释该行即可。
 
 ## 注意
 

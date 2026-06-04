@@ -19,6 +19,7 @@
  * @version V2.0 2026-04-01
  * @version V3.0 2026-04-13
  * @version V4.0 2026-04-23
+ * @version V5.0 2026-06-04
  * @upgrade 2.0:
  * Per-module dual tags (MODULE/MODULE_ERR) for centralized log output
  * @upgrade 3.0:
@@ -29,6 +30,14 @@
  * ITM/SWO output path: tags listed in debug_is_itm_tag() bypass EasyLogger
  * and are printed via printf() → __io_putchar() → ITM stimulus port 0.
  * Both paths (RTT and ITM) are active simultaneously; select per tag.
+ * @upgrade 5.0:
+ * The three runtime strcmp chains (debug_is_tag_allowed /
+ * debug_tag_to_rtt_channel / debug_is_itm_tag) collapse into a single
+ * table-driven scan, debug_route_lookup(): one s_route_table[] row per tag
+ * carries both the RTT terminal and the routing decision.  Each DEBUG_OUT
+ * now does one scan instead of three, and the ~2 KB of comparison code the
+ * old chains compiled to (when DEBUG=1) shrinks to one small loop plus a
+ * compact const table.  Call sites are unchanged.
  *
  * @note 1 tab == 4 spaces!
  *
@@ -47,7 +56,7 @@
 
 //********************************* Defines *********************************//
 
-#define DEBUG                 (0)  /* Enable centralized debug output        */
+#define DEBUG                 (1)  /* Enable centralized debug output        */
 
 
 /*
@@ -114,7 +123,7 @@
  *                                                                            *
  *  To add a new ITM-routed tag:                                              *
  *    1. Define a new *_ITM_LOG_TAG constant below.                           *
- *    2. Add it to debug_is_itm_tag().                                        *
+ *    2. Add one row { TAG, 0, DEBUG_ROUTE_ITM } to s_route_table[] (Debug.c).*
  *    No changes to elog_port.c or RTT configuration required.                *
  */
 #define CORE_ITM_LOG_TAG                         "CORE_ITM"
@@ -133,7 +142,7 @@
  *                                                                            *
  *  To add a new terminal group:                                              *
  *    1. Define a new DEBUG_RTT_CH_* constant below (value 0-9).              *
- *    2. Add the relevant tags to debug_tag_to_rtt_channel().                 *
+ *    2. Add { TAG, DEBUG_RTT_CH_x, DEBUG_ROUTE_RTT } rows to s_route_table[].*
  *    No buffer registration or SEGGER_RTT_Conf.h change required.            *
  */
 #define DEBUG_RTT_CH_DEFAULT        (0u)    /* catch-all terminal            */
@@ -146,9 +155,26 @@
 #define DEBUG_RTT_CH_PPG            (7u)    /* EM7028 PPG heart-rate sensor  */
 #define DEBUG_RTT_CH_STACK          (8u)    /* stack high-water monitor      */
 
-uint8_t debug_tag_to_rtt_channel(const char *tag);
-int debug_is_tag_allowed(const char *tag);
-int debug_is_itm_tag(const char *tag);
+/*
+ * Unified routing record.  s_route_table[] in Debug.c holds one row per
+ * tag; a single linear scan (debug_route_lookup) answers all three
+ * questions the old code asked with three separate strcmp chains:
+ * is the tag enabled, which RTT terminal does it use, and does it go to
+ * ITM instead of RTT.  Tags absent from the table resolve to NULL and
+ * produce no output, exactly like the old "not allowed" path.
+ */
+#define DEBUG_ROUTE_DROP    (0u)    /* tag disabled — emit nothing           */
+#define DEBUG_ROUTE_RTT     (1u)    /* EasyLogger → RTT terminal[channel]    */
+#define DEBUG_ROUTE_ITM     (2u)    /* printf() → ITM stimulus port 0        */
+
+typedef struct
+{
+    const char *tag;        /* points at one of the *_LOG_TAG literals       */
+    uint8_t     channel;    /* DEBUG_RTT_CH_* (0-9); unused when route=ITM   */
+    uint8_t     route;      /* DEBUG_ROUTE_*                                 */
+} debug_route_t;
+
+const debug_route_t *debug_route_lookup(const char *tag);
 extern volatile uint8_t g_debug_rtt_channel;
 
 /*
@@ -157,8 +183,8 @@ extern volatile uint8_t g_debug_rtt_channel;
  * DEBUG_OUT(e, AHT21_ERR_LOG_TAG,"AHT21 read timeout %d", err);
  * DEBUG_OUT(i, CORE_ITM_LOG_TAG, "boot complete");   <- routed to ITM/SWO
  *
- * Tags listed in debug_is_itm_tag() → printf() → ITM stimulus port 0.
- * All other allowed tags           → EasyLogger → RTT (unchanged).
+ * Rows with route DEBUG_ROUTE_ITM → printf() → ITM stimulus port 0.
+ * Rows with route DEBUG_ROUTE_RTT → EasyLogger → RTT (unchanged).
  * If ITM is not connected the itm_putchar() call is a silent no-op.
  */
 #define DEBUG_OUT(LEVEL, TAG, fmt, ...)                                       \
@@ -166,16 +192,21 @@ extern volatile uint8_t g_debug_rtt_channel;
     {                                                                         \
         if (DEBUG)                                                            \
         {                                                                     \
-            const char *debug_tag__ = (TAG);                                  \
-            if (debug_is_tag_allowed(debug_tag__))                            \
+            const char          *debug_tag__   = (TAG);                       \
+            const debug_route_t *debug_route__ =                              \
+                                            debug_route_lookup(debug_tag__);  \
+            if (debug_route__ != NULL)                                        \
             {                                                                 \
-                g_debug_rtt_channel = debug_tag_to_rtt_channel(debug_tag__);  \
-                elog_##LEVEL(debug_tag__, fmt, ##__VA_ARGS__);                \
-            }                                                                 \
-            else if (debug_is_itm_tag(debug_tag__))                           \
-            {                                                                 \
-                printf("[" #LEVEL "][%s] " fmt "\r\n",                        \
-                       debug_tag__, ##__VA_ARGS__);                           \
+                if (debug_route__->route == DEBUG_ROUTE_RTT)                  \
+                {                                                             \
+                    g_debug_rtt_channel = debug_route__->channel;             \
+                    elog_##LEVEL(debug_tag__, fmt, ##__VA_ARGS__);            \
+                }                                                             \
+                else if (debug_route__->route == DEBUG_ROUTE_ITM)             \
+                {                                                             \
+                    printf("[" #LEVEL "][%s] " fmt "\r\n",                    \
+                           debug_tag__, ##__VA_ARGS__);                       \
+                }                                                             \
             }                                                                 \
         }                                                                     \
     } while (0)
