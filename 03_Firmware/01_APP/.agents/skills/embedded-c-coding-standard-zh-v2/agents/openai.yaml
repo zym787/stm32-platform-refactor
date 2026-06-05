@@ -1,0 +1,4 @@
+interface:
+  display_name: "嵌入式 C 标准 v2"
+  short_description: "按嵌入式规范处理 C 代码，默认优先做 Git 增量审查。"
+  default_prompt: "使用 $embedded-c-coding-standard-zh_v2 按嵌入式 C 语言编码规范编写、重构或审查嵌入式 C 代码；若是 review，默认优先按 Git 变更做增量审查。"
