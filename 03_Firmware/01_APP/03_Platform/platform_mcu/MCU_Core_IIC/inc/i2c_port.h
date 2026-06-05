@@ -25,18 +25,11 @@
 #include "iic_hal.h"
 
 #include "osal_mutex.h"
+#include "platform_error.h"
 
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
-typedef enum
-{
-    CORE_I2C_OK = 0,
-    CORE_I2C_ERROR = 1,
-    CORE_I2C_BUSY = 2,
-    CORE_I2C_TIMEOUT = 3
-} core_i2c_status_t;
-
 typedef enum
 {
     HARDWARE_I2C = 0,
@@ -73,35 +66,35 @@ typedef enum
 //******************************* Declaring *********************************//
 
 // I2C port init (initializes mutex for the given bus)
-core_i2c_status_t core_i2c_port_init        (core_i2c_bus_t               bus);
+platform_err_t core_i2c_port_init           (core_i2c_bus_t               bus);
 
 #ifdef HAL_I2C_MODULE_ENABLED
 // hardware I2C bus primitives
-core_i2c_status_t core_hard_i2c_send_byte   (core_i2c_bus_t               bus,
+platform_err_t core_hard_i2c_send_byte      (core_i2c_bus_t               bus,
                                                    uint16_t          dev_addr,
                                                    uint8_t          *    data,
                                                    uint16_t              size,
                                                    uint32_t           timeout);
-core_i2c_status_t core_hard_i2c_receive_byte(core_i2c_bus_t               bus,
+platform_err_t core_hard_i2c_receive_byte   (core_i2c_bus_t               bus,
                                                    uint16_t          dev_addr,
                                                    uint8_t          *    data,
                                                    uint16_t              size,
                                                    uint32_t           timeout);
-core_i2c_status_t core_hard_i2c_mem_write   (core_i2c_bus_t               bus,
-                                                   uint16_t          dev_addr,
-                                                   uint16_t          mem_addr,
-                                                   uint16_t      mem_add_size,
-                                                   uint8_t          *    data,
-                                                   uint16_t              size,
-                                                   uint32_t           timeout);
-core_i2c_status_t core_hard_i2c_mem_read    (core_i2c_bus_t               bus,
+platform_err_t core_hard_i2c_mem_write      (core_i2c_bus_t               bus,
                                                    uint16_t          dev_addr,
                                                    uint16_t          mem_addr,
                                                    uint16_t      mem_add_size,
                                                    uint8_t          *    data,
                                                    uint16_t              size,
                                                    uint32_t           timeout);
-core_i2c_status_t core_hard_i2c_mem_read_dma(core_i2c_bus_t               bus,
+platform_err_t core_hard_i2c_mem_read       (core_i2c_bus_t               bus,
+                                                   uint16_t          dev_addr,
+                                                   uint16_t          mem_addr,
+                                                   uint16_t      mem_add_size,
+                                                   uint8_t          *    data,
+                                                   uint16_t              size,
+                                                   uint32_t           timeout);
+platform_err_t core_hard_i2c_mem_read_dma   (core_i2c_bus_t               bus,
                                                    uint16_t          dev_addr,
                                                    uint16_t          mem_addr,
                                                    uint16_t      mem_add_size,
@@ -112,15 +105,15 @@ core_i2c_status_t core_hard_i2c_mem_read_dma(core_i2c_bus_t               bus,
 #endif /* HAL_I2C_MODULE_ENABLED */
 
 // Software I2C bus primitives
-core_i2c_status_t core_soft_i2c_start       (core_i2c_bus_t               bus);
-core_i2c_status_t core_soft_i2c_stop        (core_i2c_bus_t               bus);
-core_i2c_status_t core_soft_i2c_send_byte   (core_i2c_bus_t               bus, 
+platform_err_t core_soft_i2c_start          (core_i2c_bus_t               bus);
+platform_err_t core_soft_i2c_stop           (core_i2c_bus_t               bus);
+platform_err_t core_soft_i2c_send_byte      (core_i2c_bus_t               bus, 
                                                     uint8_t              data);
-core_i2c_status_t core_soft_i2c_wait_ack    (core_i2c_bus_t               bus);
-core_i2c_status_t core_soft_i2c_receive_byte(core_i2c_bus_t               bus, 
+platform_err_t core_soft_i2c_wait_ack       (core_i2c_bus_t               bus);
+platform_err_t core_soft_i2c_receive_byte   (core_i2c_bus_t               bus, 
                                                     uint8_t             *data);
-core_i2c_status_t core_soft_i2c_send_ack    (core_i2c_bus_t               bus);
-core_i2c_status_t core_soft_i2c_send_nack   (core_i2c_bus_t               bus);
+platform_err_t core_soft_i2c_send_ack       (core_i2c_bus_t               bus);
+platform_err_t core_soft_i2c_send_nack      (core_i2c_bus_t               bus);
 
 //******************************* Declaring *********************************//
 

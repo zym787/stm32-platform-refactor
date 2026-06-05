@@ -2,15 +2,19 @@
  * @file osal_common_types.h
  *
  * @par dependencies
- * - stddef.h
- * - stdint.h
- * - stdbool.h
+ * - platform_type.h
  *
  * @author Ethan-Hang
  *
  * @brief Common OSAL base types and handle definitions.
  *
- * @version V1.0 2026-4-9
+ *        Fixed-width members are expressed through the platform_common type
+ *        vocabulary (UINT16_T / UINT32_T) rather than raw stdint, so the OS
+ *        layer shares the single type outlet with the rest of 03_Platform.
+ *        platform_type.h still pulls in stdint transitively, so the lowercase
+ *        names remain available to existing OSAL consumers.
+ *
+ * @version V1.1 2026-6-5
  *
  * @note 1 tab == 4 spaces!
  *
@@ -21,9 +25,7 @@
 #define __OSAL_COMMON_TYPES_H__
 
 //******************************** Includes *********************************//
-#include <stddef.h>
-#include <stdint.h>
-#include <stdbool.h>
+#include "platform_type.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
@@ -39,17 +41,21 @@
  * @brief Maximum tick delay value when 16-bit tick type is enabled.
  */
 #define OSAL_MAX_DELAY (0xFFFFUL)
-typedef uint16_t osal_tick_type_t;
+typedef UINT16_T osal_tick_type_t;
 #else
 /**
  * @brief Maximum tick delay value when 32-bit tick type is enabled.
  */
 #define OSAL_MAX_DELAY (0xFFFFFFFFUL)
-typedef uint32_t osal_tick_type_t;
+typedef UINT32_T osal_tick_type_t;
 #endif
 
 /**
  * @brief OSAL portable base integer type.
+ *
+ *        Intentionally the native `long` (not a fixed-width UINT*_T): this
+ *        mirrors the RTOS BaseType_t convention of "the architecture's
+ *        natural word", which the fixed-width vocabulary does not express.
  */
 typedef long  osal_base_type_t;
 
@@ -123,7 +129,7 @@ typedef enum
  */
 typedef struct
 {
-    uint32_t tcb[OSAL_TCB_STORAGE_WORDS];
+    UINT32_T tcb[OSAL_TCB_STORAGE_WORDS];
 } OsalTaskTcbStorage;
 
 /**
@@ -134,8 +140,8 @@ typedef struct
  */
 typedef struct
 {
-    uint32_t           *p_stack;     /**< Word-aligned stack buffer.        */
-    uint32_t            stack_words; /**< Stack capacity in 32-bit words.   */
+    UINT32_T           *p_stack;     /**< Word-aligned stack buffer.        */
+    UINT32_T            stack_words; /**< Stack capacity in 32-bit words.   */
     OsalTaskTcbStorage *p_tcb;       /**< TCB storage.                      */
 } OsalTaskStatic;
 //******************************* Declaring *********************************//

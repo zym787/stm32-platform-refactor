@@ -7,7 +7,7 @@
  *
  * @brief  MCU-level I2C port layer.
  *         Wraps both hardware I2C (HAL) and software I2C (iic_hal) behind a
- *         unified core_i2c_status_t interface.
+ *         unified platform_err_t interface.
  *
  * Processing flow:
  *   Select bus by core_i2c_bus_t index; dispatch to hard or soft driver.
@@ -43,12 +43,12 @@ static i2c_port_t i2c_port[CORE_I2C_BUS_MAX] = {
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
-static core_i2c_status_t core_hard_i2c_bus_lock(core_i2c_bus_t bus,
+static platform_err_t core_hard_i2c_bus_lock(core_i2c_bus_t bus,
                                          uint32_t       timeout_ms)
 {
     if (bus >= CORE_I2C_BUS_MAX)
     {
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
     if (osal_mutex_take(i2c_port[bus].os_mutexid,
@@ -57,50 +57,50 @@ static core_i2c_status_t core_hard_i2c_bus_lock(core_i2c_bus_t bus,
         DEBUG_OUT(e, HAL_IIC_ERR_LOG_TAG,
                   "BusLock mutex timeout bus=%d timeout=%u", (int)bus,
                   (unsigned int)timeout_ms);
-        return CORE_I2C_TIMEOUT;
+        return PLATFORM_ERR_TIMEOUT;
     }
-    return CORE_I2C_OK;
+    return PLATFORM_OK;
 }
 
-static core_i2c_status_t core_hard_i2c_bus_unlock(core_i2c_bus_t bus)
+static platform_err_t core_hard_i2c_bus_unlock(core_i2c_bus_t bus)
 {
     if (bus >= CORE_I2C_BUS_MAX)
     {
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
     osal_mutex_give(i2c_port[bus].os_mutexid);
-    return CORE_I2C_OK;
+    return PLATFORM_OK;
 }
 
-core_i2c_status_t core_i2c_port_init(core_i2c_bus_t bus)
+platform_err_t core_i2c_port_init(core_i2c_bus_t bus)
 {
     if (bus >= CORE_I2C_BUS_MAX)
     {
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
     if (i2c_port[bus].core_iic_state != HARDWARE_I2C)
     {
-        return CORE_I2C_OK;
+        return PLATFORM_OK;
     }
 
     int32_t ret = osal_mutex_init(&i2c_port[bus].os_mutexid);
-    return (ret == 0) ? CORE_I2C_OK : CORE_I2C_ERROR;
+    return (ret == 0) ? PLATFORM_OK : PLATFORM_ERR_GENERAL;
 }
 
-core_i2c_status_t core_hard_i2c_send_byte(core_i2c_bus_t bus, uint16_t dev_addr,
+platform_err_t core_hard_i2c_send_byte(core_i2c_bus_t bus, uint16_t dev_addr,
                                           uint8_t *data, uint16_t size,
                                           uint32_t timeout)
 {
     if (bus >= CORE_I2C_BUS_MAX || NULL == data)
     {
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
-    core_i2c_status_t lock_ret =
+    platform_err_t lock_ret =
         core_hard_i2c_bus_lock(bus, CORE_I2C_BUS_MUTEX_TIMEOUT_MS);
-    if (lock_ret != CORE_I2C_OK)
+    if (lock_ret != PLATFORM_OK)
     {
         return lock_ret;
     }
@@ -115,23 +115,23 @@ core_i2c_status_t core_hard_i2c_send_byte(core_i2c_bus_t bus, uint16_t dev_addr,
         DEBUG_OUT(e, HAL_IIC_ERR_LOG_TAG,
                   "Transmit fail bus=%d dev=0x%02X halerrcode=0x%08X",
                   (int)bus, dev_addr, (int)ret);
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
-    return CORE_I2C_OK;
+    return PLATFORM_OK;
 }
 
-core_i2c_status_t core_hard_i2c_receive_byte(core_i2c_bus_t bus,
+platform_err_t core_hard_i2c_receive_byte(core_i2c_bus_t bus,
                                              uint16_t dev_addr, uint8_t *data,
                                              uint16_t size, uint32_t timeout)
 {
     if (bus >= CORE_I2C_BUS_MAX || NULL == data)
     {
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
-    core_i2c_status_t lock_ret =
+    platform_err_t lock_ret =
         core_hard_i2c_bus_lock(bus, CORE_I2C_BUS_MUTEX_TIMEOUT_MS);
-    if (lock_ret != CORE_I2C_OK)
+    if (lock_ret != PLATFORM_OK)
     {
         return lock_ret;
     }
@@ -146,24 +146,24 @@ core_i2c_status_t core_hard_i2c_receive_byte(core_i2c_bus_t bus,
         DEBUG_OUT(e, HAL_IIC_ERR_LOG_TAG,
                   "Receive fail bus=%d dev=0x%02X halerrcode=0x%08X",
                   (int)bus, dev_addr, (int)ret);
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
-    return CORE_I2C_OK;
+    return PLATFORM_OK;
 }
 
-core_i2c_status_t core_hard_i2c_mem_write(core_i2c_bus_t bus, uint16_t dev_addr,
+platform_err_t core_hard_i2c_mem_write(core_i2c_bus_t bus, uint16_t dev_addr,
                                           uint16_t mem_addr,
                                           uint16_t mem_add_size, uint8_t *data,
                                           uint16_t size, uint32_t timeout)
 {
     if (bus >= CORE_I2C_BUS_MAX || NULL == data)
     {
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
-    core_i2c_status_t lock_ret =
+    platform_err_t lock_ret =
         core_hard_i2c_bus_lock(bus, CORE_I2C_BUS_MUTEX_TIMEOUT_MS);
-    if (lock_ret != CORE_I2C_OK)
+    if (lock_ret != PLATFORM_OK)
     {
         return lock_ret;
     }
@@ -180,24 +180,24 @@ core_i2c_status_t core_hard_i2c_mem_write(core_i2c_bus_t bus, uint16_t dev_addr,
             e, HAL_IIC_ERR_LOG_TAG,
             "MemWrite fail bus=%d dev=0x%02X mem=0x%04X halerrcode=%d",
             (int)bus, dev_addr, mem_addr, (int)ret);
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
-    return CORE_I2C_OK;
+    return PLATFORM_OK;
 }
 
-core_i2c_status_t core_hard_i2c_mem_read(core_i2c_bus_t bus, uint16_t dev_addr,
+platform_err_t core_hard_i2c_mem_read(core_i2c_bus_t bus, uint16_t dev_addr,
                                          uint16_t mem_addr,
                                          uint16_t mem_add_size, uint8_t *data,
                                          uint16_t size, uint32_t timeout)
 {
     if (bus >= CORE_I2C_BUS_MAX || NULL == data)
     {
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
-    core_i2c_status_t lock_ret =
+    platform_err_t lock_ret =
         core_hard_i2c_bus_lock(bus, CORE_I2C_BUS_MUTEX_TIMEOUT_MS);
-    if (lock_ret != CORE_I2C_OK)
+    if (lock_ret != PLATFORM_OK)
     {
         return lock_ret;
     }
@@ -214,12 +214,12 @@ core_i2c_status_t core_hard_i2c_mem_read(core_i2c_bus_t bus, uint16_t dev_addr,
             e, HAL_IIC_ERR_LOG_TAG,
             "MemRead fail bus=%d dev=0x%02X mem=0x%04X halerrcode=%d",
             (int)bus, dev_addr, mem_addr, (int)ret);
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
-    return CORE_I2C_OK;
+    return PLATFORM_OK;
 }
 
-static core_i2c_status_t core_hard_i2c_wait_dma_done(core_i2c_bus_t bus,
+static platform_err_t core_hard_i2c_wait_dma_done(core_i2c_bus_t bus,
                                                       uint32_t timeout)
 {
     uint32_t start_tick = HAL_GetTick();
@@ -233,7 +233,7 @@ static core_i2c_status_t core_hard_i2c_wait_dma_done(core_i2c_bus_t bus,
                       (int)bus, (unsigned int)timeout,
                       (unsigned long)HAL_I2C_GetState(i2c_port[bus].hard_iic_handle),
                       (unsigned long)HAL_I2C_GetError(i2c_port[bus].hard_iic_handle));
-            return CORE_I2C_TIMEOUT;
+            return PLATFORM_ERR_TIMEOUT;
         }
     }
 
@@ -243,13 +243,13 @@ static core_i2c_status_t core_hard_i2c_wait_dma_done(core_i2c_bus_t bus,
                   "MemReadDMA done with error bus=%d err=0x%lX",
                   (int)bus,
                   (unsigned long)HAL_I2C_GetError(i2c_port[bus].hard_iic_handle));
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
-    return CORE_I2C_OK;
+    return PLATFORM_OK;
 }
 
-core_i2c_status_t core_hard_i2c_mem_read_dma(core_i2c_bus_t bus,
+platform_err_t core_hard_i2c_mem_read_dma(core_i2c_bus_t bus,
                                              uint16_t       dev_addr,
                                              uint16_t       mem_addr,
                                              uint16_t       mem_add_size,
@@ -258,13 +258,13 @@ core_i2c_status_t core_hard_i2c_mem_read_dma(core_i2c_bus_t bus,
 {
     if (bus >= CORE_I2C_BUS_MAX || NULL == data)
     {
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
     /* Serialize DMA transfer with all peer users on the same bus. */
-    core_i2c_status_t lock_ret =
+    platform_err_t lock_ret =
         core_hard_i2c_bus_lock(bus, CORE_I2C_BUS_MUTEX_TIMEOUT_MS);
-    if (lock_ret != CORE_I2C_OK)
+    if (lock_ret != PLATFORM_OK)
     {
         return lock_ret;
     }
@@ -279,93 +279,93 @@ core_i2c_status_t core_hard_i2c_mem_read_dma(core_i2c_bus_t bus,
         DEBUG_OUT(e, HAL_IIC_ERR_LOG_TAG,
                   "MemReadDMA fail bus=%d dev=0x%02X mem=0x%04X halerrcode=%d",
                   (int)bus, dev_addr, mem_addr, (int)ret);
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
-    core_i2c_status_t wait_ret = core_hard_i2c_wait_dma_done(bus, timeout);
+    platform_err_t wait_ret = core_hard_i2c_wait_dma_done(bus, timeout);
     core_hard_i2c_bus_unlock(bus);
     return wait_ret;
 }
 
-core_i2c_status_t core_soft_i2c_start(core_i2c_bus_t bus)
+platform_err_t core_soft_i2c_start(core_i2c_bus_t bus)
 {
     if (bus >= CORE_I2C_BUS_MAX)
     {
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
     i2c_start(&i2c_port[bus].soft_iic_bus_inst);
-    return CORE_I2C_OK;
+    return PLATFORM_OK;
 }
 
-core_i2c_status_t core_soft_i2c_stop(core_i2c_bus_t bus)
+platform_err_t core_soft_i2c_stop(core_i2c_bus_t bus)
 {
     if (bus >= CORE_I2C_BUS_MAX)
     {
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
     i2c_stop(&i2c_port[bus].soft_iic_bus_inst);
-    return CORE_I2C_OK;
+    return PLATFORM_OK;
 }
 
-core_i2c_status_t core_soft_i2c_send_byte(core_i2c_bus_t bus, uint8_t data)
+platform_err_t core_soft_i2c_send_byte(core_i2c_bus_t bus, uint8_t data)
 {
     if (bus >= CORE_I2C_BUS_MAX)
     {
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
     i2c_send_byte(&i2c_port[bus].soft_iic_bus_inst, data);
-    return CORE_I2C_OK;
+    return PLATFORM_OK;
 }
 
-core_i2c_status_t core_soft_i2c_wait_ack(core_i2c_bus_t bus)
+platform_err_t core_soft_i2c_wait_ack(core_i2c_bus_t bus)
 {
     if (bus >= CORE_I2C_BUS_MAX)
     {
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
     iic_hal_status_t ack = i2c_wait_ack(&i2c_port[bus].soft_iic_bus_inst);
     if (IIC_HAL_OK == ack)
     {
-        return CORE_I2C_OK;
+        return PLATFORM_OK;
     }
-    return CORE_I2C_ERROR;
+    return PLATFORM_ERR_GENERAL;
 }
 
-core_i2c_status_t core_soft_i2c_receive_byte(core_i2c_bus_t bus, uint8_t *data)
+platform_err_t core_soft_i2c_receive_byte(core_i2c_bus_t bus, uint8_t *data)
 {
     if (bus >= CORE_I2C_BUS_MAX || NULL == data)
     {
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
     *data = i2c_receive_byte(&i2c_port[bus].soft_iic_bus_inst);
-    return CORE_I2C_OK;
+    return PLATFORM_OK;
 }
 
-core_i2c_status_t core_soft_i2c_send_ack(core_i2c_bus_t bus)
+platform_err_t core_soft_i2c_send_ack(core_i2c_bus_t bus)
 {
     if (bus >= CORE_I2C_BUS_MAX)
     {
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
     i2c_send_ack(&i2c_port[bus].soft_iic_bus_inst);
-    return CORE_I2C_OK;
+    return PLATFORM_OK;
 }
 
-core_i2c_status_t core_soft_i2c_send_nack(core_i2c_bus_t bus)
+platform_err_t core_soft_i2c_send_nack(core_i2c_bus_t bus)
 {
     if (bus >= CORE_I2C_BUS_MAX)
     {
-        return CORE_I2C_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
     i2c_send_not_ack(&i2c_port[bus].soft_iic_bus_inst);
-    return CORE_I2C_OK;
+    return PLATFORM_OK;
 }
 
 //******************************* Functions *********************************//

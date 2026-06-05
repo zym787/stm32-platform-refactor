@@ -2,7 +2,7 @@
  * @file mcu_uart_port.h
  *
  * @par dependencies
- * - stdint.h
+ * - platform_type.h
  *
  * @author Ethan-Hang
  *
@@ -45,7 +45,7 @@
 #define __MCU_UART_PORT_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//

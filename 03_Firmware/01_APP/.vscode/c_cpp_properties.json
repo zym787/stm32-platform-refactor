@@ -15,6 +15,7 @@
                 "${workspaceFolder}/04_Impl/impl_os/inc",
                 "${workspaceFolder}/03_Platform/platform_os/OS_Wrapper/inc",
                 "${workspaceFolder}/03_Platform/platform_common/inc",
+                "${workspaceFolder}/04_Impl/impl_borad",
                 "${workspaceFolder}/03_Platform/platform_middleware/platform_log/inc",
                 "${workspaceFolder}/04_Impl/impl_middleware/log_adapters/log_sink_rtt/inc",
                 "${workspaceFolder}/04_Impl/impl_middleware/log_adapters/log_adapter_easylogger/inc",

@@ -102,12 +102,12 @@ static w25q64_status_t w25q64_spi_transmit(uint8_t const *p_data,
      * buffer in master mode, and the MCU port layer mirrors the HAL
      * prototype.
      **/
-    core_spi_status_t ret = FLASH_HARDWARE_SPI_TRANSMIT(
+    platform_err_t ret = FLASH_HARDWARE_SPI_TRANSMIT(
         (uint8_t *)p_data,
         (uint16_t)data_length,
         W25Q64_SPI_TIMEOUT_MS);
 
-    return (CORE_SPI_OK == ret) ? W25Q64_OK : W25Q64_ERROR;
+    return (PLATFORM_OK == ret) ? W25Q64_OK : W25Q64_ERROR;
 }
 
 /**
@@ -131,12 +131,12 @@ static w25q64_status_t w25q64_spi_read(uint8_t  *p_buffer,
         return W25Q64_ERRORPARAMETER;
     }
 
-    core_spi_status_t ret = FLASH_HARDWARE_SPI_RECEIVE(
+    platform_err_t ret = FLASH_HARDWARE_SPI_RECEIVE(
         p_buffer,
         (uint16_t)buffer_length,
         W25Q64_SPI_TIMEOUT_MS);
 
-    return (CORE_SPI_OK == ret) ? W25Q64_OK : W25Q64_ERROR;
+    return (PLATFORM_OK == ret) ? W25Q64_OK : W25Q64_ERROR;
 }
 
 /**
@@ -177,11 +177,11 @@ static w25q64_status_t w25q64_spi_write_cs_pin(uint8_t state)
      * The CS GPIO (PB13) is registered on CORE_SPI_BUS_2; let the port
      * layer route the call so we don't hard-couple to HAL here.
      **/
-    core_spi_status_t ret = (0U != state)
+    platform_err_t ret = (0U != state)
         ? FLASH_HARDWARE_SPI_CS_DESELECT()
         : FLASH_HARDWARE_SPI_CS_SELECT();
 
-    return (CORE_SPI_OK == ret) ? W25Q64_OK : W25Q64_ERROR;
+    return (PLATFORM_OK == ret) ? W25Q64_OK : W25Q64_ERROR;
 }
 
 /**

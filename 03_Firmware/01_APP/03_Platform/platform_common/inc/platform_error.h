@@ -23,7 +23,7 @@
  *        == OSAL_SUCCESS == 0) so a service layer can transparently
  *        propagate a lower-layer OSAL return as a platform_err_t.
  *
- * @version V1.0 2026-05-20
+ * @version V1.1 2026-6-5
  *
  * @note 1 tab == 4 spaces!
  *

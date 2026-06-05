@@ -117,9 +117,9 @@ static em7028_status_t em7028_int_iic_mem_write(void    *hi2c,
      * Route to the shared sensor bus port layer; the bus mutex is owned by
      * the port and arbitrates access against AHT21 / MPU6050 traffic.
      **/
-    core_i2c_status_t ret = SENSOR_HARDWARE_I2C_MEM_WRITE(
+    platform_err_t ret = SENSOR_HARDWARE_I2C_MEM_WRITE(
         des_addr, mem_addr, mem_size, p_data, size, timeout);
-    if (CORE_I2C_OK != ret)
+    if (PLATFORM_OK != ret)
     {
         DEBUG_OUT(e, HAL_IIC_ERR_LOG_TAG,
                   "em7028 mem write failed, ret:%d dst:0x%04X mem:0x%04X "
@@ -153,9 +153,9 @@ static em7028_status_t em7028_int_iic_mem_read(void    *hi2c,
 {
     (void)hi2c;
 
-    core_i2c_status_t ret = SENSOR_HARDWARE_I2C_MEM_READ(
+    platform_err_t ret = SENSOR_HARDWARE_I2C_MEM_READ(
         des_addr, mem_addr, mem_size, p_data, size, timeout);
-    if (CORE_I2C_OK != ret)
+    if (PLATFORM_OK != ret)
     {
         DEBUG_OUT(e, HAL_IIC_ERR_LOG_TAG,
                   "em7028 mem read failed, ret:%d dst:0x%04X mem:0x%04X "

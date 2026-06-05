@@ -122,15 +122,15 @@ static core_gpio_port_t gpio_pin_table[CORE_GPIO_MAX_NUM] =
  *
  * @param[in] pin_id : Pin index (bounds-checked only).
  *
- * @return CORE_GPIO_OK if pin_id is valid, CORE_GPIO_ERROR otherwise.
+ * @return PLATFORM_OK if pin_id is valid, PLATFORM_ERR_GENERAL otherwise.
  */
-core_gpio_status_t core_gpio_port_init(core_gpio_bus_t pin_id)
+platform_err_t core_gpio_port_init(core_gpio_bus_t pin_id)
 {
     if (pin_id >= CORE_GPIO_MAX_NUM)
     {
-        return CORE_GPIO_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
-    return CORE_GPIO_OK;
+    return PLATFORM_OK;
 }
 
 /**
@@ -139,14 +139,14 @@ core_gpio_status_t core_gpio_port_init(core_gpio_bus_t pin_id)
  * @param[in] pin_id : Pin index from core_gpio_bus_t.
  * @param[in] state  : CORE_GPIO_SET (high) or CORE_GPIO_RESET (low).
  *
- * @return CORE_GPIO_OK on success, CORE_GPIO_ERROR on invalid index.
+ * @return PLATFORM_OK on success, PLATFORM_ERR_GENERAL on invalid index.
  */
-core_gpio_status_t core_gpio_write_pin(core_gpio_bus_t       pin_id,
+platform_err_t core_gpio_write_pin(core_gpio_bus_t       pin_id,
                                        core_gpio_pin_state_t state)
 {
     if (pin_id >= CORE_GPIO_MAX_NUM)
     {
-        return CORE_GPIO_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
     core_gpio_port_t const *p = &gpio_pin_table[pin_id];
@@ -154,7 +154,7 @@ core_gpio_status_t core_gpio_write_pin(core_gpio_bus_t       pin_id,
     HAL_GPIO_WritePin(p->port,
                       p->pin,
                       (CORE_GPIO_SET == state) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    return CORE_GPIO_OK;
+    return PLATFORM_OK;
 }
 
 /**
@@ -163,21 +163,21 @@ core_gpio_status_t core_gpio_write_pin(core_gpio_bus_t       pin_id,
  * @param[in]  pin_id  : Pin index from core_gpio_bus_t.
  * @param[out] p_state : Receives CORE_GPIO_SET or CORE_GPIO_RESET.
  *
- * @return CORE_GPIO_OK on success, CORE_GPIO_ERROR on invalid args.
+ * @return PLATFORM_OK on success, PLATFORM_ERR_GENERAL on invalid args.
  */
-core_gpio_status_t core_gpio_read_pin(core_gpio_bus_t        pin_id,
+platform_err_t core_gpio_read_pin(core_gpio_bus_t        pin_id,
                                       core_gpio_pin_state_t *p_state)
 {
     if (pin_id >= CORE_GPIO_MAX_NUM || NULL == p_state)
     {
-        return CORE_GPIO_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
     core_gpio_port_t const *p = &gpio_pin_table[pin_id];
 
     GPIO_PinState hw = HAL_GPIO_ReadPin(p->port, p->pin);
     *p_state = (GPIO_PIN_SET == hw) ? CORE_GPIO_SET : CORE_GPIO_RESET;
-    return CORE_GPIO_OK;
+    return PLATFORM_OK;
 }
 
 /**
@@ -185,19 +185,19 @@ core_gpio_status_t core_gpio_read_pin(core_gpio_bus_t        pin_id,
  *
  * @param[in] pin_id : Pin index from core_gpio_bus_t.
  *
- * @return CORE_GPIO_OK on success, CORE_GPIO_ERROR on invalid index.
+ * @return PLATFORM_OK on success, PLATFORM_ERR_GENERAL on invalid index.
  */
-core_gpio_status_t core_gpio_toggle_pin(core_gpio_bus_t pin_id)
+platform_err_t core_gpio_toggle_pin(core_gpio_bus_t pin_id)
 {
     if (pin_id >= CORE_GPIO_MAX_NUM)
     {
-        return CORE_GPIO_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
     core_gpio_port_t const *p = &gpio_pin_table[pin_id];
 
     HAL_GPIO_TogglePin(p->port, p->pin);
-    return CORE_GPIO_OK;
+    return PLATFORM_OK;
 }
 
 /**

@@ -345,8 +345,10 @@ C_DEFS =  \
 #######################################
 
 # 03_Platform/platform_common — unified types & error vocabulary
+# (platform_type.h sources its fixed-width _T vocab from impl_borad/board_types.h)
 C_INCLUDES_COMMON = \
--I03_Platform/platform_common/inc
+-I03_Platform/platform_common/inc \
+-I04_Impl/impl_borad
 
 # OS Platform — OSAL (interface in 03_Platform, FreeRTOS impl in 04_Impl)
 C_INCLUDES_OSAL = \

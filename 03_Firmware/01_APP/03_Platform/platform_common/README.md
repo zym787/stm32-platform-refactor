@@ -6,7 +6,7 @@
 
 | 文件 | 内容 |
 |---|---|
-| `inc/platform_type.h` | 基础类型出口：stdint.h 别名 + `float32_t`/`float64_t`/`bool_t` |
+| `inc/platform_type.h` | 基础类型出口：把全大写定长词汇表 `UINT8_T`…`UINT64_T` / `INT8_T`…`INT64_T` / `FLOAT32_T`/`FLOAT64_T` / `BOOL_T` / `CHAR_T`/`UCHAR_T` / `SIZE_T` / `UINTPTR_T` 叠在 `impl_borad/board_types.h` 的具体类型(`UINT8`/`UINT32`/`FLOAT32`…)之上。定长部分来自 board_types(不再来自 stdint)；stdint 仅保留供未迁移代码的小写名 + `uintptr_t`|
 | `inc/platform_error.h` | `platform_err_t` 枚举 + `PLATFORM_IS_OK()` / `PLATFORM_IS_ERR()` |
 | `inc/platform_def.h` | NULL / 对齐 / `ARRAY_SIZE` / `MIN`/`MAX` / `UNUSED` 等通用宏 |
 
@@ -29,14 +29,14 @@
 短期看完全可以。引入 `platform_type.h` 是为了：
 
 1. 给后续 middleware 抽象（接口/实现分离）一个稳定的类型来源——`platform_*` 抽象头只依赖本文件，不再分别 `#include <stdint.h>` 散落到上百个文件。
-2. 万一未来换工具链（如 arm-clang / IAR），只改本文件即可。
+2. 万一未来换工具链（如 arm-clang / IAR）或换板，定长类型的具体映射集中在 `impl_borad/board_types.h` 一处，`platform_type.h` 只叠 `_T` 命名。
 3. 对齐 `04-platform-common-class/` 教学骨架的命名习惯，方便后续与那条线合流。
 
 ## 与 04-platform-common-class 的对应
 
-| 教学骨架 | 本工程 |
+| 重构目标 | 本工程 |
 |---|---|
-| `04_Impl/impl_board/board_types.h` | 跳过——直接用 stdint.h（项目早期已铺开） |
+| `04_Impl/impl_board/board_types.h` | `04_Impl/impl_borad/board_types.h`（具体定长类型源；32 位用 `long` 对齐 arm-none-eabi 的 `uint32_t`）|
 | `03_Platform/platform_common/platform_type.h` | `03_Platform/platform_common/inc/platform_type.h` |
 | `03_Platform/platform_common/platform_error.h` | `03_Platform/platform_common/inc/platform_error.h` |
 | `03_Platform/platform_common/platform_def.h` | `03_Platform/platform_common/inc/platform_def.h` |

@@ -17,7 +17,7 @@
  *        SysTick) and OSAL (osal_task_delay). Re-exposing yet another delay
  *        symbol here would force every caller to pick one of three sources.
  *
- * @version V1.0 2026-05-20
+ * @version V1.1 2026-6-5
  *
  * @note 1 tab == 4 spaces!
  *
@@ -37,8 +37,8 @@
 #define NULL                    ((void *)0)
 #endif
 
-#define PLATFORM_TRUE           ((bool_t)true)
-#define PLATFORM_FALSE          ((bool_t)false)
+#define PLATFORM_TRUE           ((BOOL_T)true)
+#define PLATFORM_FALSE          ((BOOL_T)false)
 
 /** @brief Default alignment unit on the Cortex-M4 ABI (word). */
 #define PLATFORM_ALIGN_SIZE     (4U)

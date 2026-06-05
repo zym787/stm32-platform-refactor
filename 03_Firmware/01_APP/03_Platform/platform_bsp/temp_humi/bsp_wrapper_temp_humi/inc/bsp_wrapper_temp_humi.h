@@ -2,6 +2,7 @@
  * @file bsp_wrapper_temp_humi.h
  *
  * @par dependencies
+ * - platform_type.h
  *
  * @author Ethan-Hang
  *
@@ -40,9 +41,7 @@
 #define __BSP_WRAPPER_TEMP_HUMI_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
-#include <stdbool.h>
-#include <stddef.h>
+#include "platform_type.h"
 
 //******************************** Includes *********************************//
 

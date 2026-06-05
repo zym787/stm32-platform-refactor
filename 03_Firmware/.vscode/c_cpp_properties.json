@@ -28,6 +28,7 @@
                 "${workspaceFolder}/01_APP/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2",
                 "${workspaceFolder}/01_APP/00_Config/inc",
                 "${workspaceFolder}/01_APP/03_Platform/platform_common/inc",
+                "${workspaceFolder}/01_APP/04_Impl/impl_borad",
                 "${workspaceFolder}/01_APP/03_Platform/platform_os/OSAL_Common/inc",
                 "${workspaceFolder}/01_APP/03_Platform/platform_os/OS_Wrapper/inc",
                 "${workspaceFolder}/01_APP/04_Impl/impl_os/inc",

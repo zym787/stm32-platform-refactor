@@ -20,3 +20,6 @@ lancedb
 **/.mem_report_last_*.json
 
 .git-commit-msg.txt
+
+# superpowers brainstorming specs / design docs (local working notes, not versioned)
+docs/superpowers/

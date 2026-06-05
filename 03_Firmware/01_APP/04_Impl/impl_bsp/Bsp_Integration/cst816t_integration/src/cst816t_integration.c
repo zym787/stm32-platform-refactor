@@ -95,9 +95,9 @@ static cst816t_status_t cst816t_iic_mem_write(void    *i2c,
                                               uint32_t timeout)
 {
     (void)i2c;
-    core_i2c_status_t st = TOUCH_HARDWARE_I2C_MEM_WRITE(
+    platform_err_t st = TOUCH_HARDWARE_I2C_MEM_WRITE(
         des_addr, mem_addr, mem_size, p_data, size, timeout);
-    return (CORE_I2C_OK == st) ? CST816T_OK : CST816T_ERROR;
+    return (PLATFORM_OK == st) ? CST816T_OK : CST816T_ERROR;
 }
 
 /**
@@ -115,9 +115,9 @@ static cst816t_status_t cst816t_iic_mem_read(void    *i2c,
                                              uint32_t timeout)
 {
     (void)i2c;
-    core_i2c_status_t st = TOUCH_HARDWARE_I2C_MEM_READ(
+    platform_err_t st = TOUCH_HARDWARE_I2C_MEM_READ(
         des_addr, mem_addr, mem_size, p_data, size, timeout);
-    return (CORE_I2C_OK == st) ? CST816T_OK : CST816T_ERROR;
+    return (PLATFORM_OK == st) ? CST816T_OK : CST816T_ERROR;
 }
 
 /* ---- Timebase / Delay / OS ---------------------------------------------- */

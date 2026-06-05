@@ -86,9 +86,9 @@ mpuxxxx_status_t iic_mem_read(void *hi2c,
                               uint16_t size,
                               uint32_t timeout)
 {
-    core_i2c_status_t ret = SENSOR_HARDWARE_I2C_MEM_READ(
+    platform_err_t ret = SENSOR_HARDWARE_I2C_MEM_READ(
         dst_address, mem_addr, mem_size, p_data, size, timeout);
-    if (ret != CORE_I2C_OK)
+    if (ret != PLATFORM_OK)
     {
         DEBUG_OUT(e, HAL_IIC_ERR_LOG_TAG,
                   "iic mem read failed, ret:%d dst:0x%04X mem:0x%04X size:%u",
@@ -121,11 +121,11 @@ mpuxxxx_status_t iic_mem_write(void *hi2c,
                                uint16_t size,
                                uint32_t timeout)
 {
-    core_i2c_status_t ret = SENSOR_HARDWARE_I2C_MEM_WRITE(
+    platform_err_t ret = SENSOR_HARDWARE_I2C_MEM_WRITE(
         dst_address, mem_addr, mem_size, p_data, size, timeout);
-    if (ret != CORE_I2C_OK)
+    if (ret != PLATFORM_OK)
     {
-        if (CORE_I2C_TIMEOUT == ret)
+        if (PLATFORM_ERR_TIMEOUT == ret)
         {
             DEBUG_OUT(e, HAL_IIC_ERR_LOG_TAG,
                       "iic mem write timeout, dst:0x%04X mem:0x%04X size:%u",
@@ -163,10 +163,10 @@ mpuxxxx_status_t iic_mem_read_dma(void *hi2c,
                                   uint8_t *p_data,
                                   uint16_t size)
 {
-    core_i2c_status_t ret = SENSOR_HARDWARE_I2C_MEM_READ_DMA(
+    platform_err_t ret = SENSOR_HARDWARE_I2C_MEM_READ_DMA(
         dst_address, mem_addr, mem_size, p_data, size,
         MPU6050_I2C_DMA_WAIT_TIMEOUT_MS);
-    if (ret != CORE_I2C_OK)
+    if (ret != PLATFORM_OK)
     {
         DEBUG_OUT(
             e, HAL_IIC_ERR_LOG_TAG,

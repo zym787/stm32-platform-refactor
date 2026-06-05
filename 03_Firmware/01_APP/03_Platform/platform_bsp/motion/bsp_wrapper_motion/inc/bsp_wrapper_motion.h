@@ -2,9 +2,7 @@
  * @file bsp_wrapper_motion.h
  *
  * @par dependencies
- * - stdint.h
- * - stdbool.h
- * - stddef.h
+ * - platform_type.h
  *
  * @author Ethan-Hang
  *
@@ -32,9 +30,7 @@
 #define __BSP_WRAPPER_MOTION_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
-#include <stdbool.h>
-#include <stddef.h>
+#include "platform_type.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//

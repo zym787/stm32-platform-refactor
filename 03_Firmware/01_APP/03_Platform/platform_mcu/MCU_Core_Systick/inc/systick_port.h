@@ -2,6 +2,7 @@
  * @file systick_port.h
  *
  * @par dependencies
+ * - platform_type.h
  * - stm32f4xx_hal.h
  *
  * @author Ethan-Hang
@@ -25,7 +26,7 @@
 #define __SYSTICK_PORT_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 //******************************** Includes *********************************//
 
 //******************************* Declaring *********************************//

@@ -2,6 +2,7 @@
  * @file dwt_port.h
  *
  * @par dependencies
+ * - platform_type.h
  * - stm32f4xx.h (CoreDebug / DWT register definitions, SystemCoreClock)
  *
  * @author Ethan-Hang
@@ -30,7 +31,7 @@
 #define __DWT_PORT_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 //******************************** Includes *********************************//
 
 //******************************* Declaring *********************************//

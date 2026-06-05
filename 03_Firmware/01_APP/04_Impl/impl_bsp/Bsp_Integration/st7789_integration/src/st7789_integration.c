@@ -100,13 +100,13 @@ static st7789_status_t st7789_spi_transmit(uint8_t const *p_data,
         return ST7789_ERRORPARAMETER;
     }
 
-    core_spi_status_t st = DISPLAY_HARDWARE_SPI_TRANSMIT(
+    platform_err_t st = DISPLAY_HARDWARE_SPI_TRANSMIT(
         (uint8_t *)p_data, (uint16_t)data_length, ST7789_HAL_SPI_TX_TIMEOUT_MS);
-    if (CORE_SPI_TIMEOUT == st)
+    if (PLATFORM_ERR_TIMEOUT == st)
     {
         return ST7789_ERRORTIMEOUT;
     }
-    return (CORE_SPI_OK == st) ? ST7789_OK : ST7789_ERROR;
+    return (PLATFORM_OK == st) ? ST7789_OK : ST7789_ERROR;
 }
 
 /**
@@ -129,13 +129,13 @@ static st7789_status_t st7789_spi_transmit_dma(uint8_t const *p_data,
         return ST7789_ERRORPARAMETER;
     }
 
-    core_spi_status_t st = DISPLAY_HARDWARE_SPI_TRANSMIT_DMA(
+    platform_err_t st = DISPLAY_HARDWARE_SPI_TRANSMIT_DMA(
         (uint8_t *)p_data, (uint16_t)data_length);
-    if (CORE_SPI_TIMEOUT == st)
+    if (PLATFORM_ERR_TIMEOUT == st)
     {
         return ST7789_ERRORTIMEOUT;
     }
-    return (CORE_SPI_OK == st) ? ST7789_OK : ST7789_ERROR;
+    return (PLATFORM_OK == st) ? ST7789_OK : ST7789_ERROR;
 }
 
 /**
@@ -150,12 +150,12 @@ static st7789_status_t st7789_spi_transmit_dma(uint8_t const *p_data,
  */
 static st7789_status_t st7789_spi_wait_dma_complete(uint32_t timeout_ms)
 {
-    core_spi_status_t st = DISPLAY_HARDWARE_SPI_WAIT_COMPLETE(timeout_ms);
-    if (CORE_SPI_TIMEOUT == st)
+    platform_err_t st = DISPLAY_HARDWARE_SPI_WAIT_COMPLETE(timeout_ms);
+    if (PLATFORM_ERR_TIMEOUT == st)
     {
         return ST7789_ERRORTIMEOUT;
     }
-    return (CORE_SPI_OK == st) ? ST7789_OK : ST7789_ERROR;
+    return (PLATFORM_OK == st) ? ST7789_OK : ST7789_ERROR;
 }
 
 /**

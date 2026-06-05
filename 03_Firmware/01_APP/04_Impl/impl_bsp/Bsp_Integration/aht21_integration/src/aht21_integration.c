@@ -40,8 +40,8 @@
 static aht21_status_t iic_init_myown(void *bus)
 {
     (void)bus;
-    // core_i2c_status_t ret = core_i2c_port_init(CORE_I2C_BUS_1);
-    // return (ret == CORE_I2C_OK) ? AHT21_OK : AHT21_ERROR;
+    // platform_err_t ret = core_i2c_port_init(CORE_I2C_BUS_1);
+    // return (ret == PLATFORM_OK) ? AHT21_OK : AHT21_ERROR;
     return AHT21_OK;
 }
 
@@ -59,9 +59,9 @@ static aht21_status_t i2c_master_write_myown(void           *bus,
                                              uint16_t        size)
 {
     (void)bus;
-    core_i2c_status_t ret = SENSOR_HARDWARE_I2C_SEND_BYTE(
+    platform_err_t ret = SENSOR_HARDWARE_I2C_SEND_BYTE(
         dev_addr, data, size, AHT21_I2C_TIMEOUT_MS);
-    return (ret == CORE_I2C_OK) ? AHT21_OK : AHT21_ERROR;
+    return (ret == PLATFORM_OK) ? AHT21_OK : AHT21_ERROR;
 }
 
 static aht21_status_t i2c_master_read_myown(void     *bus,
@@ -70,9 +70,9 @@ static aht21_status_t i2c_master_read_myown(void     *bus,
                                             uint16_t  size)
 {
     (void)bus;
-    core_i2c_status_t ret = SENSOR_HARDWARE_I2C_RECEIVE_BYTE(
+    platform_err_t ret = SENSOR_HARDWARE_I2C_RECEIVE_BYTE(
         dev_addr, data, size, AHT21_I2C_TIMEOUT_MS);
-    return (ret == CORE_I2C_OK) ? AHT21_OK : AHT21_ERROR;
+    return (ret == PLATFORM_OK) ? AHT21_OK : AHT21_ERROR;
 }
 
 static aht21_iic_driver_interface_t s_iic_driver_interface = {
@@ -101,8 +101,8 @@ static aht21_status_t iic_stop_myown(void *bus)
 static aht21_status_t iic_wait_ack_myown(void *bus)
 {
     (void)bus;
-    core_i2c_status_t ret = SENSOR_SOFTWARE_I2C_WAIT_ACK();
-    return (ret == CORE_I2C_OK) ? AHT21_OK : AHT21_ERROR;
+    platform_err_t ret = SENSOR_SOFTWARE_I2C_WAIT_ACK();
+    return (ret == PLATFORM_OK) ? AHT21_OK : AHT21_ERROR;
 }
 
 static aht21_status_t iic_send_ack_myown(void *bus)

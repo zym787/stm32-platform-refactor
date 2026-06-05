@@ -2,6 +2,7 @@
  * @file gpio_port.h
  *
  * @par dependencies
+ * - platform_error.h
  * - main.h (GPIO pin defines from CubeMX)
  * - stm32f4xx_hal.h
  *
@@ -28,15 +29,10 @@
 //******************************** Includes *********************************//
 #include "main.h"
 #include "stm32f4xx_hal.h"
+#include "platform_error.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
-typedef enum
-{
-    CORE_GPIO_OK    = 0,
-    CORE_GPIO_ERROR = 1,
-} core_gpio_status_t;
-
 typedef enum
 {
     CORE_GPIO_RESET = 0,
@@ -94,15 +90,15 @@ typedef enum
 
 //******************************* Declaring *********************************//
 
-core_gpio_status_t core_gpio_port_init  (core_gpio_bus_t     pin_id);
+platform_err_t core_gpio_port_init  (core_gpio_bus_t     pin_id);
 
-core_gpio_status_t core_gpio_write_pin  (core_gpio_bus_t     pin_id,
+platform_err_t core_gpio_write_pin  (core_gpio_bus_t     pin_id,
                                          core_gpio_pin_state_t   state);
 
-core_gpio_status_t core_gpio_read_pin   (core_gpio_bus_t     pin_id,
+platform_err_t core_gpio_read_pin   (core_gpio_bus_t     pin_id,
                                          core_gpio_pin_state_t  *p_state);
 
-core_gpio_status_t core_gpio_toggle_pin (core_gpio_bus_t     pin_id);
+platform_err_t core_gpio_toggle_pin (core_gpio_bus_t     pin_id);
 
 /** @brief Look up a pin by PORT+PIN and return its bus index, or
  *         CORE_GPIO_MAX_NUM if not found.  Used for debug/dump only. */

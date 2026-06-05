@@ -2,8 +2,7 @@
  * @file iflash_port.h
  *
  * @par dependencies
- * - stdint.h
- * - stdbool.h
+ * - platform_type.h
  *
  * @author Ethan-Hang
  *
@@ -45,8 +44,7 @@
 #define __IFLASH_PORT_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
-#include <stdbool.h>
+#include "platform_type.h"
 //******************************** Includes *********************************//
 
 //******************************* Declaring *********************************//
