@@ -140,6 +140,9 @@ Core/Src/spi.c \
 04_Impl/impl_middleware/EasyLogger/src/elog_async.c \
 04_Impl/impl_middleware/EasyLogger/src/elog_buf.c \
 04_Impl/impl_middleware/EasyLogger/src/elog_utils.c \
+03_Platform/platform_middleware/platform_log/src/log_sink.c \
+04_Impl/impl_middleware/log_adapters/log_sink_rtt/src/log_sink_rtt.c \
+04_Impl/impl_middleware/log_adapters/log_adapter_easylogger/src/log_adapter_easylogger.c \
 04_Impl/impl_middleware/LetterShell/src/log.c \
 04_Impl/impl_middleware/LetterShell/src/shell_cmd_list.c \
 04_Impl/impl_middleware/LetterShell/src/shell_companion.c \
@@ -362,8 +365,11 @@ C_INCLUDES_MCU = \
 -I03_Platform/platform_mcu/MCU_Core_Watchdog/inc \
 -I03_Platform/platform_mcu/MCU_Core_IFlash/inc
 
-# Middleware Platform — all impl under 04_Impl/impl_middleware (含 LVGL 上游)
+# Middleware Platform — interface in 03_Platform, impl under 04_Impl/impl_middleware
 C_INCLUDES_MW = \
+-I03_Platform/platform_middleware/platform_log/inc \
+-I04_Impl/impl_middleware/log_adapters/log_sink_rtt/inc \
+-I04_Impl/impl_middleware/log_adapters/log_adapter_easylogger/inc \
 -I04_Impl/impl_middleware/EasyLogger/inc \
 -I04_Impl/impl_middleware/LetterShell/inc \
 -I04_Impl/impl_middleware/lvgl/lvgl \

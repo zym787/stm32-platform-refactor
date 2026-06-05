@@ -6,12 +6,15 @@
  *
  * @author Ethan-Hang
  *
- * @brief Debug subsystem initialisation: EasyLogger setup and RTT
- *        virtual-terminal routing initialisation.
+ * @brief Debug subsystem initialisation: registers the log transport sink,
+ *        starts the logging frontend, and owns the RTT virtual-terminal
+ *        routing table.  No direct EasyLogger dependency — the logger is a
+ *        compile-time backend behind log_if.h / log_frontend_init().
  *
  * @version V1.0 2025-11-20
  * @version V2.0 2026-04-13
  * @version V3.0 2026-06-04
+ * @version V4.0 2026-06-05
  * @upgrade 2.0:
  * Virtual-terminal routing via SEGGER_RTT_SetTerminal(): all log data
  * travels through physical RTT channel 0, and elog_port_output() inserts
@@ -29,6 +32,8 @@
 
 //******************************** Includes *********************************//
 #include "Debug.h"
+#include "log_if.h"
+#include "log_sink_rtt.h"
 //******************************** Includes *********************************//
 
 //******************************* Variables *********************************//
@@ -63,14 +68,29 @@ volatile uint8_t g_debug_rtt_channel = 0u;
 void debug_init(void)
 {
 #if DEBUG
-    /** Configure EasyLogger output format for every severity level. */
-    elog_init();
-    elog_set_fmt(ELOG_LVL_ASSERT, ELOG_FMT_LVL | ELOG_FMT_TAG);
-    elog_set_fmt(ELOG_LVL_ERROR , ELOG_FMT_LVL | ELOG_FMT_TAG);
-    elog_set_fmt(ELOG_LVL_WARN  , ELOG_FMT_LVL | ELOG_FMT_TAG);
-    elog_set_fmt(ELOG_LVL_INFO  , ELOG_FMT_LVL | ELOG_FMT_TAG);
-    elog_set_fmt(ELOG_LVL_DEBUG , ELOG_FMT_LVL | ELOG_FMT_TAG);
-    elog_start();
+    /*
+     * Wire the log transport BEFORE elog_init(): elog_init() -> elog_port_init()
+     * -> log_sink_init() -> the sink's pf_init (SEGGER_RTT_Init()).  Registering
+     * first keeps SEGGER_RTT_Init()'s call timing identical to the pre-
+     * abstraction code.  The RTT register cannot fail, and DEBUG_OUT is not yet
+     * live here, so a non-OK result has nowhere useful to go but is still
+     * checked to satisfy the return-value rule.
+     */
+    if (PLATFORM_IS_ERR(log_sink_rtt_register()))
+    {
+        /* Transport unavailable: logging still runs, output is dropped. */
+    }
+
+    /*
+     * Start the logging library through the logger-agnostic frontend. The
+     * concrete backend (EasyLogger today) is chosen at compile time in
+     * log_if.h; debug_init() no longer references elog directly. Failure is
+     * debug-only with nowhere useful to report, but is still checked.
+     */
+    if (PLATFORM_IS_ERR(log_frontend_init()))
+    {
+        /* Logger init failed: DEBUG_OUT calls become silent no-ops. */
+    }
 #endif /* DEBUG */
 }
 

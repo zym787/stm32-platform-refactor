@@ -2,7 +2,7 @@
  * @file Debug.h
  *
  * @par dependencies
- * - "elog.h"
+ * - "log_if.h"
  * - "itm_trace.h"
  *
  * @author Ethan-Hang
@@ -20,6 +20,13 @@
  * @version V3.0 2026-04-13
  * @version V4.0 2026-04-23
  * @version V5.0 2026-06-04
+ * @version V6.0 2026-06-05
+ * @upgrade 6.0:
+ * The RTT branch now expands through the logger-agnostic LOG_##LEVEL facade
+ * (log_if.h) instead of elog_##LEVEL.  DEBUG_OUT no longer knows EasyLogger:
+ * the concrete library is a compile-time-selected backend adapter, so the
+ * logging library can be swapped without touching Debug.h, Debug.c, or any
+ * call site.  Macro expansion stays byte-identical (LOG_i -> elog_i, ...).
  * @upgrade 2.0:
  * Per-module dual tags (MODULE/MODULE_ERR) for centralized log output
  * @upgrade 3.0:
@@ -50,7 +57,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "elog.h"
+#include "log_if.h"
 #include "itm_trace.h"
 //********************************* Includes ********************************//
 
@@ -200,7 +207,7 @@ extern volatile uint8_t g_debug_rtt_channel;
                 if (debug_route__->route == DEBUG_ROUTE_RTT)                  \
                 {                                                             \
                     g_debug_rtt_channel = debug_route__->channel;             \
-                    elog_##LEVEL(debug_tag__, fmt, ##__VA_ARGS__);            \
+                    LOG_##LEVEL(debug_tag__, fmt, ##__VA_ARGS__);             \
                 }                                                             \
                 else if (debug_route__->route == DEBUG_ROUTE_ITM)             \
                 {                                                             \

@@ -32,7 +32,7 @@
 #include "task.h"
 
 #include "elog.h"
-#include "SEGGER_RTT.h"
+#include "log_sink.h"
 #include "Debug.h"
 
 
@@ -45,8 +45,15 @@ ElogErrCode elog_port_init(void)
 {
     ElogErrCode result = ELOG_NO_ERR;
 
-    /* add your code here */
-    SEGGER_RTT_Init();
+    /*
+     * Bring the active log transport up via the platform sink abstraction.
+     * The concrete transport (RTT today) must already be registered by
+     * debug_init() before elog_init() reaches here.  A missing registration
+     * is non-fatal: logging is simply dropped, exactly as it would be if the
+     * transport were down, so we still report ELOG_NO_ERR and let boot
+     * proceed rather than stalling on a debug-only facility.
+     */
+    (void)log_sink_init();
 
     return result;
 }
@@ -70,16 +77,14 @@ void elog_port_deinit(void)
 void elog_port_output(const char *log, size_t size)
 {
     /*
-     * g_debug_rtt_channel holds a virtual terminal index (0-9).
-     * SEGGER_RTT_SetTerminal() prefixes the stream with a 2-byte escape
-     * sequence so J-Link RTT Viewer routes the following data to the
-     * correct Terminal tab.  All data goes through physical channel 0.
-     * Called inside elog_port_output_lock (portENTER_CRITICAL), so the
-     * SetTerminal + Write pair is atomic from a task-scheduling view.
+     * g_debug_rtt_channel holds a virtual channel index (0-9) chosen by the
+     * Debug.c tag-routing table.  It is transport-agnostic: the active sink
+     * decides how to use it (the RTT sink maps it to a Viewer Terminal tab).
+     * elog_port_output() is void, so a dropped fragment cannot be reported
+     * upward — same non-blocking, drop-on-full behaviour as the former direct
+     * RTT write.
      */
-    SEGGER_RTT_SetTerminal((unsigned char)g_debug_rtt_channel);
-    SEGGER_RTT_Write(0, log, size);
-    SEGGER_RTT_SetTerminal(0u);
+    (void)log_sink_write((uint8_t)g_debug_rtt_channel, log, size);
 }
 
 /**

@@ -28,11 +28,30 @@
 |---|---|---|
 | `lv_storage_port.h` | LVGL 资源存储抽象 | `lv_port_extflash.c` 不再 #include service_storage_facade.h |
 | `ymodem_sink.h` | Ymodem 数据接收回调接口 | Ymodem 不再 extern OSAL queue/sema |
-| `log_backend.h` | 日志后端抽象 | 可换 EasyLogger / RTT / UART |
+| `platform_log/log_if.h` | 日志**前端** facade（已落地）| Debug 层不绑 EasyLogger，可整体换日志库 |
+| `platform_log/log_sink.h` | 日志**后端**传输抽象（已落地）| elog_port 不再焊死 SEGGER_RTT，可换 RTT / UART / ITM |
 
 引入这些接口的同时会把对应实现挪到 `04_Impl/impl_middleware/` 下的专门
 adapter，service 层只 include 本目录的抽象头。
 
 ## 当前状态
 
-空目录 + 本 README。Makefile 不引用本目录任何路径。
+`platform_log/` 已落地**两层**抽象：
+
+- **前端 facade** `log_if.h`：通用 `LOG_a/e/w/i/d/v` 宏 + `log_frontend_init()`，
+  编译期选后端（默认 EasyLogger）。`Debug.h` 改 include `log_if.h`、`DEBUG_OUT`
+  走 `LOG_##LEVEL`，`debug_init()` 调 `log_frontend_init()`，**不再引用 elog**。
+  EasyLogger 适配器在 `04_Impl/impl_middleware/log_adapters/log_adapter_easylogger/`
+  （宏映射 + 接管 elog 启动块）。**换日志库** = 加 `log_adapter_<lib>` + 在
+  `log_if.h` 加 `#elif`，Debug 层 / 调用站零改动。
+- **后端 sink** `log_sink.h`：transport vtable + 分发器 `log_sink.c`，RTT 适配器在
+  `log_sink_rtt/`。`elog_port_output()` 调 `log_sink_write()`，`debug_init()` 在
+  `log_frontend_init()` 前 `log_sink_rtt_register()`。**换 RTT/UART/ITM** = 加
+  `log_sink_*` 适配器 + 改 register 一行。
+
+启动顺序：`debug_init()` → `log_sink_rtt_register()`（先挂传输）→
+`log_frontend_init()`（再起库；其 `elog_init` 内部经 `elog_port_init` 触达
+`log_sink_init`）。
+
+> 注：未抽运行时 vtable / `va_list`（换库是编译期一次性事，无需运行时可换）。
+> `lv_storage_port.h` / `ymodem_sink.h` 仍待接入。

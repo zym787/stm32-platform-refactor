@@ -1,6 +1,13 @@
 /.vscode/
 /.claude/
 **/.claude/
+# 例外：把 APP 的嵌入式 C 编码规范 skill 纳入版本管理（逐级解除上面的 .claude 忽略）
+!03_Firmware/01_APP/.claude/
+03_Firmware/01_APP/.claude/*
+!03_Firmware/01_APP/.claude/skills/
+03_Firmware/01_APP/.claude/skills/*
+!03_Firmware/01_APP/.claude/skills/embedded-c-coding-standard-zh-v2/
+!03_Firmware/01_APP/.claude/skills/embedded-c-coding-standard-zh-v2/**
 lancedb
 
 # Windows alternate data stream metadata (created when copying via Explorer)
