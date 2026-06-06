@@ -364,7 +364,7 @@ APP `user_init` 看到 `0x33` 或 `0x44` 都 auto-confirm 写 `0x00`；若 IWDG 
 ### 易踩坑
 
 - **W25Q64 Page Program 跨 page 回卷**：`bsp_w25q64_driver.c::w25q64_write_data_erase` 必须按 256 B page 边界拆 chunk，erase 仍 per-sector (4 KB)。否则单个 Page Program 跨 page 时 W25Q64 地址回卷到 page 起点 → 后续字节覆盖前面字节
-- **APP `Write_OtaData` 每次 erase 整 sector**：sub-sector 写入会抹掉同 sector 之前的数据。`firmware_upgrade_task.c` 用 4 KB `s_sector_buf[]` 攒满再写，ymodem_recv_task 调 `firmware_upgrade_flush_staged()` 冲尾段
+- **APP `Write_OtaData` 每次 erase 整 sector**：sub-sector 写入会抹掉同 sector 之前的数据。`firmware_upgrade_task.c` 用 4 KB `s_sector_buf[]` 攒满再写，ymodem_recv_task 调 `firmware_upgrade_flush_staged()` 冲尾段。该不变量现已在 seam 处强制：`ota_storage_write` 对非扇区对齐/非整扇区写直接返回 `OTA_STORAGE_ERR`（把静默擦写变显式错误），`firmware_upgrade_service_init` 启动时校验 `UPGRADE_SECTOR_BUF_SIZE == ota_storage_sector_size()`
 - **内部 Flash 操作必须关中断**：F411 单 bank flash erase 阻塞 ~1 s，期间 ISR 在 flash 取指会死锁。`MCU_Core_IFlash/iflash_port.c` 已经在 `mcu_iflash_erase_sector` / `mcu_iflash_program_words` 函数体内用 `__disable_irq()` + 出口恢复 PRIMASK 兜住，service 层调用方不用再手动关
 - **UART1 polled HAL 会饿死 PRI_BACKGROUND**：listener 必须走中断/DMA 模式，否则 `iwdg_feeder` 抢不到 CPU → IWDG fire 整机 reset
 

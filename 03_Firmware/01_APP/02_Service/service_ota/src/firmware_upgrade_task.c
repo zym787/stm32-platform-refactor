@@ -179,6 +179,23 @@ platform_err_t firmware_upgrade_service_init(void)
         DEBUG_OUT(e, USER_INIT_ERR_LOG_TAG, "ota_storage_init failed");
         return PLATFORM_ERR_GENERAL;
     }
+
+    /**
+    * The coalescer (s_sector_buf) is a compile-time BSS allocation, but the
+    * erase granularity it must match is owned by the storage adapter. Verify
+    * they agree at init so a future adapter with a different sector size
+    * fails loudly here instead of silently corrupting staged data — replaces
+    * the previous comment-only "must equal" assumption with a real check.
+    **/
+    if (UPGRADE_SECTOR_BUF_SIZE != ota_storage_sector_size())
+    {
+        DEBUG_OUT(e, USER_INIT_ERR_LOG_TAG,
+                  "OTA sector buf %u != storage sector %u",
+                  (unsigned)UPGRADE_SECTOR_BUF_SIZE,
+                  (unsigned)ota_storage_sector_size());
+        return PLATFORM_ERR_GENERAL;
+    }
+
     return firmware_upgrade_resources_init();
 }
 

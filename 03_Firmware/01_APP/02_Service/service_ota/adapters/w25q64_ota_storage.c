@@ -59,6 +59,27 @@ ota_storage_status_t ota_storage_write(UINT32_T       offset,
                                        const UINT8_T *buf,
                                        UINT32_T       len)
 {
+    /* Validate the caller buffer before touching the medium. */
+    if ((NULL == buf) || (0U == len))
+    {
+        return OTA_STORAGE_ERR;
+    }
+
+    /**
+    * Enforce the sector-aligned / sector-multiple contract documented in
+    * ota_storage.h. Each Write_OtaData call erases the whole containing
+    * 4 KB sector (see W25Q64_SECTOR_SIZE note + [[w25q64-write-erases-sector]]),
+    * so a sub-sector or unaligned write would silently wipe a neighbouring
+    * partial sector. Rejecting it here turns that latent corruption into a
+    * loud, testable error at the seam -- the OTA consumer already coalesces
+    * to full sectors before calling, so this never fires on the happy path.
+    **/
+    if (((offset % W25Q64_SECTOR_SIZE) != 0U) ||
+        ((len % W25Q64_SECTOR_SIZE) != 0U))
+    {
+        return OTA_STORAGE_ERR;
+    }
+
     /* Write_OtaData accepts non-const UINT8_T * for legacy reasons; the
        blocking façade copies into a request struct before posting to the
        storage queue so the const-cast is safe. */

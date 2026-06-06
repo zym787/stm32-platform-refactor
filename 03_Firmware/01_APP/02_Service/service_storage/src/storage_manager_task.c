@@ -73,12 +73,27 @@ typedef enum
 
 typedef struct
 {
-    UINT32_T                addr;        /* offset within LVGL sub-region   */
+    UINT32_T                addr;        /* offset within the sub-region    */
     UINT32_T                size;
     UINT8_T                *buf;         /* read: dst, write: src           */
     storage_op_t              op;
     platform_err_t   last_status;
 } storage_request_t;
+
+/**
+ * Per-operation descriptor. Each storage_op_t fully determines its
+ * sub-region bound, the physical base on the W25Q64, the event-group bit
+ * that wakes the manager, and the transfer direction -- so one table
+ * replaces the three near-identical *_blocking_dispatch twins and the
+ * per-region if/else chain in storage_manager_task.
+ */
+typedef struct
+{
+    UINT32_T  region_size;   /* sub-region length, for the bounds check */
+    UINT32_T  phys_base;     /* physical base address on the W25Q64     */
+    UINT32_T  event_bit;     /* event-group bit that wakes the manager  */
+    BOOL_T    is_write;      /* true = program, false = read            */
+} storage_op_desc_t;
 //******************************** Typedefs *********************************//
 
 //******************************* Variables *********************************//
@@ -87,6 +102,32 @@ static osal_sema_handle_t         s_done_sem     = NULL;
 static osal_mutex_handle_t        s_caller_mutex = NULL;
 
 static storage_request_t          s_pending      = {0};
+
+/* OTA read and write share EVENT_OTA (the op field disambiguates) so the
+   manager doesn't burn two event bits on one region. */
+static const storage_op_desc_t g_opDesc[] =
+{
+    [STORAGE_OP_NONE] =
+        { 0U, 0U, 0U, false },
+    [STORAGE_OP_LVGL_READ] =
+        { MEMORY_LVGL_REGION_SIZE, MEMORY_LVGL_START_ADDRESS,
+          EVENT_LVGL_R, false },
+    [STORAGE_OP_LVGL_WRITE] =
+        { MEMORY_LVGL_REGION_SIZE, MEMORY_LVGL_START_ADDRESS,
+          EVENT_LVGL_W, true },
+    [STORAGE_OP_OTA_READ] =
+        { MEMORY_OTA_REGION_SIZE, MEMORY_OTA_START_ADDRESS,
+          EVENT_OTA, false },
+    [STORAGE_OP_OTA_WRITE] =
+        { MEMORY_OTA_REGION_SIZE, MEMORY_OTA_START_ADDRESS,
+          EVENT_OTA, true },
+    [STORAGE_OP_CALIB_READ] =
+        { MEMORY_CALIB_REGION_SIZE, MEMORY_CALIB_START_ADDRESS,
+          EVENT_CALIB_R, false },
+    [STORAGE_OP_CALIB_WRITE] =
+        { MEMORY_CALIB_REGION_SIZE, MEMORY_CALIB_START_ADDRESS,
+          EVENT_CALIB_W, true },
+};
 //******************************* Variables *********************************//
 
 //******************************* Functions *********************************//
@@ -121,26 +162,40 @@ static ext_flash_status_t translate_status(platform_err_t st)
 }
 
 /**
- * @brief Common blocking dispatch: parameter check, take mutex, publish
- *        request, signal event, wait for completion.
+ * @brief Region-agnostic blocking dispatch shared by every Read_/Write_*
+ *        facade: validate, take the caller mutex, publish the request,
+ *        raise the op's event bit, and block until the completion callback
+ *        gives s_done_sem. The op alone selects the sub-region bound and
+ *        event bit via g_opDesc, so LVGL / OTA / CALIB share this one path.
+ *
+ * @param[in]  addr : byte offset INSIDE the op's sub-region.
+ * @param[in]  size : transfer length in bytes.
+ * @param[in]  buf  : read destination or write source (caller-owned).
+ * @param[in]  op   : which sub-region + direction; indexes g_opDesc.
+ *
+ * @return EXT_FLASH_OK on success, an EXT_FLASH_ERROR* code otherwise.
  */
-static ext_flash_status_t lvgl_blocking_dispatch(UINT32_T      addr,
-                                                 UINT32_T      size,
-                                                 UINT8_T      *buf,
-                                                 storage_op_t    op,
-                                                 UINT32_T   event_bit)
+static ext_flash_status_t blocking_dispatch(UINT32_T      addr,
+                                            UINT32_T      size,
+                                            UINT8_T      *buf,
+                                            storage_op_t  op)
 {
+    /* Reject an out-of-table op before indexing g_opDesc. */
+    if ((op <= STORAGE_OP_NONE) || (op > STORAGE_OP_CALIB_WRITE))
+    {
+        return EXT_FLASH_ERRORPARAMETER;
+    }
+    const storage_op_desc_t *desc = &g_opDesc[op];
+
     if ((NULL == buf) || (0U == size))
     {
         return EXT_FLASH_ERRORPARAMETER;
     }
 
-    if (size > MEMORY_LVGL_REGION_SIZE)
-    {
-        return EXT_FLASH_ERRORNOMEMORY;
-    }
-
-    if ((addr + size) > MEMORY_LVGL_REGION_SIZE)
+    /* Bound the request to the op's sub-region (size first so addr + size
+       cannot wrap for any in-region offset). */
+    if ((size > desc->region_size) ||
+        ((addr + size) > desc->region_size))
     {
         return EXT_FLASH_ERRORNOMEMORY;
     }
@@ -163,7 +218,7 @@ static ext_flash_status_t lvgl_blocking_dispatch(UINT32_T      addr,
     s_pending.op          = op;
     s_pending.last_status = PLATFORM_ERR_GENERAL;
 
-    (void)osal_event_group_set_bits(s_evgrp, event_bit);
+    (void)osal_event_group_set_bits(s_evgrp, desc->event_bit);
 
     /**
      * Wait forever for the manager / handler / callback chain to give the
@@ -213,8 +268,7 @@ ext_flash_status_t Read_LvglData(UINT32_T  addr,
                                  UINT32_T  size,
                                  UINT8_T  *out_buf)
 {
-    return lvgl_blocking_dispatch(addr, size, out_buf,
-                                  STORAGE_OP_LVGL_READ, EVENT_LVGL_R);
+    return blocking_dispatch(addr, size, out_buf, STORAGE_OP_LVGL_READ);
 }
 
 ext_flash_status_t Write_LvglData(UINT32_T        addr,
@@ -224,64 +278,15 @@ ext_flash_status_t Write_LvglData(UINT32_T        addr,
     /* The wrapper's pf_externflash_write needs a non-const pointer; the
      * underlying SPI write path only reads from this buffer, and the API
      * is blocking, so casting away const is safe here. */
-    return lvgl_blocking_dispatch(addr, size, (UINT8_T *)in_buf,
-                                  STORAGE_OP_LVGL_WRITE, EVENT_LVGL_W);
-}
-
-/**
- * @brief OTA-region twin of lvgl_blocking_dispatch — same protocol but the
- *        range check uses the OTA sub-region size and the physical address
- *        computed in storage_manager_task uses MEMORY_OTA_START_ADDRESS.
- */
-static ext_flash_status_t ota_blocking_dispatch(UINT32_T      addr,
-                                                UINT32_T      size,
-                                                UINT8_T      *buf,
-                                                storage_op_t  op)
-{
-    if ((NULL == buf) || (0U == size))
-    {
-        return EXT_FLASH_ERRORPARAMETER;
-    }
-
-    if ((size > MEMORY_OTA_REGION_SIZE) ||
-        ((addr + size) > MEMORY_OTA_REGION_SIZE))
-    {
-        return EXT_FLASH_ERRORNOMEMORY;
-    }
-
-    if ((NULL == s_caller_mutex) ||
-        (NULL == s_evgrp)        ||
-        (NULL == s_done_sem))
-    {
-        return EXT_FLASH_ERRORRESOURCE;
-    }
-
-    if (OSAL_SUCCESS != osal_mutex_take(s_caller_mutex, OSAL_MAX_DELAY))
-    {
-        return EXT_FLASH_ERROR;
-    }
-
-    s_pending.addr        = addr;
-    s_pending.size        = size;
-    s_pending.buf         = buf;
-    s_pending.op          = op;
-    s_pending.last_status = PLATFORM_ERR_GENERAL;
-
-    (void)osal_event_group_set_bits(s_evgrp, EVENT_OTA);
-
-    (void)osal_sema_take(s_done_sem, OSAL_MAX_DELAY);
-
-    ext_flash_status_t ret = translate_status(s_pending.last_status);
-
-    (void)osal_mutex_give(s_caller_mutex);
-    return ret;
+    return blocking_dispatch(addr, size, (UINT8_T *)in_buf,
+                             STORAGE_OP_LVGL_WRITE);
 }
 
 ext_flash_status_t Read_OtaData(UINT32_T  addr,
                                 UINT32_T  size,
                                 UINT8_T  *out_buf)
 {
-    return ota_blocking_dispatch(addr, size, out_buf, STORAGE_OP_OTA_READ);
+    return blocking_dispatch(addr, size, out_buf, STORAGE_OP_OTA_READ);
 }
 
 ext_flash_status_t Write_OtaData(UINT32_T        addr,
@@ -290,69 +295,15 @@ ext_flash_status_t Write_OtaData(UINT32_T        addr,
 {
     /* externflash_drv_write needs a non-const pointer; SPI path only reads
        from the buffer, and the wrapper is blocking, so casting is safe. */
-    return ota_blocking_dispatch(addr, size, (UINT8_T *)in_buf,
-                                 STORAGE_OP_OTA_WRITE);
-}
-
-/**
- * @brief Calibration-region twin of lvgl_blocking_dispatch.
- *
- *        Identical handshake (mutex, request publish, event-bit, wait sem)
- *        but range-checks against MEMORY_CALIB_REGION_SIZE so a caller
- *        cannot accidentally write past the 4-KB block.  storage_manager_task
- *        rebases s_pending.addr to MEMORY_CALIB_START_ADDRESS at dispatch.
- */
-static ext_flash_status_t calib_blocking_dispatch(UINT32_T      addr,
-                                                  UINT32_T      size,
-                                                  UINT8_T      *buf,
-                                                  storage_op_t  op,
-                                                  UINT32_T  event_bit)
-{
-    if ((NULL == buf) || (0U == size))
-    {
-        return EXT_FLASH_ERRORPARAMETER;
-    }
-
-    if ((size > MEMORY_CALIB_REGION_SIZE) ||
-        ((addr + size) > MEMORY_CALIB_REGION_SIZE))
-    {
-        return EXT_FLASH_ERRORNOMEMORY;
-    }
-
-    if ((NULL == s_caller_mutex) ||
-        (NULL == s_evgrp)        ||
-        (NULL == s_done_sem))
-    {
-        return EXT_FLASH_ERRORRESOURCE;
-    }
-
-    if (OSAL_SUCCESS != osal_mutex_take(s_caller_mutex, OSAL_MAX_DELAY))
-    {
-        return EXT_FLASH_ERROR;
-    }
-
-    s_pending.addr        = addr;
-    s_pending.size        = size;
-    s_pending.buf         = buf;
-    s_pending.op          = op;
-    s_pending.last_status = PLATFORM_ERR_GENERAL;
-
-    (void)osal_event_group_set_bits(s_evgrp, event_bit);
-
-    (void)osal_sema_take(s_done_sem, OSAL_MAX_DELAY);
-
-    ext_flash_status_t ret = translate_status(s_pending.last_status);
-
-    (void)osal_mutex_give(s_caller_mutex);
-    return ret;
+    return blocking_dispatch(addr, size, (UINT8_T *)in_buf,
+                             STORAGE_OP_OTA_WRITE);
 }
 
 ext_flash_status_t Read_CalibData(UINT32_T  addr,
                                   UINT32_T  size,
                                   UINT8_T  *out_buf)
 {
-    return calib_blocking_dispatch(addr, size, out_buf,
-                                   STORAGE_OP_CALIB_READ, EVENT_CALIB_R);
+    return blocking_dispatch(addr, size, out_buf, STORAGE_OP_CALIB_READ);
 }
 
 ext_flash_status_t Write_CalibData(UINT32_T        addr,
@@ -362,8 +313,8 @@ ext_flash_status_t Write_CalibData(UINT32_T        addr,
     /* externflash_drv_write needs a non-const pointer; the underlying SPI
      * write path only reads from this buffer, and the API is blocking, so
      * casting away const is safe here. */
-    return calib_blocking_dispatch(addr, size, (UINT8_T *)in_buf,
-                                   STORAGE_OP_CALIB_WRITE, EVENT_CALIB_W);
+    return blocking_dispatch(addr, size, (UINT8_T *)in_buf,
+                             STORAGE_OP_CALIB_WRITE);
 }
 
 void storage_manager_task(void *argument)
@@ -388,77 +339,38 @@ void storage_manager_task(void *argument)
             continue;
         }
 
-        platform_err_t  st       = PLATFORM_ERR_GENERAL;
-        BOOL_T                     handled  = false;
-
         /**
-        * Two address bases live on the same W25Q64; pick the base from the
-        * event bit set by the caller. EVENT_LVGL_* and EVENT_OTA are
-        * mutually exclusive because s_caller_mutex serialises clients.
+        * The op was published into s_pending under s_caller_mutex together
+        * with its event bit, and the mutex serialises callers, so s_pending.op
+        * is the single source of truth for region base + direction here. The
+        * woken event bit (any of EVENT_*) only signals "a request arrived".
         **/
-        if (0U != (bits_set & EVENT_LVGL_R))
+        const storage_op_t op = s_pending.op;
+        if ((op <= STORAGE_OP_NONE) || (op > STORAGE_OP_CALIB_WRITE))
         {
-            const UINT32_T addr_phy = MEMORY_LVGL_START_ADDRESS +
-                                      s_pending.addr;
-            st = externflash_drv_read(addr_phy, s_pending.buf, s_pending.size,
-                                      on_done_cb, NULL);
-            handled = true;
+            DEBUG_OUT(w, W25Q64_LOG_TAG,
+                      "storage_manager: unhandled op=%d bits=0x%08X",
+                      (int)op, (unsigned int)bits_set);
+            continue;
         }
-        else if (0U != (bits_set & EVENT_LVGL_W))
+
+        const storage_op_desc_t *desc     = &g_opDesc[op];
+        const UINT32_T           addr_phy = desc->phys_base + s_pending.addr;
+        platform_err_t           st;
+
+        if (desc->is_write)
         {
-            const UINT32_T addr_phy = MEMORY_LVGL_START_ADDRESS +
-                                      s_pending.addr;
-            st = externflash_drv_write(addr_phy, s_pending.buf, s_pending.size,
-                                       on_done_cb, NULL);
-            handled = true;
-        }
-        else if (0U != (bits_set & EVENT_CALIB_R))
-        {
-            const UINT32_T addr_phy = MEMORY_CALIB_START_ADDRESS +
-                                      s_pending.addr;
-            st = externflash_drv_read(addr_phy, s_pending.buf, s_pending.size,
-                                      on_done_cb, NULL);
-            handled = true;
-        }
-        else if (0U != (bits_set & EVENT_CALIB_W))
-        {
-            const UINT32_T addr_phy = MEMORY_CALIB_START_ADDRESS +
-                                      s_pending.addr;
-            st = externflash_drv_write(addr_phy, s_pending.buf, s_pending.size,
-                                       on_done_cb, NULL);
-            handled = true;
-        }
-        else if (0U != (bits_set & EVENT_OTA))
-        {
-            /**
-            * OTA path: single event bit, sub-op selects read vs write so
-            * we don't burn extra event bits. ERASE not exposed yet —
-            * externflash_drv_write auto-erases sectors, which is enough
-            * for the upgrade write path.
-            **/
-            const UINT32_T addr_phy = MEMORY_OTA_START_ADDRESS +
-                                      s_pending.addr;
-            if (STORAGE_OP_OTA_READ == s_pending.op)
-            {
-                st = externflash_drv_read(addr_phy, s_pending.buf,
-                                          s_pending.size, on_done_cb, NULL);
-                handled = true;
-            }
-            else if (STORAGE_OP_OTA_WRITE == s_pending.op)
-            {
-                st = externflash_drv_write(addr_phy, s_pending.buf,
-                                           s_pending.size, on_done_cb, NULL);
-                handled = true;
-            }
+            /* externflash_drv_write auto-erases the covered sector(s). */
+            st = externflash_drv_write(addr_phy, s_pending.buf,
+                                       s_pending.size, on_done_cb, NULL);
         }
         else
         {
-            DEBUG_OUT(w, W25Q64_LOG_TAG,
-                      "storage_manager: unhandled bits=0x%08X",
-                      (unsigned int)bits_set);
+            st = externflash_drv_read(addr_phy, s_pending.buf,
+                                      s_pending.size, on_done_cb, NULL);
         }
 
-        if (handled && (PLATFORM_OK != st))
+        if (PLATFORM_OK != st)
         {
             /* Submit failed synchronously -- callback will not fire, so
              * publish the error and unblock the caller ourselves. */
