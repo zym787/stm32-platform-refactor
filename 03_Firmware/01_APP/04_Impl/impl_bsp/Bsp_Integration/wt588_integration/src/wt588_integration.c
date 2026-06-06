@@ -27,6 +27,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "wt588_integration.h"
 #include "bsp_wt588_hal_port.h"
 #include "osal_wrapper_adapter.h"
@@ -43,7 +44,7 @@
 /*  OS adapter functions                                                      */
 /* ========================================================================= */
 
-static void os_delay_ms_adapter(uint32_t ms)
+static void os_delay_ms_adapter(UINT32_t ms)
 {
     (void)osal_task_delay((osal_tick_type_t)ms);
 }
@@ -52,33 +53,33 @@ static wt_handler_status_t task_create_adapter(void **const   task_handle,
                                                void          *parameters,
                                       void (*entry)(void *const args),
                                                char const    *name,
-                                               uint16_t       stack_depth,
-                                               uint32_t       priority)
+                                               UINT16_t       stack_depth,
+                                               UINT32_t       priority)
 {
-    int32_t ret = osal_task_create(
+    INT32_t ret = osal_task_create(
                       (osal_task_handle_t *)task_handle,
                       name,
                       parameters,
                       (osal_task_entry_t)entry,
-                      (uint32_t)stack_depth,
+                      (UINT32_t)stack_depth,
                       priority);
     return (OSAL_SUCCESS == ret) ? WT_HANDLER_OK : WT_HANDLER_ERROR;
 }
 
 static wt_handler_status_t task_delete_adapter(void *const task_handle)
 {
-    int32_t ret = osal_task_delete((osal_task_handle_t)task_handle);
+    INT32_t ret = osal_task_delete((osal_task_handle_t)task_handle);
     return (OSAL_SUCCESS == ret) ? WT_HANDLER_OK : WT_HANDLER_ERROR;
 }
 
 static wt_handler_status_t queue_create_adapter(void **const  queue_handle,
-                                                uint32_t const queue_length,
-                                                uint32_t const item_size)
+                                                UINT32_t const queue_length,
+                                                UINT32_t const item_size)
 {
-    int32_t ret = osal_queue_create(
+    INT32_t ret = osal_queue_create(
                       (osal_queue_handle_t *)queue_handle,
-                      (size_t)queue_length,
-                      (size_t)item_size);
+                      (SIZE_t)queue_length,
+                      (SIZE_t)item_size);
     return (OSAL_SUCCESS == ret) ? WT_HANDLER_OK : WT_HANDLER_ERROR;
 }
 
@@ -90,9 +91,9 @@ static wt_handler_status_t queue_delete_adapter(void *const queue_handle)
 
 static wt_handler_status_t queue_send_adapter(void *const queue_handle,
                                               void *const item,
-                                              uint32_t    timeout)
+                                              UINT32_t    timeout)
 {
-    int32_t ret = osal_queue_send((osal_queue_handle_t)queue_handle,
+    INT32_t ret = osal_queue_send((osal_queue_handle_t)queue_handle,
                                   item,
                                   (osal_tick_type_t)timeout);
     return (OSAL_SUCCESS == ret) ? WT_HANDLER_OK : WT_HANDLER_ERROR;
@@ -100,23 +101,23 @@ static wt_handler_status_t queue_send_adapter(void *const queue_handle,
 
 static wt_handler_status_t queue_get_adapter(void *const queue_handle,
                                              void *const item,
-                                             uint32_t    timeout)
+                                             UINT32_t    timeout)
 {
-    int32_t ret = osal_queue_receive((osal_queue_handle_t)queue_handle,
+    INT32_t ret = osal_queue_receive((osal_queue_handle_t)queue_handle,
                                      item,
                                      (osal_tick_type_t)timeout);
     return (OSAL_SUCCESS == ret) ? WT_HANDLER_OK : WT_HANDLER_ERROR;
 }
 
-static uint32_t queue_count_adapter(void *const queue_handle)
+static UINT32_t queue_count_adapter(void *const queue_handle)
 {
-    int32_t ret = osal_queue_messages_waiting((osal_queue_handle_t)queue_handle);
-    return (ret >= 0) ? (uint32_t)ret : 0U;
+    INT32_t ret = osal_queue_messages_waiting((osal_queue_handle_t)queue_handle);
+    return (ret >= 0) ? (UINT32_t)ret : 0U;
 }
 
 static wt_handler_status_t sema_create_adapter(void **const sema_handle)
 {
-    int32_t ret = osal_sema_init((osal_sema_handle_t *)sema_handle, 0U);
+    INT32_t ret = osal_sema_init((osal_sema_handle_t *)sema_handle, 0U);
     return (OSAL_SUCCESS == ret) ? WT_HANDLER_OK : WT_HANDLER_ERROR;
 }
 
@@ -127,9 +128,9 @@ static wt_handler_status_t sema_delete_adapter(void *const sema_handle)
 }
 
 static wt_handler_status_t sema_take_adapter(void *const sema_handle,
-                                             uint32_t    timeout)
+                                             UINT32_t    timeout)
 {
-    int32_t ret = osal_sema_take((osal_sema_handle_t)sema_handle,
+    INT32_t ret = osal_sema_take((osal_sema_handle_t)sema_handle,
                                  (osal_tick_type_t)timeout);
     if (OSAL_SUCCESS == ret)
     {
@@ -141,7 +142,7 @@ static wt_handler_status_t sema_take_adapter(void *const sema_handle,
 
 static wt_handler_status_t sema_give_adapter(void *const sema_handle)
 {
-    int32_t ret = osal_sema_give((osal_sema_handle_t)sema_handle);
+    INT32_t ret = osal_sema_give((osal_sema_handle_t)sema_handle);
     return (OSAL_SUCCESS == ret) ? WT_HANDLER_OK : WT_HANDLER_ERROR;
 }
 

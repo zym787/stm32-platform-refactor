@@ -16,6 +16,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_wt588_driver.h"
 //******************************** Includes *********************************//
 
@@ -39,7 +40,7 @@
  * @return wt588_status_t WT588_OK if successful, error code otherwise
  *
  * */
-static wt588_status_t (wt588_start_play)(bsp_wt588_driver_t *self, uint8_t index)
+static wt588_status_t (wt588_start_play)(bsp_wt588_driver_t *self, UINT8_t index)
 {
     wt588_status_t ret = WT588_OK;
     /************ 1.Checking input parameters ************/
@@ -144,7 +145,7 @@ static wt588_status_t (wt588_stop_play )(bsp_wt588_driver_t *self)
  * @return wt588_status_t WT588_OK if successful, error code otherwise
  *
  * */
-static wt588_status_t (wt588_set_volume)(bsp_wt588_driver_t *self, uint8_t volume)
+static wt588_status_t (wt588_set_volume)(bsp_wt588_driver_t *self, UINT8_t volume)
 {
     wt588_status_t ret = WT588_OK;
     /************ 1.Checking input parameters ************/
@@ -202,10 +203,10 @@ static wt588_status_t (wt588_set_volume)(bsp_wt588_driver_t *self, uint8_t volum
  *
  * @param[in] self : Pointer to WT588 driver instance
  *
- * @return bool true if busy, false otherwise (or on error)
+ * @return BOOL true if busy, false otherwise (or on error)
  *
  * */
-static bool           (wt588_is_busy   )(bsp_wt588_driver_t *self)
+static BOOL           (wt588_is_busy   )(bsp_wt588_driver_t *self)
 {
     /************ 1.Checking input parameters ************/
     if (NULL == self)

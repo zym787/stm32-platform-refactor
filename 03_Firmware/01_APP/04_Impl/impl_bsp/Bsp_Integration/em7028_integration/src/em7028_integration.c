@@ -35,6 +35,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "em7028_integration.h"
 
 #include "i2c_port.h"
@@ -105,12 +106,12 @@ static em7028_status_t em7028_int_iic_deinit(void *hi2c)
  * @return EM7028_OK on success, EM7028_ERROR on bus or timeout failure.
  */
 static em7028_status_t em7028_int_iic_mem_write(void    *hi2c,
-                                                uint16_t des_addr,
-                                                uint16_t mem_addr,
-                                                uint16_t mem_size,
-                                                uint8_t *p_data,
-                                                uint16_t size,
-                                                uint32_t timeout)
+                                                UINT16_t des_addr,
+                                                UINT16_t mem_addr,
+                                                UINT16_t mem_size,
+                                                UINT8_t *p_data,
+                                                UINT16_t size,
+                                                UINT32_t timeout)
 {
     (void)hi2c;
 
@@ -145,12 +146,12 @@ static em7028_status_t em7028_int_iic_mem_write(void    *hi2c,
  * @return EM7028_OK on success, EM7028_ERROR on bus or timeout failure.
  */
 static em7028_status_t em7028_int_iic_mem_read(void    *hi2c,
-                                               uint16_t des_addr,
-                                               uint16_t mem_addr,
-                                               uint16_t mem_size,
-                                               uint8_t *p_data,
-                                               uint16_t size,
-                                               uint32_t timeout)
+                                               UINT16_t des_addr,
+                                               UINT16_t mem_addr,
+                                               UINT16_t mem_size,
+                                               UINT8_t *p_data,
+                                               UINT16_t size,
+                                               UINT32_t timeout)
 {
     (void)hi2c;
 
@@ -174,7 +175,7 @@ static em7028_status_t em7028_int_iic_mem_read(void    *hi2c,
  *
  * @return Current ms tick from the systick port.
  */
-static uint32_t em7028_int_get_tick_ms(void)
+static UINT32_t em7028_int_get_tick_ms(void)
 {
     return core_systick_get_ms();
 }
@@ -184,13 +185,13 @@ static uint32_t em7028_int_get_tick_ms(void)
 /**
  * @brief  ms-resolution busy-wait wrapper.
  *
- *         The driver's vtable exposes a uint32_t-ms entry; DWT provides us
+ *         The driver's vtable exposes a UINT32_t-ms entry; DWT provides us
  *         resolution, so trampoline through *1000U. Used only on the
  *         5 ms boot path before the scheduler-aware OS delay kicks in.
  *
  * @param[in] ms : Wait duration in milliseconds.
  */
-static void em7028_int_dwt_delay_ms(uint32_t const ms)
+static void em7028_int_dwt_delay_ms(UINT32_t const ms)
 {
     core_dwt_delay_us(ms * 1000U);
 }
@@ -203,7 +204,7 @@ static void em7028_int_dwt_delay_ms(uint32_t const ms)
  *
  * @param[in] ms : Wait duration in milliseconds.
  */
-static void em7028_int_rtos_delay(uint32_t const ms)
+static void em7028_int_rtos_delay(UINT32_t const ms)
 {
     osal_task_delay((osal_tick_type_t)ms);
 }
@@ -220,12 +221,12 @@ static void em7028_int_rtos_delay(uint32_t const ms)
  * @return EM7028_HANDLER_OK on success, EM7028_HANDLER_ERROR on failure.
  */
 static em7028_handler_status_t em7028_int_os_queue_create(
-    uint32_t const   item_num,
-    uint32_t const   item_size,
+    UINT32_t const   item_num,
+    UINT32_t const   item_size,
     void    **const  queue_handler)
 {
-    int32_t ret = osal_queue_create((osal_queue_handle_t *)queue_handler,
-                                    (size_t)item_num, (size_t)item_size);
+    INT32_t ret = osal_queue_create((osal_queue_handle_t *)queue_handler,
+                                    (SIZE_t)item_num, (SIZE_t)item_size);
     return (OSAL_SUCCESS == ret) ? EM7028_HANDLER_OK : EM7028_HANDLER_ERROR;
 }
 
@@ -241,9 +242,9 @@ static em7028_handler_status_t em7028_int_os_queue_create(
 static em7028_handler_status_t em7028_int_os_queue_put(
     void    *const   queue_handler,
     void    *const   item,
-    uint32_t         timeout)
+    UINT32_t         timeout)
 {
-    int32_t ret = osal_queue_send((osal_queue_handle_t)queue_handler, item,
+    INT32_t ret = osal_queue_send((osal_queue_handle_t)queue_handler, item,
                                   (osal_tick_type_t)timeout);
     return (OSAL_SUCCESS == ret) ? EM7028_HANDLER_OK : EM7028_HANDLER_ERROR;
 }
@@ -261,9 +262,9 @@ static em7028_handler_status_t em7028_int_os_queue_put(
 static em7028_handler_status_t em7028_int_os_queue_get(
     void    *const   queue_handler,
     void    *const   msg,
-    uint32_t         timeout)
+    UINT32_t         timeout)
 {
-    int32_t ret = osal_queue_receive((osal_queue_handle_t)queue_handler, msg,
+    INT32_t ret = osal_queue_receive((osal_queue_handle_t)queue_handler, msg,
                                      (osal_tick_type_t)timeout);
     if (OSAL_SUCCESS == ret)
     {

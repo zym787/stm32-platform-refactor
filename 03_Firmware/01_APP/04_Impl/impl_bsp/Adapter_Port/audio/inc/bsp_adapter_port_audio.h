@@ -27,6 +27,7 @@
 #define __BSP_ADAPTER_PORT_AUDIO_H__
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_wrapper_audio.h"
 //******************************** Includes *********************************//
 
@@ -46,7 +47,7 @@
  * @return  true  - Registration successful.
  *          false - Mount failed.
  */
-bool drv_adapter_audio_register(void);
+BOOL drv_adapter_audio_register(void);
 
 //******************************* Functions *********************************//
 

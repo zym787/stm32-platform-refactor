@@ -37,7 +37,7 @@
 
 #include "lvgl.h"
 
-#include <stddef.h>
+#include "board_types.h"
 #include <stdio.h>
 //******************************** Includes *********************************//
 
@@ -71,9 +71,9 @@ typedef struct
     lv_timer_t                     *complete_timer;
 
     calibration_ui_state_t          state;
-    uint8_t                         current_idx;
-    uint32_t                        point_start_tick;
-    bool                            screen_ready;
+    UINT8_t                         current_idx;
+    UINT32_t                        point_start_tick;
+    BOOL                            screen_ready;
 
     touch_calibration_t            *p_calib;
     touch_calibration_ui_done_cb_t  done_cb;
@@ -86,7 +86,7 @@ static calibration_ui_t s_ui = {0};
 //******************************* Variables *********************************//
 
 //******************************* Declaring *********************************//
-static void show_point(uint8_t idx);
+static void show_point(UINT8_t idx);
 static void show_instruction(const char *text);
 static void on_screen_pressed(lv_event_t *e);
 static void on_btn_skip_clicked(lv_event_t *e);
@@ -239,15 +239,15 @@ void touch_calibration_ui_cleanup(void)
     s_ui.screen_ready = false;
 }
 
-static void show_point(uint8_t idx)
+static void show_point(UINT8_t idx)
 {
     if (idx >= CFG_TOUCH_CALIB_POINT_COUNT)
     {
         return;
     }
 
-    uint16_t sx = 0u;
-    uint16_t sy = 0u;
+    UINT16_t sx = 0u;
+    UINT16_t sy = 0u;
     if (CALIBRATION_SUCCESS !=
             touch_calibration_get_standard_point(idx, &sx, &sy))
     {
@@ -299,8 +299,8 @@ static void on_screen_pressed(lv_event_t *e)
     lv_point_t pt;
     lv_indev_get_point(indev, &pt);
 
-    uint16_t std_x = 0u;
-    uint16_t std_y = 0u;
+    UINT16_t std_x = 0u;
+    UINT16_t std_y = 0u;
     if (CALIBRATION_SUCCESS !=
             touch_calibration_get_standard_point(s_ui.current_idx,
                                                  &std_x, &std_y))
@@ -312,7 +312,7 @@ static void on_screen_pressed(lv_event_t *e)
 
     const calibration_status_t st = touch_calibration_add_point(
             s_ui.p_calib,
-            (uint16_t)pt.x, (uint16_t)pt.y,
+            (UINT16_t)pt.x, (UINT16_t)pt.y,
             std_x, std_y,
             s_ui.current_idx);
     if (CALIBRATION_SUCCESS != st)
@@ -329,7 +329,7 @@ static void on_screen_pressed(lv_event_t *e)
 
     lv_obj_add_flag(s_ui.cross, LV_OBJ_FLAG_HIDDEN);
 
-    s_ui.current_idx = (uint8_t)(s_ui.current_idx + 1U);
+    s_ui.current_idx = (UINT8_t)(s_ui.current_idx + 1U);
     if (s_ui.current_idx < CFG_TOUCH_CALIB_POINT_COUNT)
     {
         show_point(s_ui.current_idx);
@@ -426,7 +426,7 @@ static void timeout_cb(lv_timer_t *timer)
     {
         return;
     }
-    const uint32_t elapsed = lv_tick_elaps(s_ui.point_start_tick);
+    const UINT32_t elapsed = lv_tick_elaps(s_ui.point_start_tick);
     if (elapsed >= CFG_TOUCH_CALIB_TIMEOUT_MS)
     {
         enter_error("per-point timeout",

@@ -27,6 +27,7 @@
 #define __BSP_ADAPTER_PORT_EXTERNFLASH_H__
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_wrapper_externflash.h"
 //******************************** Includes *********************************//
 
@@ -38,7 +39,7 @@
  * @return  true  - Registration successful.
  *          false - Mount failed (index out of range or NULL vtable).
  */
-bool drv_adapter_externflash_register(void);
+BOOL drv_adapter_externflash_register(void);
 //******************************* Declaring *********************************//
 
 #endif /* __BSP_ADAPTER_PORT_EXTERNFLASH_H__ */

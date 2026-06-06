@@ -22,7 +22,7 @@
  * callers ├─ assign req_id, clear EG bits ├─ bsp_temp_humi_xxx_read()     ──
  * post event (req_id in p_user_ctx) └─ osal_event_group_wait_bits() ── block
  * caller ↑ handler reads AHT21 → aht21_data_ready_cb(temp, humi, ctx) ctx ==
- * (void*)(uintptr_t)req_id → verify req_id == s_inflight_req_id  (discard if
+ * (void*)(UINTPTR_t)req_id → verify req_id == s_inflight_req_id  (discard if
  * stale) → store temp/humi into s_temp_result/s_humi_result →
  * osal_event_group_set_bits()  ── unblock caller caller ◄── mutex released;
  * *temp / *humi filled; returns platform_err_t
@@ -34,7 +34,7 @@
  *   request begin.  The request-ID mechanism prevents a late-arriving
  *   callback from that timed-out request from polluting the new one:
  *
- *     callback stores (void*)(uintptr_t)req_id at dispatch time.
+ *     callback stores (void*)(UINTPTR_t)req_id at dispatch time.
  *     aht21_data_ready_cb() compares the embedded id against s_inflight_req_id.
  *     If they differ the callback is silently discarded.
  *
@@ -67,6 +67,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_temp_humi_xxx_handler.h"
 #include "bsp_adapter_port_temp_humi.h"
 #include "bsp_wrapper_temp_humi.h"
@@ -95,26 +96,26 @@ static void aht21_drv_init(temp_humi_drv_t *const dev);
 static void aht21_drv_deinit(temp_humi_drv_t *const dev);
 
 static platform_err_t aht21_read_temp_sync(temp_humi_drv_t *const  dev,
-                                                            float *const temp,
-                                                         uint32_t   life_time);
+                                                            FLOAT *const temp,
+                                                         UINT32_t   life_time);
 static platform_err_t aht21_read_humi_sync(temp_humi_drv_t *const  dev,
-                                                            float *const humi,
-                                                         uint32_t   life_time);
+                                                            FLOAT *const humi,
+                                                         UINT32_t   life_time);
 static platform_err_t aht21_read_all_sync(temp_humi_drv_t *const   dev,
-                                                           float *const  temp,
-                                                           float *const  humi,
-                                                        uint32_t    life_time);
+                                                           FLOAT *const  temp,
+                                                           FLOAT *const  humi,
+                                                        UINT32_t    life_time);
 static void                  aht21_read_temp_async(temp_humi_drv_t *const dev,
                                                    temp_humi_cb_async_t    cb,
-                                                   uint32_t         life_time);
+                                                   UINT32_t         life_time);
 static void                  aht21_read_humi_async(temp_humi_drv_t *const dev,
                                                    temp_humi_cb_async_t    cb,
-                                                   uint32_t         life_time);
+                                                   UINT32_t         life_time);
 static void                  aht21_read_all_async (temp_humi_drv_t *const dev,
                                                    temp_humi_cb_async_t    cb,
-                                                   uint32_t         life_time);
+                                                   UINT32_t         life_time);
 
-static void aht21_data_ready_cb(float *temp, float *humi, void *ctx);
+static void aht21_data_ready_cb(FLOAT *temp, FLOAT *humi, void *ctx);
 //******************************* Declaring *********************************//
 
 //******************************** Variables ********************************//
@@ -123,8 +124,8 @@ static void aht21_data_ready_cb(float *temp, float *humi, void *ctx);
  * and read back by the _sync caller after the event group unblocks it.
  * volatile: prevent compiler from caching across context switches.
  */
-static volatile float s_temp_result          = 0.0f;
-static volatile float s_humi_result          = 0.0f;
+static volatile FLOAT s_temp_result          = 0.0f;
+static volatile FLOAT s_humi_result          = 0.0f;
 
 /** Event group signalled by aht21_data_ready_cb(). */
 static osal_event_group_handle_t s_eg_handle = NULL;
@@ -137,14 +138,14 @@ static osal_mutex_handle_t s_read_mutex      = NULL;
  * and stores the value in s_inflight_req_id before posting to the queue.
  * Never wraps to ADAPTER_REQ_ID_NONE (0) — the ++ brings 0xFF... to 1.
  */
-static volatile uint32_t s_req_id_counter    = 0U;
+static volatile UINT32_t s_req_id_counter    = 0U;
 
 /**
  * req_id of the currently awaited request.
  * Written by the task holding s_read_mutex; read by aht21_data_ready_cb()
  * (handler thread).  32-bit aligned — Cortex-M4 single-cycle atomic read.
  */
-static volatile uint32_t s_inflight_req_id   = ADAPTER_REQ_ID_NONE;
+static volatile UINT32_t s_inflight_req_id   = ADAPTER_REQ_ID_NONE;
 
 /**
  * Event type of the in-flight request; used by aht21_data_ready_cb() to
@@ -168,11 +169,11 @@ static volatile temp_humi_data_type_event_t s_inflight_event_type =
  *
  * @return true on success or if resources already exist.
  */
-static bool adapter_resources_init(void)
+static BOOL adapter_resources_init(void)
 {
     if (NULL == s_eg_handle)
     {
-        int32_t ret = osal_event_group_create(&s_eg_handle);
+        INT32_t ret = osal_event_group_create(&s_eg_handle);
         if (OSAL_SUCCESS != ret)
         {
             DEBUG_OUT(e, TEMP_HUMI_ERR_LOG_TAG,
@@ -184,7 +185,7 @@ static bool adapter_resources_init(void)
 
     if (NULL == s_read_mutex)
     {
-        int32_t ret = osal_mutex_init(&s_read_mutex);
+        INT32_t ret = osal_mutex_init(&s_read_mutex);
         if (OSAL_SUCCESS != ret)
         {
             DEBUG_OUT(e, TEMP_HUMI_ERR_LOG_TAG,
@@ -248,8 +249,8 @@ static platform_err_t temp_humi_status_to_platform(temp_humi_status_t st)
  * PLATFORM_ERR_NO_RESOURCE.
  */
 static platform_err_t adapter_sync_read(temp_humi_data_type_event_t event_type,
-                                                                   uint32_t wait_bits,
-                                                                   uint32_t life_time)
+                                                                   UINT32_t wait_bits,
+                                                                   UINT32_t life_time)
 {
     if (NULL == s_eg_handle || NULL == s_read_mutex)
     {
@@ -259,7 +260,7 @@ static platform_err_t adapter_sync_read(temp_humi_data_type_event_t event_type,
     }
 
     /* ---- 1. Acquire mutex ---- */
-    int32_t lock_ret = osal_mutex_take(s_read_mutex, OSAL_MAX_DELAY);
+    INT32_t lock_ret = osal_mutex_take(s_read_mutex, OSAL_MAX_DELAY);
     if (OSAL_SUCCESS != lock_ret)
     {
         DEBUG_OUT(e, TEMP_HUMI_ERR_LOG_TAG,
@@ -268,7 +269,7 @@ static platform_err_t adapter_sync_read(temp_humi_data_type_event_t event_type,
     }
 
     /* ---- 2. Assign a fresh request ID ---- */
-    uint32_t this_req_id = ++s_req_id_counter;
+    UINT32_t this_req_id = ++s_req_id_counter;
     if (ADAPTER_REQ_ID_NONE == this_req_id)
     {
         this_req_id = ++s_req_id_counter; /* skip the reserved sentinel      */
@@ -287,7 +288,7 @@ static platform_err_t adapter_sync_read(temp_humi_data_type_event_t event_type,
     temp_humi_xxx_event_t event = {
         .event_type  = event_type,
         .lifetime    = life_time,
-        .p_user_ctx  = (void *)(uintptr_t)this_req_id,
+        .p_user_ctx  = (void *)(UINTPTR_t)this_req_id,
         .pf_callback = aht21_data_ready_cb,
     };
 
@@ -302,9 +303,9 @@ static platform_err_t adapter_sync_read(temp_humi_data_type_event_t event_type,
     }
 
     /* ---- 5. Wait for the callback to signal completion ---- */
-    bool wait_all  = (ADAPTER_EG_BIT_BOTH == wait_bits);
+    BOOL wait_all  = (ADAPTER_EG_BIT_BOTH == wait_bits);
 
-    int32_t eg_ret = osal_event_group_wait_bits(
+    INT32_t eg_ret = osal_event_group_wait_bits(
         s_eg_handle, wait_bits, true, /* clear bits on exit   */
         wait_all,                     /* AND for BOTH, OR for single-axis */
         ADAPTER_EG_READ_TIMEOUT_TICKS, NULL);
@@ -327,8 +328,8 @@ static platform_err_t adapter_sync_read(temp_humi_data_type_event_t event_type,
         DEBUG_OUT(i, TEMP_HUMI_LOG_TAG,
                   "adapter_sync_read: req_id=%u complete "
                   "temp=%.2f humi=%.2f",
-                  (unsigned)this_req_id, (double)s_temp_result,
-                  (double)s_humi_result);
+                  (unsigned)this_req_id, (DOUBLE)s_temp_result,
+                  (DOUBLE)s_humi_result);
         result = PLATFORM_OK;
     }
 
@@ -342,14 +343,14 @@ static platform_err_t adapter_sync_read(temp_humi_data_type_event_t event_type,
  *
  * Runs in the handler task context.
  *
- * @p ctx carries the req_id encoded as (void*)(uintptr_t)req_id at dispatch
+ * @p ctx carries the req_id encoded as (void*)(UINTPTR_t)req_id at dispatch
  * time.  It is compared against s_inflight_req_id:
  *   - Match: store results, set event-group bits to unblock the caller.
  *   - Mismatch: this is a stale callback from a timed-out request; discard.
  */
-static void aht21_data_ready_cb(float *temp, float *humi, void *ctx)
+static void aht21_data_ready_cb(FLOAT *temp, FLOAT *humi, void *ctx)
 {
-    uint32_t incoming_req_id = (uint32_t)(uintptr_t)ctx;
+    UINT32_t incoming_req_id = (UINT32_t)(UINTPTR_t)ctx;
 
     /* ---- Validate request ID ---- */
     if (incoming_req_id != s_inflight_req_id)
@@ -371,7 +372,7 @@ static void aht21_data_ready_cb(float *temp, float *humi, void *ctx)
     }
 
     /* ---- Determine bits to set from the in-flight event type ---- */
-    uint32_t bits;
+    UINT32_t bits;
     switch (s_inflight_event_type)
     {
     case TEMP_HUMI_EVENT_TEMP:
@@ -388,8 +389,8 @@ static void aht21_data_ready_cb(float *temp, float *humi, void *ctx)
 
     DEBUG_OUT(i, TEMP_HUMI_LOG_TAG,
               "adapter_cb: req_id=%u temp=%.2f humi=%.2f bits=0x%x",
-              (unsigned)incoming_req_id, (double)s_temp_result,
-              (double)s_humi_result, (unsigned)bits);
+              (unsigned)incoming_req_id, (DOUBLE)s_temp_result,
+              (DOUBLE)s_humi_result, (unsigned)bits);
 
     if (NULL != s_eg_handle)
     {
@@ -399,7 +400,7 @@ static void aht21_data_ready_cb(float *temp, float *humi, void *ctx)
 
 /* ---------- Wrapper vtable implementations -------------------------------- */
 
-bool drv_adapter_temp_humi_register(void)
+BOOL drv_adapter_temp_humi_register(void)
 {
     temp_humi_drv_t temp_humi_drv = {
         .idx                          = 0,
@@ -431,8 +432,8 @@ static void aht21_drv_deinit(temp_humi_drv_t *const dev)
 /* --- Synchronous vtable slots --- */
 
 static platform_err_t aht21_read_temp_sync(temp_humi_drv_t *const dev,
-                                                  float *const           temp,
-                                                  uint32_t life_time)
+                                                  FLOAT *const           temp,
+                                                  UINT32_t life_time)
 {
     (void)dev;
     platform_err_t ret =
@@ -445,8 +446,8 @@ static platform_err_t aht21_read_temp_sync(temp_humi_drv_t *const dev,
 }
 
 static platform_err_t aht21_read_humi_sync(temp_humi_drv_t *const dev,
-                                                  float *const           humi,
-                                                  uint32_t life_time)
+                                                  FLOAT *const           humi,
+                                                  UINT32_t life_time)
 {
     (void)dev;
     platform_err_t ret =
@@ -459,9 +460,9 @@ static platform_err_t aht21_read_humi_sync(temp_humi_drv_t *const dev,
 }
 
 static platform_err_t aht21_read_all_sync(temp_humi_drv_t *const dev,
-                                                 float *const           temp,
-                                                 float *const           humi,
-                                                 uint32_t          life_time)
+                                                 FLOAT *const           temp,
+                                                 FLOAT *const           humi,
+                                                 UINT32_t          life_time)
 {
     (void)dev;
     platform_err_t ret =
@@ -481,7 +482,7 @@ static platform_err_t aht21_read_all_sync(temp_humi_drv_t *const dev,
 }
 
 /* --- Asynchronous vtable slots --- */
-static void async_cb_trampoline(float *temp, float *humi, void *user_ctx)
+static void async_cb_trampoline(FLOAT *temp, FLOAT *humi, void *user_ctx)
 {
     temp_humi_cb_async_t user_cb = (temp_humi_cb_async_t)user_ctx;
     if (NULL != user_cb)
@@ -493,7 +494,7 @@ static void async_cb_trampoline(float *temp, float *humi, void *user_ctx)
 
 static void aht21_read_temp_async(temp_humi_drv_t *const dev,
                                   temp_humi_cb_async_t    cb,
-                                          uint32_t life_time)
+                                          UINT32_t life_time)
 {
     (void)dev;
     if (NULL == cb)
@@ -511,7 +512,7 @@ static void aht21_read_temp_async(temp_humi_drv_t *const dev,
 
 static void aht21_read_humi_async(temp_humi_drv_t *const dev,
                                   temp_humi_cb_async_t    cb,
-                                          uint32_t life_time)
+                                          UINT32_t life_time)
 {
     (void)dev;
     if (NULL == cb)
@@ -529,7 +530,7 @@ static void aht21_read_humi_async(temp_humi_drv_t *const dev,
 
 static void aht21_read_all_async(temp_humi_drv_t *const dev,
                                  temp_humi_cb_async_t     cb,
-                                          uint32_t life_time)
+                                          UINT32_t life_time)
 {
     (void)dev;
     if (NULL == cb)

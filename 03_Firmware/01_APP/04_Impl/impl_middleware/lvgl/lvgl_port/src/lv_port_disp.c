@@ -16,7 +16,7 @@
  * in .bss.  When LVGL asks for a flush, we forward the rectangle straight
  * into the wrapper API; the underlying driver handles RGB565 byte-swap and
  * DMA, so lv_color_t (host-endian RGB565) can be passed through as a plain
- * uint16_t* without further conversion.
+ * UINT16_t* without further conversion.
  *
  * @version V1.0 2026-04-24
  * @version V2.0 2026-04-26
@@ -30,7 +30,7 @@
 //******************************** Includes *********************************//
 #include "lv_port_disp.h"
 
-#include <stddef.h>
+#include "board_types.h"
 #include <string.h>
 
 #include "lvgl.h"
@@ -54,7 +54,7 @@ static lv_color_t            s_buf1[LV_PORT_DISP_BUF_PIXELS];
 /**
  * @brief LVGL flush callback.  Forwards the dirty rectangle to the
  *        display wrapper; lv_color_t shares storage layout with the
- *        wrapper's uint16_t RGB565 buffer so the cast is well-defined.
+ *        wrapper's UINT16_t RGB565 buffer so the cast is well-defined.
  *
  * @param[in] disp_drv  : LVGL display driver context.
  * @param[in] area      : Dirty rectangle in screen coordinates.
@@ -64,21 +64,21 @@ static void lv_port_flush_cb(lv_disp_drv_t *  disp_drv,
                              const lv_area_t *area,
                              lv_color_t *     color_p)
 {
-    const uint16_t x      = (uint16_t)area->x1;
-    const uint16_t y      = (uint16_t)area->y1;
-    const uint16_t width  = (uint16_t)(area->x2 - area->x1 + 1);
-    const uint16_t height = (uint16_t)(area->y2 - area->y1 + 1);
+    const UINT16_t x      = (UINT16_t)area->x1;
+    const UINT16_t y      = (UINT16_t)area->y1;
+    const UINT16_t width  = (UINT16_t)(area->x2 - area->x1 + 1);
+    const UINT16_t height = (UINT16_t)(area->y2 - area->y1 + 1);
 
     /**
      * lv_color_t is a 16-bit RGB565 union whose .full matches the host-endian
-     * uint16_t the wrapper expects; the cast is layout-compatible.
+     * UINT16_t the wrapper expects; the cast is layout-compatible.
      **/
-    (void)display_draw_image(x, y, width, height, (uint16_t const *)color_p);
+    (void)display_draw_image(x, y, width, height, (UINT16_t const *)color_p);
 
     lv_disp_flush_ready(disp_drv);
 }
 
-bool lv_port_disp_init(void)
+BOOL lv_port_disp_init(void)
 {
     lv_disp_draw_buf_init(&s_draw_buf, s_buf1, NULL, LV_PORT_DISP_BUF_PIXELS);
 

@@ -21,7 +21,7 @@
 #define __CIRCULAR_BUFFER_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "board_types.h"
 #include <stdlib.h>
 //******************************** Includes *********************************//
 
@@ -30,13 +30,13 @@
 
 typedef struct circular_buffer
 {
-    uint8_t  *                  buffer;
-    uint8_t                   capacity;
-    uint8_t                      rflag;
-    uint8_t                      wflag;
+    UINT8_t  *                  buffer;
+    UINT8_t                   capacity;
+    UINT8_t                      rflag;
+    UINT8_t                      wflag;
 
-    uint8_t  * (*pf_get_rbuffer_addr)(struct circular_buffer const  *  const );
-    uint8_t  * (*pf_get_wbuffer_addr)(struct circular_buffer const  *  const );
+    UINT8_t  * (*pf_get_rbuffer_addr)(struct circular_buffer const  *  const );
+    UINT8_t  * (*pf_get_wbuffer_addr)(struct circular_buffer const  *  const );
     void       (*pf_data_writed     )(struct circular_buffer        *  const );
     void       (*pf_data_readed     )(struct circular_buffer        *  const );
 } circular_buffer_t;
@@ -44,7 +44,7 @@ typedef struct circular_buffer
 //******************************** Defines **********************************//
 
 //******************************* Declaring *********************************//
-void               circular_buffer_init        (circular_buffer_t * const p_buffer, uint8_t size);
+void               circular_buffer_init        (circular_buffer_t * const p_buffer, UINT8_t size);
 
 /**
  * @brief   Get a pointer to the singleton circular buffer instance.

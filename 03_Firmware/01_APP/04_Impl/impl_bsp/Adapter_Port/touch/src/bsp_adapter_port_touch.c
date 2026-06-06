@@ -48,7 +48,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include <stddef.h>
+#include "board_types.h"
 
 #include "bsp_adapter_port_touch.h"
 #include "bsp_wrapper_touch.h"
@@ -77,7 +77,7 @@ static bsp_cst816t_driver_t s_cst816t_drv;
 static void (*s_int_callback)(void *, void *) = NULL;
 
 /* True once bsp_cst816t_inst() has populated s_cst816t_drv successfully. */
-static bool s_inst_ok = false;
+static BOOL s_inst_ok = false;
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
@@ -199,7 +199,7 @@ static platform_err_t cst816t_status_to_platform(cst816t_status_t st)
  * @brief Read the current finger count from the CST816T.
  */
 static platform_err_t touch_get_finger_num_adapter(
-    struct _touch_drv_t *const dev, uint8_t *const p_finger)
+    struct _touch_drv_t *const dev, UINT8_t *const p_finger)
 {
     (void)dev;
     if (!s_inst_ok || NULL == s_cst816t_drv.pf_cst816t_get_finger_num)
@@ -219,7 +219,7 @@ static platform_err_t touch_get_finger_num_adapter(
  * @brief Read the current touch XY coordinate.
  */
 static platform_err_t touch_get_xy_adapter(
-    struct _touch_drv_t *const dev, uint16_t *const p_x, uint16_t *const p_y)
+    struct _touch_drv_t *const dev, UINT16_t *const p_x, UINT16_t *const p_y)
 {
     (void)dev;
     if (!s_inst_ok || NULL == s_cst816t_drv.pf_cst816t_get_xy_axis)
@@ -247,7 +247,7 @@ static platform_err_t touch_get_xy_adapter(
  * @brief Probe the CST816T chip id.
  */
 static platform_err_t touch_get_chip_id_adapter(
-    struct _touch_drv_t *const dev, uint8_t *const p_chip_id)
+    struct _touch_drv_t *const dev, UINT8_t *const p_chip_id)
 {
     (void)dev;
     if (!s_inst_ok || NULL == s_cst816t_drv.pf_cst816t_get_chip_id)
@@ -267,7 +267,7 @@ static platform_err_t touch_get_chip_id_adapter(
  * @brief Read the latest gesture id (CST816T-defined encoding).
  */
 static platform_err_t touch_get_gesture_adapter(
-    struct _touch_drv_t *const dev, uint8_t *const p_gesture)
+    struct _touch_drv_t *const dev, UINT8_t *const p_gesture)
 {
     (void)dev;
     if (!s_inst_ok || NULL == s_cst816t_drv.pf_cst816t_get_gesture_id)
@@ -286,7 +286,7 @@ static platform_err_t touch_get_gesture_adapter(
     {
         return cst816t_status_to_platform(st);
     }
-    *p_gesture = (uint8_t)gesture;
+    *p_gesture = (UINT8_t)gesture;
     return PLATFORM_OK;
 }
 

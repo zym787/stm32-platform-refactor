@@ -27,23 +27,36 @@
 #ifndef __BOARD_TYPES_H__
 #define __BOARD_TYPES_H__
 
+//******************************** Includes *********************************//
+#include <stddef.h>
+#include <stdbool.h>
+#include <stdint.h>
+
+//******************************** Includes *********************************//
+
+
 //******************************** Defines **********************************//
-typedef signed char        INT8;
-typedef unsigned char      UINT8;
-typedef signed short       INT16;
-typedef unsigned short     UINT16;
+typedef signed char    INT8_t;
+typedef unsigned char  UINT8_t;
+typedef signed short   INT16_t;
+typedef unsigned short UINT16_t;
 /* 32-bit maps to `long`, not `int`: arm-none-eabi-gcc defines uint32_t as
  * `unsigned long`. Matching that underlying type keeps UINT32(_T) pointer-
- * compatible with the toolchain / CMSIS / FreeRTOS uint32_t — e.g. the
+ *-compatible with the toolchain / CMSIS / FreeRTOS uint32_t — e.g. the
  * static-task stack buffers (StackType_t) bound via OSAL_TASK_STATIC_DEFINE.
  * `int` is also 32-bit here but is a *distinct* type and would warn. */
-typedef signed long        INT32;
-typedef unsigned long      UINT32;
-typedef signed long long   INT64;
-typedef unsigned long long UINT64;
-typedef float              FLOAT32;
-typedef double             FLOAT64;
+typedef signed long        INT32_t;
+typedef unsigned long      UINT32_t;
+typedef signed long long   INT64_t;
+typedef unsigned long long UINT64_t;
+typedef float              FLOAT;
+typedef double             DOUBLE;
 
+typedef size_t SIZE_t;
+
+typedef bool BOOL;
+
+typedef uintptr_t UINTPTR_t;
 //******************************** Defines **********************************//
 
 

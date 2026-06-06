@@ -4,6 +4,7 @@
 #define _YMODEM_H_
 
 /* Includes ------------------------------------------------------------------*/
+#include "board_types.h"
 #include "stdint.h"
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
@@ -55,23 +56,23 @@ typedef enum
 
 typedef struct
 {
-    uint8_t         *packet_data;
-    uint8_t          file_size[FILE_SIZE_LENGTH];
-    uint8_t         *file_ptr;
-    uint8_t         *buf_ptr;
-    int32_t          i;
-    int32_t          packet_length;
-    int32_t          session_done;
-    int32_t          file_done;
-    int32_t          packets_received;
-    int32_t          errors;
-    int32_t          session_begin;
-    int32_t          size;           /* Total file size from filename packet */
-    int32_t          bytes_received; /* Bytes received so far */
-    int32_t          eot_seen;       /* 1 = first EOT NAK'd, waiting for the
+    UINT8_t         *packet_data;
+    UINT8_t          file_size[FILE_SIZE_LENGTH];
+    UINT8_t         *file_ptr;
+    UINT8_t         *buf_ptr;
+    INT32_t          i;
+    INT32_t          packet_length;
+    INT32_t          session_done;
+    INT32_t          file_done;
+    INT32_t          packets_received;
+    INT32_t          errors;
+    INT32_t          session_begin;
+    INT32_t          size;           /* Total file size from filename packet */
+    INT32_t          bytes_received; /* Bytes received so far */
+    INT32_t          eot_seen;       /* 1 = first EOT NAK'd, waiting for the
                                         second per Ymodem batch spec */
     Ymodem_RxState_t state;
-    uint8_t (*buf)[1030];
+    UINT8_t (*buf)[1030];
 } Ymodem_RxContext_t;
 
 /* State handler return values
@@ -104,7 +105,7 @@ typedef enum
 } Ymodem_ReceiveStatus_t;
 
 /* Exported functions ------------------------------------------------------- */
-int32_t  Ymodem_Receive(uint8_t (*)[1030]);
+INT32_t  Ymodem_Receive(UINT8_t (*)[1030]);
 
 #endif /* _YMODEM_H_ */
 

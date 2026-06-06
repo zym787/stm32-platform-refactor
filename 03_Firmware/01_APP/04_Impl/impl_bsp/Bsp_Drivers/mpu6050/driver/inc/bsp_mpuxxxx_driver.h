@@ -31,8 +31,7 @@
 #define __BSP_MPUXXXX_DRIVER_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
-#include <stdbool.h>
+#include "board_types.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -75,25 +74,25 @@ typedef struct
 
     /**/
     mpuxxxx_status_t (*pf_iic_mem_write   ) (void    *i2c,
-                                        uint16_t des_addr,
-                                        uint16_t mem_addr,
-                                        uint16_t mem_size,
-                                        uint8_t   *p_data,
-                                        uint16_t     size,
-                                        uint32_t  timeout);
+                                        UINT16_t des_addr,
+                                        UINT16_t mem_addr,
+                                        UINT16_t mem_size,
+                                        UINT8_t   *p_data,
+                                        UINT16_t     size,
+                                        UINT32_t  timeout);
     mpuxxxx_status_t (*pf_iic_mem_read    ) (void    *i2c,
-                                        uint16_t des_addr,
-                                        uint16_t mem_addr,
-                                        uint16_t mem_size,
-                                        uint8_t   *p_data,
-                                        uint16_t     size,
-                                        uint32_t  timeout);                              
+                                        UINT16_t des_addr,
+                                        UINT16_t mem_addr,
+                                        UINT16_t mem_size,
+                                        UINT8_t   *p_data,
+                                        UINT16_t     size,
+                                        UINT32_t  timeout);                              
     mpuxxxx_status_t (*pf_iic_mem_read_dma) (void    *i2c,
-                                        uint16_t des_addr,
-                                        uint16_t mem_addr,
-                                        uint16_t mem_size,
-                                        uint8_t   *p_data,
-                                        uint16_t     size);
+                                        UINT16_t des_addr,
+                                        UINT16_t mem_addr,
+                                        UINT16_t mem_size,
+                                        UINT8_t   *p_data,
+                                        UINT16_t     size);
 } iic_driver_interface_t;
 
 /*       Interrupt Of MPUXXXX        */
@@ -111,16 +110,16 @@ typedef struct
 /*        Timebase Interface         */
 typedef struct
 {
-    uint32_t         (*pf_get_tick_count   )        (void);
+    UINT32_t         (*pf_get_tick_count   )        (void);
 } timebase_interface_t;
 
 /*        Delay Interface            */
 typedef struct
 {
     void             (*pf_delay_init       )        (void);
-    void             (*pf_delay_ms         ) (uint32_t \
+    void             (*pf_delay_ms         ) (UINT32_t \
                                                  const ms);
-    void             (*pf_delay_us         ) (uint32_t \
+    void             (*pf_delay_us         ) (UINT32_t \
                                                  const us);
 } delay_interface_t;
 
@@ -129,7 +128,7 @@ typedef struct
 /*        Yield Interface            */
 typedef struct
 {
-    void             (*pf_rtos_yield       ) (uint32_t \
+    void             (*pf_rtos_yield       ) (UINT32_t \
                                                  const ms);
 } yield_interface_t;
 
@@ -137,15 +136,15 @@ typedef struct
 typedef struct
 {
     /*       os queue interface      */
-    mpuxxxx_status_t (*pf_os_queue_create    ) (uint32_t const   queue_length,
-                                                uint32_t const     queue_size,
+    mpuxxxx_status_t (*pf_os_queue_create    ) (UINT32_t const   queue_length,
+                                                UINT32_t const     queue_size,
                                                 void  ** const  queue_handler);
     mpuxxxx_status_t (*pf_os_queue_send      ) (void  *  const  queue_handler,
                                                 void  *  const       item_ptr,
-                                                uint32_t const      wait_time);
+                                                UINT32_t const      wait_time);
     mpuxxxx_status_t (*pf_os_queue_receive   ) (void  *  const  queue_handler,
                                                 void  *  const       item_ptr,
-                                                uint32_t const      wait_time);
+                                                UINT32_t const      wait_time);
     mpuxxxx_status_t (*pf_os_queue_send_isr  ) (void  *  const  queue_handler, 
                                                 void  *  const       item_ptr, 
                                                 long  *  const \
@@ -155,7 +154,7 @@ typedef struct
     /* os semaphore mutex interface  */
     mpuxxxx_status_t (*pf_os_mutex_create    ) (void  ** const  mutex_handler);
     mpuxxxx_status_t (*pf_os_mutex_lock      ) (void  *  const  mutex_handler,
-                                                uint32_t const      wait_time);
+                                                UINT32_t const      wait_time);
     mpuxxxx_status_t (*pf_os_mutex_unlock    ) (void  *  const  mutex_handler);
     mpuxxxx_status_t (*pf_os_mutex_delete    ) (void  *  const  mutex_handler);
 
@@ -167,14 +166,14 @@ typedef struct
                                                 long  *  const \
                                                       HigherPriorityTaskWoken);
     mpuxxxx_status_t (*pf_os_semaphore_wait_notify)\
-                                               (uint32_t ulBitsToClearOnEntry, 
-                                                uint32_t  ulBitsToClearOnExit, 
-                                                uint32_t*pulNotificationValue,
-                                                uint32_t              timeout);                                                      
+                                               (UINT32_t ulBitsToClearOnEntry, 
+                                                UINT32_t  ulBitsToClearOnExit, 
+                                                UINT32_t*pulNotificationValue,
+                                                UINT32_t              timeout);                                                      
     mpuxxxx_status_t (*pf_os_semaephore_notify_isr)\
                                                (void  *  const binary_handler,
-                                                uint32_t const        ulValue,
-                                                uint32_t const        eAction,
+                                                UINT32_t const        ulValue,
+                                                UINT32_t const        eAction,
                                                 long  *  const \
                                                       HigherPriorityTaskWoken);
     mpuxxxx_status_t (*pf_os_semaphore_give  ) (void  *  const binary_handler);
@@ -188,45 +187,45 @@ typedef struct
 typedef struct 
 {
     /*     raw accelerometer data    */
-    int16_t                accel_x_raw;
-    int16_t                accel_y_raw;
-    int16_t                accel_z_raw;
+    INT16_t                accel_x_raw;
+    INT16_t                accel_y_raw;
+    INT16_t                accel_z_raw;
     
     /*  processed accelerometer data */
-    double                   accel_x_g;
-    double                   accel_y_g;
-    double                   accel_z_g;
+    DOUBLE                   accel_x_g;
+    DOUBLE                   accel_y_g;
+    DOUBLE                   accel_z_g;
 
     /*      raw gyroscope data       */
-    int16_t                 gyro_x_raw;
-    int16_t                 gyro_y_raw;
-    int16_t                 gyro_z_raw;
+    INT16_t                 gyro_x_raw;
+    INT16_t                 gyro_y_raw;
+    INT16_t                 gyro_z_raw;
 
     /*    processed gyroscope data   */
-    double                  gyro_x_dps;
-    double                  gyro_y_dps;
-    double                  gyro_z_dps;
+    DOUBLE                  gyro_x_dps;
+    DOUBLE                  gyro_y_dps;
+    DOUBLE                  gyro_z_dps;
 
     /*     processed temperature     */
-    float                temperature_c;
+    FLOAT                temperature_c;
 
     /* kalman filter processed angles*/
-    double              kalman_angle_x;
-    double              kalman_angle_y;
+    DOUBLE              kalman_angle_x;
+    DOUBLE              kalman_angle_y;
 } mpuxxxx_data_t;
 
 /*  Store Data From MPUXXXX Driver   */
 typedef struct
 {
-    uint8_t *        (*pf_buffer_init      )(uint8_t size);
-    uint8_t *        (*pf_get_rbuffer_addr )        (void);
-    uint8_t *        (*pf_get_wbuffer_addr )        (void);
+    UINT8_t *        (*pf_buffer_init      )(UINT8_t size);
+    UINT8_t *        (*pf_get_rbuffer_addr )        (void);
+    UINT8_t *        (*pf_get_wbuffer_addr )        (void);
 } buffer_interface_t;
 
 typedef struct bsp_mpuxxxx_driver
 {
     /*      Driver Private Data     */
-    bool                                                          private_data;
+    BOOL                                                          private_data;
 
     /*          core layer          */
     iic_driver_interface_t              const  *         p_iic_driver_instance;
@@ -258,37 +257,37 @@ typedef struct bsp_mpuxxxx_driver
                                                                 const * const);
     mpuxxxx_status_t (*pf_set_gyro_fsr         ) (struct bsp_mpuxxxx_driver   \
                                                                 const * const, 
-                                                                      uint8_t);
+                                                                      UINT8_t);
     mpuxxxx_status_t (*pf_set_accel_fsr        ) (struct bsp_mpuxxxx_driver   \
                                                                 const * const,
-                                                                      uint8_t);
+                                                                      UINT8_t);
     mpuxxxx_status_t (*pf_set_lpf              ) (struct bsp_mpuxxxx_driver   \
                                                                 const * const, 
-                                                                      uint8_t);
+                                                                      UINT8_t);
     mpuxxxx_status_t (*pf_set_rate             ) (struct bsp_mpuxxxx_driver   \
                                                                 const * const,
-                                                                      uint8_t);
+                                                                      UINT8_t);
     mpuxxxx_status_t (*pf_set_interrupt_enable ) (struct bsp_mpuxxxx_driver   \
                                                                 const * const, 
-                                                                      uint8_t);
+                                                                      UINT8_t);
     mpuxxxx_status_t (*pf_set_motion_threshold ) (struct bsp_mpuxxxx_driver   \
                                                                 const * const, 
-                                                                      uint8_t);
+                                                                      UINT8_t);
     mpuxxxx_status_t (*pf_set_INT_level        ) (struct bsp_mpuxxxx_driver   \
                                                                 const * const, 
-                                                                      uint8_t);
+                                                                      UINT8_t);
     mpuxxxx_status_t (*pf_set_user_ctrl        ) (struct bsp_mpuxxxx_driver   \
                                                                 const * const, 
-                                                                      uint8_t);
+                                                                      UINT8_t);
     mpuxxxx_status_t (*pf_set_pwr_mgmt1_reg    ) (struct bsp_mpuxxxx_driver   \
                                                                 const * const, 
-                                                                      uint8_t);
+                                                                      UINT8_t);
     mpuxxxx_status_t (*pf_set_pwr_mgmt2_reg    ) (struct bsp_mpuxxxx_driver   \
                                                                 const * const, 
-                                                                      uint8_t);
+                                                                      UINT8_t);
     mpuxxxx_status_t (*pf_set_fifo_en_reg      ) (struct bsp_mpuxxxx_driver   \
                                                                 const * const, 
-                                                                      uint8_t);    
+                                                                      UINT8_t);    
     mpuxxxx_status_t (*pf_get_temperature      ) (struct bsp_mpuxxxx_driver   \
                                                                 const * const, 
                                                        mpuxxxx_data_t * const);
@@ -304,7 +303,7 @@ typedef struct bsp_mpuxxxx_driver
     mpuxxxx_status_t (*pf_get_interrupt_status_reg)                           \
                                                  (struct bsp_mpuxxxx_driver   \
                                                                 const * const, 
-                                                              uint8_t * const);
+                                                              UINT8_t * const);
     mpuxxxx_status_t (*pf_read_fifo_packet     ) (struct bsp_mpuxxxx_driver   \
                                                                 const * const, 
                                                        mpuxxxx_data_t * const);

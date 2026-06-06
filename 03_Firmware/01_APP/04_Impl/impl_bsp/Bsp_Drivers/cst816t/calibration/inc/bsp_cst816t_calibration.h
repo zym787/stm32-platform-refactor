@@ -50,8 +50,7 @@
 #define __BSP_CST816T_CALIBRATION_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
-#include <stdbool.h>
+#include "board_types.h"
 
 #include "cfg_touch.h"
 //******************************** Includes *********************************//
@@ -64,10 +63,10 @@
  */
 typedef struct
 {
-    uint16_t raw_x;
-    uint16_t raw_y;
-    uint16_t screen_x;
-    uint16_t screen_y;
+    UINT16_t raw_x;
+    UINT16_t raw_y;
+    UINT16_t screen_x;
+    UINT16_t screen_y;
 } calibration_point_t;
 
 /**
@@ -79,21 +78,21 @@ typedef struct
  */
 typedef struct
 {
-    bool                 is_calibrated;
+    BOOL                 is_calibrated;
     calibration_point_t  points[CFG_TOUCH_CALIB_POINT_COUNT];
 
     /* Affine coefficients:  X' = a*x + b*y + c,  Y' = d*x + e*y + f */
-    float matrix_a;
-    float matrix_b;
-    float matrix_c;
-    float matrix_d;
-    float matrix_e;
-    float matrix_f;
+    FLOAT matrix_a;
+    FLOAT matrix_b;
+    FLOAT matrix_c;
+    FLOAT matrix_d;
+    FLOAT matrix_e;
+    FLOAT matrix_f;
 
     /* Panel resolution the calibration was captured at — used by load to
      * detect a build-time resolution change and force a re-calibration. */
-    uint16_t panel_w;
-    uint16_t panel_h;
+    UINT16_t panel_w;
+    UINT16_t panel_h;
 } touch_calibration_t;
 
 /**
@@ -127,9 +126,9 @@ calibration_status_t touch_calibration_init(touch_calibration_t *p_calibration);
  */
 calibration_status_t touch_calibration_add_point(
         touch_calibration_t *p_calibration,
-        uint16_t raw_x, uint16_t raw_y,
-        uint16_t screen_x, uint16_t screen_y,
-        uint8_t  idx);
+        UINT16_t raw_x, UINT16_t raw_y,
+        UINT16_t screen_x, UINT16_t screen_y,
+        UINT8_t  idx);
 
 /**
  * @brief Solve the 6 affine coefficients via least-squares.
@@ -151,8 +150,8 @@ calibration_status_t touch_calibration_calculate_affine(
  */
 calibration_status_t touch_calibration_apply_matrix(
         touch_calibration_t *p_calibration,
-        uint16_t raw_x, uint16_t raw_y,
-        uint16_t *p_screen_x, uint16_t *p_screen_y);
+        UINT16_t raw_x, UINT16_t raw_y,
+        UINT16_t *p_screen_x, UINT16_t *p_screen_y);
 
 /**
  * @brief Persist the current coefficients to W25Q64 calibration sector.
@@ -187,9 +186,9 @@ calibration_status_t touch_calibration_load_from_storage(
  *            6  7  8     row 2 (bottom, y = H - 1 - margin)
  */
 calibration_status_t touch_calibration_get_standard_point(
-        uint8_t   idx,
-        uint16_t *p_screen_x,
-        uint16_t *p_screen_y);
+        UINT8_t   idx,
+        UINT16_t *p_screen_x,
+        UINT16_t *p_screen_y);
 
 /**
  * @brief Reset back to the uncalibrated identity state.
@@ -207,7 +206,7 @@ touch_calibration_t *touch_calibration_get_instance(void);
  * @brief Convenience check used by lv_port_indev to decide whether to apply
  *        the affine transform on a given read.
  */
-bool touch_calibration_is_calibrated(void);
+BOOL touch_calibration_is_calibrated(void);
 //******************************* Functions *********************************//
 
 #endif /* __BSP_CST816T_CALIBRATION_H__ */

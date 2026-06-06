@@ -7,6 +7,7 @@
 * terms, then you may not retain, install, activate or otherwise use the software.
 */
 
+#include "board_types.h"
 #include "lvgl.h"
 #include <stdio.h>
 #include "gui_guider.h"
@@ -33,7 +34,7 @@ void setup_scr_Clock_3(lv_ui *ui)
     lv_obj_set_style_bg_grad_dir(ui->Clock_3, LV_GRAD_DIR_NONE, LV_PART_MAIN|LV_STATE_DEFAULT);
 
     //Write codes Clock_3_analog_clock_1
-    static bool Clock_3_analog_clock_1_timer_enabled = false;
+    static BOOL Clock_3_analog_clock_1_timer_enabled = false;
     ui->Clock_3_analog_clock_1 = lv_analogclock_create(ui->Clock_3);
     lv_analogclock_hide_digits(ui->Clock_3_analog_clock_1, true);
     lv_analogclock_set_major_ticks(ui->Clock_3_analog_clock_1, 0, 0, lv_color_hex(0x555555), 10);

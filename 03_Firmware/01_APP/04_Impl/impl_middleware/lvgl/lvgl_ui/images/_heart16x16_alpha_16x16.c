@@ -1,4 +1,5 @@
 #if defined(LV_LVGL_H_INCLUDE_SIMPLE)
+#include "board_types.h"
 #include "lvgl.h"
 #else
 #include "lvgl/lvgl.h"
@@ -13,7 +14,7 @@
 #define LV_ATTRIBUTE_IMG__HEART16X16_ALPHA_16X16
 #endif
 
-const LV_ATTRIBUTE_MEM_ALIGN LV_ATTRIBUTE_LARGE_CONST LV_ATTRIBUTE_IMG__HEART16X16_ALPHA_16X16 uint8_t _heart16x16_alpha_16x16_map[] = {
+const LV_ATTRIBUTE_MEM_ALIGN LV_ATTRIBUTE_LARGE_CONST LV_ATTRIBUTE_IMG__HEART16X16_ALPHA_16X16 UINT8_t _heart16x16_alpha_16x16_map[] = {
 #if LV_COLOR_DEPTH == 1 || LV_COLOR_DEPTH == 8
   /*Pixel format: Alpha 8 bit, Red: 3 bit, Green: 3 bit, Blue: 2 bit*/
   0x00, 0x03, 0x00, 0x00, 0xa1, 0x53, 0xe1, 0xcc, 0xe1, 0xff, 0xe1, 0xef, 0xe1, 0x9b, 0x40, 0x0d, 0x61, 0x06, 0xe1, 0x8d, 0xe1, 0xe2, 0xe1, 0xff, 0xe1, 0xde, 0xc1, 0x67, 0x00, 0x00, 0x00, 0x01, 

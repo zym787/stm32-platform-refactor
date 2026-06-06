@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "log_sink_rtt.h"
 #include "log_sink.h"
 #include "SEGGER_RTT.h"
@@ -31,9 +32,9 @@
 
 static platform_err_t rtt_sink_init(log_sink_t *self);
 static platform_err_t rtt_sink_write(log_sink_t *self,
-                                     uint8_t     channel,
+                                     UINT8_t     channel,
                                      const char *data,
-                                     size_t      size);
+                                     SIZE_t      size);
 
 //****************************** Declarations *******************************//
 
@@ -93,9 +94,9 @@ static platform_err_t rtt_sink_init(log_sink_t *self)
  *
  * */
 static platform_err_t rtt_sink_write(log_sink_t *self,
-                                     uint8_t     channel,
+                                     UINT8_t     channel,
                                      const char *data,
-                                     size_t      size)
+                                     SIZE_t      size)
 {
     (void)self;
 

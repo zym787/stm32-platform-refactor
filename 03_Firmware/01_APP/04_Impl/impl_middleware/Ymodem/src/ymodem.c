@@ -29,6 +29,7 @@
  *****************************************************************************/
 
 /* Includes ------------------------------------------------------------------*/
+#include "board_types.h"
 #include <string.h>
 
 #include "osal_wrapper_adapter.h"
@@ -44,7 +45,7 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-uint8_t                  file_name[FILE_NAME_LENGTH];
+UINT8_t                  file_name[FILE_NAME_LENGTH];
 /**
  * @brief Producer-consumer to the OTA staging task. These remain
  *        application-level coupling — the Ymodem user handlers below act
@@ -57,7 +58,7 @@ uint8_t                  file_name[FILE_NAME_LENGTH];
 
 /** @brief Bytes received in the most recent ota_transport_frame_wait —
  *         consumed by Receive_Packet to validate packet length. */
-static uint16_t            s_u16_YmodRecLength;
+static UINT16_t            s_u16_YmodRecLength;
 
 
 /* Private function prototypes -----------------------------------------------*/
@@ -77,10 +78,10 @@ static uint16_t            s_u16_YmodRecLength;
  *       borrowed verbatim — do not rewrite to a table without re-checking
  *       compatibility with the sender's CRC.
  */
-static uint16_t crc16_update(uint16_t crc_in, uint8_t byte)
+static UINT16_t crc16_update(UINT16_t crc_in, UINT8_t byte)
 {
-    uint32_t crc = crc_in;
-    uint32_t in  = byte | 0x100u;
+    UINT32_t crc = crc_in;
+    UINT32_t in  = byte | 0x100u;
     do
     {
         crc <<= 1;
@@ -94,7 +95,7 @@ static uint16_t crc16_update(uint16_t crc_in, uint8_t byte)
             crc ^= 0x1021u;
         }
     } while (!(in & 0x10000u));
-    return (uint16_t)(crc & 0xFFFFu);
+    return (UINT16_t)(crc & 0xFFFFu);
 }
 
 /**
@@ -102,10 +103,10 @@ static uint16_t crc16_update(uint16_t crc_in, uint8_t byte)
  *        two zero bytes the way the XMODEM-CRC algorithm augments the data
  *        stream so the result matches the 2-byte trailer the sender appended.
  */
-static uint16_t crc16_xmodem(const uint8_t *data, uint32_t size)
+static UINT16_t crc16_xmodem(const UINT8_t *data, UINT32_t size)
 {
-    uint16_t       crc      = 0U;
-    const uint8_t *data_end = data + size;
+    UINT16_t       crc      = 0U;
+    const UINT8_t *data_end = data + size;
     while (data < data_end)
     {
         crc = crc16_update(crc, *data++);
@@ -122,10 +123,10 @@ static uint16_t crc16_xmodem(const uint8_t *data, uint32_t size)
  * @retval 1: Convert success
  *         0: Convert failed
  */
-static uint32_t Str2Int(uint8_t *inputstr, int32_t *intnum)
+static UINT32_t Str2Int(UINT8_t *inputstr, INT32_t *intnum)
 {
-    uint32_t i = 0, res = 0;
-    uint32_t val = 0;
+    UINT32_t i = 0, res = 0;
+    UINT32_t val = 0;
 
     if (inputstr[0] == '0' && (inputstr[1] == 'x' || inputstr[1] == 'X'))
     {
@@ -214,7 +215,7 @@ static uint32_t Str2Int(uint8_t *inputstr, int32_t *intnum)
  * @retval YMODEM_PKT_SUCCESS: Data received.
  * @retval YMODEM_PKT_TIMEOUT: Timeout or receive start failed.
  */
-static int32_t Receive_Byte(uint8_t *c, uint16_t length, uint32_t timeout)
+static INT32_t Receive_Byte(UINT8_t *c, UINT16_t length, UINT32_t timeout)
 {
     /**
     * If the user handler pre-armed the next buffer already, skip the
@@ -253,7 +254,7 @@ static int32_t Receive_Byte(uint8_t *c, uint16_t length, uint32_t timeout)
  * @param  c: Character
  * @retval 0: Byte sent
  */
-static uint32_t Send_Byte(uint8_t c)
+static UINT32_t Send_Byte(UINT8_t c)
 {
     (void)ota_transport_tx_byte(c);
     return 0;
@@ -347,14 +348,14 @@ static void Ymodem_File_Data_User_Handler(Ymodem_RxContext_t *ctx)
  * @retval YMODEM_PKT_TIMEOUT: Timeout or packet invalid.
  * @retval YMODEM_PKT_ABORT: Transfer aborted.
  */
-static int32_t Receive_Packet(uint8_t *data, int32_t *length, uint32_t timeout)
+static INT32_t Receive_Packet(UINT8_t *data, INT32_t *length, UINT32_t timeout)
 {
-    uint16_t packet_size;
-    uint8_t  c = 0;
+    UINT16_t packet_size;
+    UINT8_t  c = 0;
     *length    = 0;
     if (Receive_Byte(data, 1030, timeout) != 0)
     {
-        return (int32_t)YMODEM_PKT_TIMEOUT;
+        return (INT32_t)YMODEM_PKT_TIMEOUT;
     }
 
     c = data[0];
@@ -367,36 +368,36 @@ static int32_t Receive_Packet(uint8_t *data, int32_t *length, uint32_t timeout)
         packet_size = PACKET_1K_SIZE;
         break;
     case EOT:
-        return (int32_t)YMODEM_PKT_SUCCESS;
+        return (INT32_t)YMODEM_PKT_SUCCESS;
     case CA:
         if ((Receive_Byte(&c, 1, timeout) == 0) && (c == CA))
         {
             *length = -1;
             DEBUG_OUT(i, YMODEM_LOG_TAG,
-                      "Received double CA, aborting transfer...");
-            return (int32_t)YMODEM_PKT_SUCCESS;
+                      "Received DOUBLE CA, aborting transfer...");
+            return (INT32_t)YMODEM_PKT_SUCCESS;
         }
         else
         {
             DEBUG_OUT(w, YMODEM_LOG_TAG,
                       "Single CA received, waiting for second CA...");
-            return (int32_t)YMODEM_PKT_TIMEOUT;
+            return (INT32_t)YMODEM_PKT_TIMEOUT;
         }
     case ABORT1:
     case ABORT2:
-        return (int32_t)YMODEM_PKT_ABORT;
+        return (INT32_t)YMODEM_PKT_ABORT;
     default:
-        return (int32_t)YMODEM_PKT_TIMEOUT;
+        return (INT32_t)YMODEM_PKT_TIMEOUT;
     }
     if (s_u16_YmodRecLength != (packet_size + PACKET_OVERHEAD))
     {
-        return (int32_t)YMODEM_PKT_TIMEOUT;
+        return (INT32_t)YMODEM_PKT_TIMEOUT;
     }
 
     if (data[PACKET_SEQNO_INDEX] !=
         ((data[PACKET_SEQNO_COMP_INDEX] ^ 0xff) & 0xff))
     {
-        return (int32_t)YMODEM_PKT_TIMEOUT;
+        return (INT32_t)YMODEM_PKT_TIMEOUT;
     }
 
     /* CRC-16/XMODEM check. Sender places the running CRC over the
@@ -404,23 +405,23 @@ static int32_t Receive_Packet(uint8_t *data, int32_t *length, uint32_t timeout)
        immediately after the data. Without this check, a corrupted payload
        with intact SOH/STX + SEQ/~SEQ would silently pass to the consumer. */
     {
-        const uint16_t expected_crc =
-            crc16_xmodem(&data[PACKET_HEADER], (uint32_t)packet_size);
-        const uint16_t received_crc =
-            ((uint16_t)data[PACKET_HEADER + packet_size] << 8) |
-             (uint16_t)data[PACKET_HEADER + packet_size + 1];
+        const UINT16_t expected_crc =
+            crc16_xmodem(&data[PACKET_HEADER], (UINT32_t)packet_size);
+        const UINT16_t received_crc =
+            ((UINT16_t)data[PACKET_HEADER + packet_size] << 8) |
+             (UINT16_t)data[PACKET_HEADER + packet_size + 1];
         if (expected_crc != received_crc)
         {
             DEBUG_OUT(w, YMODEM_PACKET_LOG_TAG,
                       "CRC mismatch seq=%u got=0x%04X expected=0x%04X",
                       (unsigned)(data[PACKET_SEQNO_INDEX] & 0xFFu),
                       (unsigned)received_crc, (unsigned)expected_crc);
-            return (int32_t)YMODEM_PKT_TIMEOUT;
+            return (INT32_t)YMODEM_PKT_TIMEOUT;
         }
     }
 
     *length = packet_size;
-    return (int32_t)YMODEM_PKT_SUCCESS;
+    return (INT32_t)YMODEM_PKT_SUCCESS;
 }
 
 /* Private state machine handler functions ---------------------------------*/
@@ -430,7 +431,7 @@ static int32_t Receive_Packet(uint8_t *data, int32_t *length, uint32_t timeout)
  * @param  ctx: Receive context
  * @retval Ymodem_RxHandlerStatus_t: HANDLER_ERROR/CONTINUE/DONE
  */
-static int32_t Ymodem_RxState_FileInfo(Ymodem_RxContext_t *ctx)
+static INT32_t Ymodem_RxState_FileInfo(Ymodem_RxContext_t *ctx)
 {
     /* Filename packet */
     if (ctx->packet_data[PACKET_HEADER] != 0)
@@ -460,7 +461,7 @@ static int32_t Ymodem_RxState_FileInfo(Ymodem_RxContext_t *ctx)
         DEBUG_OUT(d, YMODEM_FILE_LOG_TAG, "Transition to FILE_DATA state");
         ctx->bytes_received = 0; /* Reset byte counter for new file */
         ctx->state          = YMODEM_RX_STATE_FILE_DATA;
-        return (int32_t)YMODEM_RX_HANDLER_CONTINUE;
+        return (INT32_t)YMODEM_RX_HANDLER_CONTINUE;
     }
     /* Filename packet is empty, end session */
     else
@@ -470,7 +471,7 @@ static int32_t Ymodem_RxState_FileInfo(Ymodem_RxContext_t *ctx)
                   "Session complete, file transfer successful");
         ctx->file_done    = 1;
         ctx->session_done = 1;
-        return (int32_t)YMODEM_RX_HANDLER_DONE;
+        return (INT32_t)YMODEM_RX_HANDLER_DONE;
     }
 }
 
@@ -479,13 +480,13 @@ static int32_t Ymodem_RxState_FileInfo(Ymodem_RxContext_t *ctx)
  * @param  ctx: Receive context
  * @retval Ymodem_RxHandlerStatus_t: always CONTINUE
  */
-static int32_t Ymodem_RxState_FileData(Ymodem_RxContext_t *ctx)
+static INT32_t Ymodem_RxState_FileData(Ymodem_RxContext_t *ctx)
 {
     // Only process positive packet lengths (actual data)
     if (ctx->packet_length > 0)
     {
         // Calculate bytes to copy (don't exceed total file size)
-        int32_t bytes_to_copy = ctx->packet_length;
+        INT32_t bytes_to_copy = ctx->packet_length;
         if ((ctx->bytes_received + bytes_to_copy) > ctx->size)
         {
             bytes_to_copy = ctx->size - ctx->bytes_received;
@@ -498,15 +499,15 @@ static int32_t Ymodem_RxState_FileData(Ymodem_RxContext_t *ctx)
 
         ctx->bytes_received += bytes_to_copy;
 
-        // Calculate and display progress (integer math, no float)
-        uint32_t progress_percent = (ctx->bytes_received * 100) / ctx->size;
+        // Calculate and display progress (integer math, no FLOAT)
+        UINT32_t progress_percent = (ctx->bytes_received * 100) / ctx->size;
         DEBUG_OUT(i, YMODEM_DATA_LOG_TAG, "Progress: %d/%d bytes (%d%%)",
                   (int)ctx->bytes_received, (int)ctx->size,
                   (int)progress_percent);
     }
 
     Send_Byte(ACK);
-    return (int32_t)YMODEM_RX_HANDLER_CONTINUE;
+    return (INT32_t)YMODEM_RX_HANDLER_CONTINUE;
 }
 
 /**
@@ -519,16 +520,16 @@ static int32_t Ymodem_RxState_FileData(Ymodem_RxContext_t *ctx)
  *    - YMODEM_RX_FLASH_ERR: Flash programming error (-2)
  *    - YMODEM_RX_USER_ABORT: User abort with Ctrl+C (-3)
  */
-int32_t Ymodem_Receive(uint8_t (*buf)[1030])
+INT32_t Ymodem_Receive(UINT8_t (*buf)[1030])
 {
     Ymodem_RxContext_t ctx;
     /* State handler function pointer array */
-    int32_t (*state_handlers[])(Ymodem_RxContext_t *) = {
+    INT32_t (*state_handlers[])(Ymodem_RxContext_t *) = {
         Ymodem_RxState_FileInfo, /* YMODEM_RX_STATE_FILE_INFO */
         Ymodem_RxState_FileData  /* YMODEM_RX_STATE_FILE_DATA */
     };
-    int32_t rx_result;
-    int32_t state_result;
+    INT32_t rx_result;
+    INT32_t state_result;
 
     /* Initialize context */
     ctx.buf              = buf;
@@ -546,7 +547,7 @@ int32_t Ymodem_Receive(uint8_t (*buf)[1030])
 
     DEBUG_OUT(i, YMODEM_LOG_TAG,
               "Starting reception... (bufA @0x%08lx)(bufB @0x%08lx)",
-              (uint32_t)buf[0], (uint32_t)buf[1]);
+              (UINT32_t)buf[0], (UINT32_t)buf[1]);
 
     while (1)
     {
@@ -565,7 +566,7 @@ int32_t Ymodem_Receive(uint8_t (*buf)[1030])
                 /* Abort by sender */
                 case -1:
                     Send_Byte(ACK);
-                    return (int32_t)YMODEM_RX_ABORTED;
+                    return (INT32_t)YMODEM_RX_ABORTED;
                 /* End of transmission. Ymodem batch spec requires the
                    sender to send EOT twice — the first verified with NAK,
                    the second ACK'd. This is what makes a stuck dialog on
@@ -611,9 +612,9 @@ int32_t Ymodem_Receive(uint8_t (*buf)[1030])
                 /* Normal packet */
                 default:
                 {
-                    uint8_t pkt_seqno =
+                    UINT8_t pkt_seqno =
                         ctx.packet_data[PACKET_SEQNO_INDEX] & 0xff;
-                    uint8_t exp_seqno = ctx.packets_received & 0xff;
+                    UINT8_t exp_seqno = ctx.packets_received & 0xff;
 
                     /* Debug: Print sequence number */
                     DEBUG_OUT(d, YMODEM_PACKET_LOG_TAG,
@@ -629,11 +630,11 @@ int32_t Ymodem_Receive(uint8_t (*buf)[1030])
                     {
                         /* Call state handler function pointer */
                         state_result = state_handlers[ctx.state](&ctx);
-                        if (state_result == (int32_t)YMODEM_RX_HANDLER_ERROR)
+                        if (state_result == (INT32_t)YMODEM_RX_HANDLER_ERROR)
                         {
                             return state_result;
                         }
-                        if (state_result == (int32_t)YMODEM_RX_HANDLER_DONE)
+                        if (state_result == (INT32_t)YMODEM_RX_HANDLER_DONE)
                         {
                             /* State handler indicates completion */
                             break;
@@ -650,7 +651,7 @@ int32_t Ymodem_Receive(uint8_t (*buf)[1030])
                 /* User abort */
                 Send_Byte(CA);
                 Send_Byte(CA);
-                return (int32_t)YMODEM_RX_USER_ABORT;
+                return (INT32_t)YMODEM_RX_USER_ABORT;
             case YMODEM_PKT_TIMEOUT:
             default:
                 /* Graceful close for senders that omit the batch-terminator
@@ -684,7 +685,7 @@ int32_t Ymodem_Receive(uint8_t (*buf)[1030])
                     DEBUG_OUT(e, YMODEM_LOG_TAG, "Max errors exceeded!");
                     Send_Byte(CA);
                     Send_Byte(CA);
-                    return (int32_t)YMODEM_RX_TIMEOUT_ERR;
+                    return (INT32_t)YMODEM_RX_TIMEOUT_ERR;
                 }
                 Send_Byte(CRC16);
                 break;

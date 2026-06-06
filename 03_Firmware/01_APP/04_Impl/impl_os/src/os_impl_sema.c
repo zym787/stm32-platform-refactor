@@ -18,6 +18,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "osal_internal_sema.h"
 #include "osal_error.h"
 
@@ -55,8 +56,8 @@ static TickType_t osal_sema_timeout_to_ticks(osal_tick_type_t timeout)
  *
  * @return OSAL_SUCCESS on success, otherwise OSAL_SEM_FAILURE.
  */
-int32_t osal_sema_create_impl(osal_sema_handle_t *p_sema_handle,
-							  uint32_t initial_count)
+INT32_t osal_sema_create_impl(osal_sema_handle_t *p_sema_handle,
+							  UINT32_t initial_count)
 {
 	UBaseType_t max_count;
 	SemaphoreHandle_t sema_handle;
@@ -97,7 +98,7 @@ void osal_sema_delete_impl(osal_sema_handle_t sema_handle)
  * @return OSAL_SUCCESS on success, OSAL_ERR_IN_ISR in ISR context,
  *         otherwise OSAL_SEM_TIMEOUT.
  */
-int32_t osal_sema_take_impl(osal_sema_handle_t sema_handle,
+INT32_t osal_sema_take_impl(osal_sema_handle_t sema_handle,
 							osal_tick_type_t timeout)
 {
 	BaseType_t result;
@@ -125,7 +126,7 @@ int32_t osal_sema_take_impl(osal_sema_handle_t sema_handle,
  * @return OSAL_SUCCESS on success, OSAL_ERR_IN_ISR in ISR context,
  *         otherwise OSAL_SEM_FAILURE.
  */
-int32_t osal_sema_give_impl(osal_sema_handle_t sema_handle)
+INT32_t osal_sema_give_impl(osal_sema_handle_t sema_handle)
 {
 	BaseType_t result;
 
@@ -152,7 +153,7 @@ int32_t osal_sema_give_impl(osal_sema_handle_t sema_handle)
  * @return OSAL_SUCCESS on success, OSAL_ERROR when not in ISR,
  *         otherwise OSAL_SEM_FAILURE.
  */
-int32_t osal_sema_give_from_isr_impl(
+INT32_t osal_sema_give_from_isr_impl(
 	osal_sema_handle_t sema_handle,
 	osal_base_type_t *p_higher_priority_task_woken)
 {

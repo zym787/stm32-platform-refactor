@@ -24,6 +24,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "i2c_port.h"
 #include "systick_port.h"
 #include "aht21_integration.h"
@@ -54,9 +55,9 @@ static aht21_status_t iic_deinit_myown(void *bus)
 #if USE_HARDWARE_I2C
 
 static aht21_status_t i2c_master_write_myown(void           *bus,
-                                             uint16_t        dev_addr,
-                                             uint8_t  *data,
-                                             uint16_t        size)
+                                             UINT16_t        dev_addr,
+                                             UINT8_t  *data,
+                                             UINT16_t        size)
 {
     (void)bus;
     platform_err_t ret = SENSOR_HARDWARE_I2C_SEND_BYTE(
@@ -65,9 +66,9 @@ static aht21_status_t i2c_master_write_myown(void           *bus,
 }
 
 static aht21_status_t i2c_master_read_myown(void     *bus,
-                                            uint16_t  dev_addr,
-                                            uint8_t  *data,
-                                            uint16_t  size)
+                                            UINT16_t  dev_addr,
+                                            UINT8_t  *data,
+                                            UINT16_t  size)
 {
     (void)bus;
     platform_err_t ret = SENSOR_HARDWARE_I2C_RECEIVE_BYTE(
@@ -119,14 +120,14 @@ static aht21_status_t iic_send_no_ack_myown(void *bus)
     return AHT21_OK;
 }
 
-static aht21_status_t iic_send_byte_myown(void *bus, uint8_t const data)
+static aht21_status_t iic_send_byte_myown(void *bus, UINT8_t const data)
 {
     (void)bus;
     SENSOR_SOFTWARE_I2C_SEND_BYTE(data);
     return AHT21_OK;
 }
 
-static aht21_status_t iic_receive_byte_myown(void *bus, uint8_t *const data)
+static aht21_status_t iic_receive_byte_myown(void *bus, UINT8_t *const data)
 {
     (void)bus;
     SENSOR_SOFTWARE_I2C_RECEIVE_BYTE(data);
@@ -151,7 +152,7 @@ static aht21_iic_driver_interface_t s_iic_driver_interface = {
 
 /* ---------- Timebase interface -------------------------------------------- */
 
-static uint32_t get_tick_count_ms(void)
+static UINT32_t get_tick_count_ms(void)
 {
     return core_systick_get_ms();
 }
@@ -162,7 +163,7 @@ static aht21_timebase_interface_t s_timebase_interface = {
 
 /* ---------- Yield interface ----------------------------------------------- */
 
-static void rtos_yield(uint32_t const xms)
+static void rtos_yield(UINT32_t const xms)
 {
     osal_task_delay(xms);
 }
@@ -173,29 +174,29 @@ static aht21_yield_interface_t s_yield_interface = {
 
 /* ---------- OS queue interface -------------------------------------------- */
 
-static temp_humi_status_t os_queue_create_adapter(uint32_t const item_num,
-                                                  uint32_t const item_size,
+static temp_humi_status_t os_queue_create_adapter(UINT32_t const item_num,
+                                                  UINT32_t const item_size,
                                                   void **const   queue_handler)
 {
-    int32_t ret = osal_queue_create((osal_queue_handle_t *)queue_handler,
-                                    (size_t)item_num, (size_t)item_size);
+    INT32_t ret = osal_queue_create((osal_queue_handle_t *)queue_handler,
+                                    (SIZE_t)item_num, (SIZE_t)item_size);
     return (ret == OSAL_SUCCESS) ? TEMP_HUMI_OK : TEMP_HUMI_ERROR;
 }
 
 static temp_humi_status_t os_queue_put_adapter(void *const queue_handler,
                                                void *const item,
-                                               uint32_t    timeout)
+                                               UINT32_t    timeout)
 {
-    int32_t ret = osal_queue_send((osal_queue_handle_t)queue_handler, item,
+    INT32_t ret = osal_queue_send((osal_queue_handle_t)queue_handler, item,
                                   (osal_tick_type_t)timeout);
     return (ret == OSAL_SUCCESS) ? TEMP_HUMI_OK : TEMP_HUMI_ERROR;
 }
 
 static temp_humi_status_t os_queue_get_adapter(void *const queue_handler,
                                                void *const msg,
-                                               uint32_t    timeout)
+                                               UINT32_t    timeout)
 {
-    int32_t ret = osal_queue_receive((osal_queue_handle_t)queue_handler, msg,
+    INT32_t ret = osal_queue_receive((osal_queue_handle_t)queue_handler, msg,
                                      (osal_tick_type_t)timeout);
     return (ret == OSAL_SUCCESS) ? TEMP_HUMI_OK : TEMP_HUMI_ERROR;
 }

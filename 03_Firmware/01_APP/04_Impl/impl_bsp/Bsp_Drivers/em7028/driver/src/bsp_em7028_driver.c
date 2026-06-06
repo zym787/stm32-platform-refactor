@@ -32,7 +32,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include <stddef.h>
+#include "board_types.h"
 #include <string.h>
 
 #include "bsp_em7028_driver.h"
@@ -109,14 +109,14 @@
 //******************************* Declaring *********************************//
 struct em7028_private
 {
-    bool             is_init;
+    BOOL             is_init;
     em7028_config_t  cached_cfg;
-    uint32_t         frame_seq;
-    uint32_t         err_count;
+    UINT32_t         frame_seq;
+    UINT32_t         err_count;
 };
 
 static struct em7028_private gs_priv_pool[EM7028_MAX_INSTANCES];
-static uint8_t               gs_priv_used = 0u;
+static UINT8_t               gs_priv_used = 0u;
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
@@ -138,7 +138,7 @@ static uint8_t               gs_priv_used = 0u;
 static inline void em7028_yield_ms(
     em7028_os_delay_interface_t const * const p_os_delay,
     em7028_delay_interface_t      const * const p_delay,
-    uint32_t                                    ms)
+    UINT32_t                                    ms)
 {
     /**
      * OS path is preferred when available so the thread does not monopolise
@@ -170,9 +170,9 @@ static inline void em7028_yield_ms(
  * */
 static inline em7028_status_t em7028_write_reg(
     em7028_iic_driver_interface_t const * const p_iic,
-    uint16_t                                    reg,
-    uint8_t                                 * const p_data,
-    uint16_t                                    len)
+    UINT16_t                                    reg,
+    UINT8_t                                 * const p_data,
+    UINT16_t                                    len)
 {
     /**
      * HAL mem APIs expect the 8-bit address; bit0 selects the R/W direction.
@@ -202,9 +202,9 @@ static inline em7028_status_t em7028_write_reg(
  * */
 static inline em7028_status_t em7028_read_reg(
     em7028_iic_driver_interface_t const * const p_iic,
-    uint16_t                                    reg,
-    uint8_t                                 * const p_data,
-    uint16_t                                    len)
+    UINT16_t                                    reg,
+    UINT8_t                                 * const p_data,
+    UINT16_t                                    len)
 {
     return p_iic->pf_iic_mem_read(
         p_iic->hi2c,
@@ -229,10 +229,10 @@ static inline em7028_status_t em7028_read_reg(
  * */
 static inline em7028_status_t em7028_write_byte(
     em7028_iic_driver_interface_t const * const p_iic,
-    uint16_t                                    reg,
-    uint8_t                                     value)
+    UINT16_t                                    reg,
+    UINT8_t                                     value)
 {
-    uint8_t data = value;
+    UINT8_t data = value;
     return em7028_write_reg(p_iic, reg, &data, 1);
 }
 
@@ -243,7 +243,7 @@ static inline em7028_status_t em7028_write_byte(
  *
  * @return     true if all mandatory members are non-NULL, false otherwise.
  * */
-static inline bool em7028_validate_iic(
+static inline BOOL em7028_validate_iic(
     em7028_iic_driver_interface_t const * const p_iic)
 {
     if ((p_iic == NULL)                          ||
@@ -266,10 +266,10 @@ static inline bool em7028_validate_iic(
  *
  * @return     Assembled HRS1_CTRL register byte.
  * */
-static inline uint8_t em7028_build_hrs1_ctrl(
+static inline UINT8_t em7028_build_hrs1_ctrl(
     em7028_config_t const * const p_cfg)
 {
-    uint8_t val = 0;
+    UINT8_t val = 0;
 
     if (p_cfg->hrs1_gain_high)
     {
@@ -279,8 +279,8 @@ static inline uint8_t em7028_build_hrs1_ctrl(
     {
         val |= (1u << EM7028_HRS1_CTRL_RANGE_BIT);
     }
-    val |= ((uint8_t)p_cfg->hrs1_freq << EM7028_HRS1_CTRL_FREQ_SHIFT);
-    val |= ((uint8_t)p_cfg->hrs1_res  << EM7028_HRS1_CTRL_RES_SHIFT);
+    val |= ((UINT8_t)p_cfg->hrs1_freq << EM7028_HRS1_CTRL_FREQ_SHIFT);
+    val |= ((UINT8_t)p_cfg->hrs1_res  << EM7028_HRS1_CTRL_RES_SHIFT);
 
     /* IR_MODE = 1 selects HRS1 (heart-rate); IR mode is for proximity
      * sensing and is never used by this driver.                       */
@@ -297,16 +297,16 @@ static inline uint8_t em7028_build_hrs1_ctrl(
  *
  * @return     Assembled HRS2_CTRL register byte.
  * */
-static inline uint8_t em7028_build_hrs2_ctrl(
+static inline UINT8_t em7028_build_hrs2_ctrl(
     em7028_config_t const * const p_cfg)
 {
-    uint8_t val = 0;
+    UINT8_t val = 0;
 
     if (p_cfg->hrs2_mode == EM7028_HRS2_MODE_PULSE)
     {
         val |= (1u << EM7028_HRS2_CTRL_MODE_BIT);
     }
-    val |= ((uint8_t)p_cfg->hrs2_wait << EM7028_HRS2_CTRL_WAIT_SHIFT);
+    val |= ((UINT8_t)p_cfg->hrs2_wait << EM7028_HRS2_CTRL_WAIT_SHIFT);
     val |= EM7028_HRS2_CTRL_LED_WIDTH_DEFAULT;
     val |= EM7028_HRS2_CTRL_LED_CNT_DEFAULT;
     return val;
@@ -319,10 +319,10 @@ static inline uint8_t em7028_build_hrs2_ctrl(
  *
  * @return     Assembled HRS2_GAIN_CTRL register byte.
  * */
-static inline uint8_t em7028_build_hrs2_gain(
+static inline UINT8_t em7028_build_hrs2_gain(
     em7028_config_t const * const p_cfg)
 {
-    uint8_t val = 0;
+    UINT8_t val = 0;
 
     if (p_cfg->hrs2_gain_high)
     {
@@ -334,7 +334,7 @@ static inline uint8_t em7028_build_hrs2_gain(
 
 /**
  * @brief      Burst-read 8 bytes from consecutive HRS data registers and
- *             assemble them into 4 little-endian uint16_t pixel values.
+ *             assemble them into 4 little-endian UINT16_t pixel values.
  *
  * @param[in]  p_iic     : I2C interface bound to the driver instance.
  *
@@ -346,10 +346,10 @@ static inline uint8_t em7028_build_hrs2_gain(
  * */
 static inline em7028_status_t em7028_burst_read_block(
     em7028_iic_driver_interface_t const * const p_iic,
-    uint8_t                                     base_reg,
-    uint16_t                          dst_pixel[EM7028_HRS_PIXEL_NUM])
+    UINT8_t                                     base_reg,
+    UINT16_t                          dst_pixel[EM7028_HRS_PIXEL_NUM])
 {
-    uint8_t buf[EM7028_HRS_BLOCK_BYTES];
+    UINT8_t buf[EM7028_HRS_BLOCK_BYTES];
 
     em7028_status_t ret = em7028_read_reg(p_iic, base_reg,
                                            buf, EM7028_HRS_BLOCK_BYTES);
@@ -360,12 +360,12 @@ static inline em7028_status_t em7028_burst_read_block(
 
     /**
      * Byte order: _L (lower address) = LSB, _H (higher address) = MSB.
-     * Reconstruct little-endian pairs into native uint16_t.
+     * Reconstruct little-endian pairs into native UINT16_t.
      **/
-    dst_pixel[0] = (uint16_t)(((uint16_t)buf[1] << 8) | buf[0]);
-    dst_pixel[1] = (uint16_t)(((uint16_t)buf[3] << 8) | buf[2]);
-    dst_pixel[2] = (uint16_t)(((uint16_t)buf[5] << 8) | buf[4]);
-    dst_pixel[3] = (uint16_t)(((uint16_t)buf[7] << 8) | buf[6]);
+    dst_pixel[0] = (UINT16_t)(((UINT16_t)buf[1] << 8) | buf[0]);
+    dst_pixel[1] = (UINT16_t)(((UINT16_t)buf[3] << 8) | buf[2]);
+    dst_pixel[2] = (UINT16_t)(((UINT16_t)buf[5] << 8) | buf[4]);
+    dst_pixel[3] = (UINT16_t)(((UINT16_t)buf[7] << 8) | buf[6]);
 
     return EM7028_OK;
 }
@@ -529,7 +529,7 @@ static em7028_status_t em7028_init(
     }
 
     /* 4. probe and verify chip id */
-    uint8_t id = 0;
+    UINT8_t id = 0;
     ret = em7028_read_reg(self->p_iic, ID_REG, &id, 1);
     if (EM7028_OK != ret)
     {
@@ -610,7 +610,7 @@ static em7028_status_t em7028_deinit(
  * */
 static em7028_status_t em7028_read_id(
     struct bsp_em7028_driver *const self,
-    uint8_t                   *const p_id)
+    UINT8_t                   *const p_id)
 {
     if ((self == NULL) || (self->priv == NULL) ||
         (p_id == NULL) || (!self->priv->is_init))
@@ -672,7 +672,7 @@ static em7028_status_t em7028_start(
         return EM7028_ERRORPARAMETER;
     }
 
-    uint8_t hrs_cfg = 0;
+    UINT8_t hrs_cfg = 0;
     em7028_status_t ret = em7028_read_reg(self->p_iic, HRS_CFG,
                                            &hrs_cfg, 1);
     if (EM7028_OK != ret)
@@ -726,7 +726,7 @@ static em7028_status_t em7028_stop(
         return EM7028_ERRORPARAMETER;
     }
 
-    uint8_t hrs_cfg = 0;
+    UINT8_t hrs_cfg = 0;
     em7028_status_t ret = em7028_read_reg(self->p_iic, HRS_CFG,
                                            &hrs_cfg, 1);
     if (EM7028_OK != ret)
@@ -793,10 +793,10 @@ static em7028_status_t em7028_read_frame(
             }
             return ret;
         }
-        p_frame->hrs2_sum = (uint32_t)p_frame->hrs2_pixel[0]
-                           + (uint32_t)p_frame->hrs2_pixel[1]
-                           + (uint32_t)p_frame->hrs2_pixel[2]
-                           + (uint32_t)p_frame->hrs2_pixel[3];
+        p_frame->hrs2_sum = (UINT32_t)p_frame->hrs2_pixel[0]
+                           + (UINT32_t)p_frame->hrs2_pixel[1]
+                           + (UINT32_t)p_frame->hrs2_pixel[2]
+                           + (UINT32_t)p_frame->hrs2_pixel[3];
     }
     else
     {
@@ -821,10 +821,10 @@ static em7028_status_t em7028_read_frame(
             }
             return ret;
         }
-        p_frame->hrs1_sum = (uint32_t)p_frame->hrs1_pixel[0]
-                           + (uint32_t)p_frame->hrs1_pixel[1]
-                           + (uint32_t)p_frame->hrs1_pixel[2]
-                           + (uint32_t)p_frame->hrs1_pixel[3];
+        p_frame->hrs1_sum = (UINT32_t)p_frame->hrs1_pixel[0]
+                           + (UINT32_t)p_frame->hrs1_pixel[1]
+                           + (UINT32_t)p_frame->hrs1_pixel[2]
+                           + (UINT32_t)p_frame->hrs1_pixel[3];
     }
     else
     {
@@ -854,8 +854,8 @@ static em7028_status_t em7028_read_frame(
  * */
 static em7028_status_t em7028_read_reg_raw(
     struct bsp_em7028_driver *const self,
-    uint8_t                     reg_addr,
-    uint8_t                  *const p_val)
+    UINT8_t                     reg_addr,
+    UINT8_t                  *const p_val)
 {
     if ((self == NULL) || (self->priv == NULL) ||
         (p_val == NULL) || (!self->priv->is_init))
@@ -889,8 +889,8 @@ static em7028_status_t em7028_read_reg_raw(
  * */
 static em7028_status_t em7028_write_reg_raw(
     struct bsp_em7028_driver *const self,
-    uint8_t                     reg_addr,
-    uint8_t                     val)
+    UINT8_t                     reg_addr,
+    UINT8_t                     val)
 {
     if ((self == NULL) || (self->priv == NULL) || (!self->priv->is_init))
     {

@@ -48,35 +48,34 @@
 
 //******************************** Includes *********************************//
 #include "board_types.h"
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
+
+
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
 
 /** @brief Fixed-width signed integers (sourced from board_types.h). */
-typedef INT8      INT8_T;
-typedef INT16     INT16_T;
-typedef INT32     INT32_T;
-typedef INT64     INT64_T;
+typedef INT8_t      INT8_T;
+typedef INT16_t     INT16_T;
+typedef INT32_t     INT32_T;
+typedef INT64_t     INT64_T;
 
 /** @brief Fixed-width unsigned integers (sourced from board_types.h). */
-typedef UINT8     UINT8_T;
-typedef UINT16    UINT16_T;
-typedef UINT32    UINT32_T;
-typedef UINT64    UINT64_T;
+typedef UINT8_t     UINT8_T;
+typedef UINT16_t    UINT16_T;
+typedef UINT32_t    UINT32_T;
+typedef UINT64_t    UINT64_T;
 
 /** @brief Floating point (sourced from board_types.h). */
-typedef FLOAT32   FLOAT32_T;
-typedef FLOAT64   FLOAT64_T;
+typedef FLOAT    FLOAT32_T;
+typedef DOUBLE   FLOAT64_T;
 
 /** @brief Boolean — alias to C99 _Bool via stdbool.h. */
-typedef bool      BOOL_T;
+typedef BOOL      BOOL_T;
 
 /** @brief Character vocabulary. */
 typedef char      CHAR_T;
-typedef uint8_t   UCHAR_T;
+typedef UINT8_t   UCHAR_T;
 
 /**
  * @brief Size and pointer-sized integer vocabulary.
@@ -85,8 +84,8 @@ typedef uint8_t   UCHAR_T;
  *        pointer arithmetic, mirroring the coding-standard guidance to keep
  *        sizes in size_t and never to truncate pointers through a 32-bit int.
  */
-typedef size_t    SIZE_T;
-typedef uintptr_t UINTPTR_T;
+typedef SIZE_t    SIZE_T;
+typedef UINTPTR_t UINTPTR_T;
 
 //******************************** Defines **********************************//
 

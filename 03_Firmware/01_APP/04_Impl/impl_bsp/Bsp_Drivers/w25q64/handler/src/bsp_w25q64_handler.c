@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_w25q64_handler.h"
 
 #include "osal_common_types.h"
@@ -61,7 +62,7 @@ static bsp_w25q64_handler_t *gp_flash_instance = NULL;
  */
 struct flash_handler_private_data
 {
-    bool is_initated;             /* Initialization flag                 */
+    BOOL is_initated;             /* Initialization flag                 */
 };
 
 /**

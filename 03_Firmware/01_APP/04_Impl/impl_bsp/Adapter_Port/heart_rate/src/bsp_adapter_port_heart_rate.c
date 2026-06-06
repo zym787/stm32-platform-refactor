@@ -45,6 +45,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include <string.h>
 
 #include "bsp_adapter_port_heart_rate.h"
@@ -70,7 +71,7 @@ static platform_err_t em7028_drv_reconfigure(
 
 static platform_err_t em7028_drv_get_req(
                                 heart_rate_drv_t *const dev,
-                                uint32_t         timeout_ms);
+                                UINT32_t         timeout_ms);
 static wp_ppg_frame_t        *em7028_get_frame_addr(
                                 heart_rate_drv_t *const dev);
 static void                   em7028_read_data_done(
@@ -272,7 +273,7 @@ static platform_err_t em7028_drv_reconfigure(
  * */
 static platform_err_t em7028_drv_get_req(
                                   heart_rate_drv_t *const dev,
-                                  uint32_t         timeout_ms)
+                                  UINT32_t         timeout_ms)
 {
     (void)dev;
 
@@ -293,7 +294,7 @@ static platform_err_t em7028_drv_get_req(
      * (EM7028_HRS_PIXEL_NUM == WP_HEART_RATE_PIXEL_NUM == 4); a static
      * assert in v2 will tighten this once a second chip is added. */
     s_latest_frame.timestamp_ms = chip_frame.timestamp_ms;
-    for (uint32_t i = 0U; i < (uint32_t)WP_HEART_RATE_PIXEL_NUM; i++)
+    for (UINT32_t i = 0U; i < (UINT32_t)WP_HEART_RATE_PIXEL_NUM; i++)
     {
         s_latest_frame.hrs1_pixel[i] = chip_frame.hrs1_pixel[i];
         s_latest_frame.hrs2_pixel[i] = chip_frame.hrs2_pixel[i];
@@ -341,7 +342,7 @@ static void em7028_read_data_done(heart_rate_drv_t *const dev)
  *
  * @return   true on successful mount.
  * */
-bool drv_adapter_heart_rate_register(void)
+BOOL drv_adapter_heart_rate_register(void)
 {
     heart_rate_drv_t heart_rate_drv = {
         .idx                              = 0,

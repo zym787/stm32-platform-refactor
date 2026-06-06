@@ -25,6 +25,7 @@
 #define __BSP_W25Q64_HANDLER_H__
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_w25q64_driver.h"
 
 //******************************** Includes *********************************//
@@ -65,9 +66,9 @@ typedef enum
  */
 typedef struct
 {
-    uint32_t                            addr;
-    uint32_t                            size;
-    uint8_t                       *     data;
+    UINT32_t                            addr;
+    UINT32_t                            size;
+    UINT8_t                       *     data;
     flash_handler_status_t            status;
     flash_handler_event_type_t    event_type;
     void                       *  p_user_ctx;
@@ -81,19 +82,19 @@ typedef struct
 {
     /** Create a message queue */
     flash_handler_status_t (*pf_os_queue_create) (
-                                                 uint32_t const      item_num,
-                                                 uint32_t const     item_size,
+                                                 UINT32_t const      item_num,
+                                                 UINT32_t const     item_size,
                                                  void **  const queue_handler);
     /** Put message into queue */
     flash_handler_status_t (*pf_os_queue_put   ) (
                                                  void *  const  queue_handler,
                                                  void *  const           item,
-                                                 uint32_t             timeout);
+                                                 UINT32_t             timeout);
     /** Get message from queue */
     flash_handler_status_t (*pf_os_queue_get   ) (
                                                  void *  const  queue_handler,
                                                  void *  const            msg,
-                                                 uint32_t             timeout);
+                                                 UINT32_t             timeout);
     /** Delete queue */
     flash_handler_status_t (*pf_os_queue_delete) (
                                                  void *  const  queue_handler);
@@ -104,7 +105,7 @@ typedef struct
  */
 typedef struct
 {
-    flash_handler_status_t (*pf_os_delay_ms)(uint32_t ms);
+    flash_handler_status_t (*pf_os_delay_ms)(UINT32_t ms);
 } flash_handler_os_delay_t;
 
 /**

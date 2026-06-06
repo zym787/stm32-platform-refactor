@@ -31,6 +31,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_adapter_port_externflash.h"
 #include "bsp_w25q64_handler.h"
 
@@ -50,7 +51,7 @@
 //******************************* Variables *********************************//
 typedef struct
 {
-    bool                         in_use;
+    BOOL                         in_use;
     wp_externflash_callback_t   user_cb;
     void                    *  user_ctx;
 } trampoline_slot_t;
@@ -75,7 +76,7 @@ static trampoline_slot_t *adapter_slot_alloc(void)
         (void)osal_mutex_take(s_pool_mutex, OSAL_MAX_DELAY);
     }
 
-    for (uint32_t i = 0U; i < EXTERNFLASH_TRAMPOLINE_SLOT_NUM; ++i)
+    for (UINT32_t i = 0U; i < EXTERNFLASH_TRAMPOLINE_SLOT_NUM; ++i)
     {
         if (false == s_slot_pool[i].in_use)
         {
@@ -197,9 +198,9 @@ static void adapter_trampoline(void *args)
  */
 static platform_err_t adapter_submit_event(
                                   flash_handler_event_type_t  event_type,
-                                  uint32_t                          addr,
-                                  uint8_t  *                        data,
-                                  uint32_t                          size,
+                                  UINT32_t                          addr,
+                                  UINT8_t  *                        data,
+                                  UINT32_t                          size,
                                   wp_externflash_callback_t      user_cb,
                                   void     *                    user_ctx)
 {
@@ -248,9 +249,9 @@ static void w25q64_externflash_drv_deinit(externflash_drv_t *const dev)
 
 static platform_err_t w25q64_externflash_read(
                                             externflash_drv_t *const   dev,
-                                                          uint32_t    addr,
-                                                          uint8_t *   data,
-                                                          uint32_t    size,
+                                                          UINT32_t    addr,
+                                                          UINT8_t *   data,
+                                                          UINT32_t    size,
                                             wp_externflash_callback_t   cb,
                                                           void *p_user_ctx)
 {
@@ -265,9 +266,9 @@ static platform_err_t w25q64_externflash_read(
 
 static platform_err_t w25q64_externflash_write(
                                             externflash_drv_t *const   dev,
-                                                          uint32_t    addr,
-                                                          uint8_t *   data,
-                                                          uint32_t    size,
+                                                          UINT32_t    addr,
+                                                          UINT8_t *   data,
+                                                          UINT32_t    size,
                                             wp_externflash_callback_t   cb,
                                                           void *p_user_ctx)
 {
@@ -282,9 +283,9 @@ static platform_err_t w25q64_externflash_write(
 
 static platform_err_t w25q64_externflash_write_noerase(
                                             externflash_drv_t *const   dev,
-                                                          uint32_t    addr,
-                                                          uint8_t *   data,
-                                                          uint32_t    size,
+                                                          UINT32_t    addr,
+                                                          UINT8_t *   data,
+                                                          UINT32_t    size,
                                             wp_externflash_callback_t   cb,
                                                           void *p_user_ctx)
 {
@@ -309,7 +310,7 @@ static platform_err_t w25q64_externflash_erase_chip(
 
 static platform_err_t w25q64_externflash_erase_sector(
                                             externflash_drv_t *const   dev,
-                                                          uint32_t    addr,
+                                                          UINT32_t    addr,
                                             wp_externflash_callback_t   cb,
                                                           void *p_user_ctx)
 {
@@ -350,7 +351,7 @@ static platform_err_t w25q64_externflash_wakeup(
  * @return  true  - Registration successful.
  *          false - Mount failed.
  */
-bool drv_adapter_externflash_register(void)
+BOOL drv_adapter_externflash_register(void)
 {
     if (NULL == s_pool_mutex)
     {

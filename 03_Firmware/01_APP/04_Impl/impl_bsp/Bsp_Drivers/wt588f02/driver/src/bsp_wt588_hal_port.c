@@ -31,6 +31,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_wt588_hal_port.h"
 #include "gpio_port.h"
 #include "tim.h"
@@ -57,18 +58,18 @@
 //******************************* Declaring *********************************//
 static wt588_status_t wt588_hal_gpio_init        (void);
 static void           wt588_hal_gpio_deinit      (void);
-static bool           wt588_hal_busy_is_busy     (void);
+static BOOL           wt588_hal_busy_is_busy     (void);
 static wt588_status_t wt588_hal_pwm_dma_init     (void);
 static void           wt588_hal_pwm_dma_deinit   (void);
-static wt588_status_t wt588_hal_pwm_dma_send_byte(uint8_t data);
+static wt588_status_t wt588_hal_pwm_dma_send_byte(UINT8_t data);
 //******************************* Declaring *********************************//
 
 //******************************* Variables *********************************//
 /** DMA busy flag: set before HAL_DMA_Start_IT, cleared in DMA-complete ISR. */
-static volatile bool s_tx_busy = false;
+static volatile BOOL s_tx_busy = false;
 
 /** DMA CCR buffer — static so it remains valid during the async DMA transfer. */
-static uint32_t s_cmp_buff[WT588_DMA_BUFF_LEN];
+static UINT32_t s_cmp_buff[WT588_DMA_BUFF_LEN];
 //******************************* Variables *********************************//
 
 //******************************* Functions *********************************//
@@ -117,7 +118,7 @@ static void wt588_hal_gpio_deinit(void)
  * @brief Report busy state by reading the hardware WT_BUSY pin.
  *        High level = busy (audio playing), low level = idle.
  */
-static bool wt588_hal_busy_is_busy(void)
+static BOOL wt588_hal_busy_is_busy(void)
 {
     mcu_gpio_pin_state_t state;
     AUDIO_GPIO_READ_BUSY(&state);
@@ -161,10 +162,10 @@ static void wt588_hal_pwm_dma_deinit(void)
  * @return WT588_OK on success, WT588_ERRORTIMEOUT if previous tx did not
  *         finish within WT588_DMA_SEND_TIMEOUT_MS.
  */
-static wt588_status_t wt588_hal_pwm_dma_send_byte(uint8_t data)
+static wt588_status_t wt588_hal_pwm_dma_send_byte(UINT8_t data)
 {
     /* Wait for any previous transfer to finish */
-    uint32_t timeout_ms = WT588_DMA_SEND_TIMEOUT_MS;
+    UINT32_t timeout_ms = WT588_DMA_SEND_TIMEOUT_MS;
     while (s_tx_busy && (timeout_ms > 0U))
     {
         osal_task_delay(1U);
@@ -180,12 +181,12 @@ static wt588_status_t wt588_hal_pwm_dma_send_byte(uint8_t data)
      *   [7..14] = CCR     → 8 data bits, LSB first
      *   [15]    = GUARD   → one full high guard period
      */
-    for (uint8_t i = 0U; i < 7U; i++)
+    for (UINT8_t i = 0U; i < 7U; i++)
     {
         s_cmp_buff[i] = 0U;
     }
-    uint8_t d = data;
-    for (uint8_t i = 7U; i < 15U; i++)
+    UINT8_t d = data;
+    for (UINT8_t i = 7U; i < 15U; i++)
     {
         s_cmp_buff[i] = ((d & 0x01U) != 0U) ? WT588_CCR_BIT1 : WT588_CCR_BIT0;
         d >>= 1U;
@@ -201,8 +202,8 @@ static wt588_status_t wt588_hal_pwm_dma_send_byte(uint8_t data)
               "pwm_dma_send: PWM_Start ret=%d", (int)hal_ret);
 
     hal_ret = HAL_DMA_Start_IT(htim2.hdma[TIM_DMA_ID_UPDATE],
-                               (uint32_t)s_cmp_buff,
-                               (uint32_t)&htim2.Instance->CCR1,
+                               (UINT32_t)s_cmp_buff,
+                               (UINT32_t)&htim2.Instance->CCR1,
                                WT588_DMA_BUFF_LEN);
     DEBUG_OUT(d, WT588_HAL_PORT_LOG_TAG,
               "pwm_dma_send: DMA_Start_IT ret=%d, DMA_State=%d",

@@ -24,8 +24,7 @@
 #define __LV_PORT_DISP_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
-#include <stdbool.h>
+#include "board_types.h"
 //******************************** Includes *********************************//
 
 //******************************* Functions *********************************//
@@ -37,7 +36,7 @@
  *
  * @return true on success, false if LVGL rejects the registration.
  */
-bool lv_port_disp_init(void);
+BOOL lv_port_disp_init(void);
 //******************************* Functions *********************************//
 
 #endif /* __LV_PORT_DISP_H__ */

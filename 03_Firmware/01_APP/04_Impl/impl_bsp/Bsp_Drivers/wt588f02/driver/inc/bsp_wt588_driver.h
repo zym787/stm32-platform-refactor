@@ -19,8 +19,7 @@
 #ifndef __BSP_WT588_DRIVER_H__
 #define __BSP_WT588_DRIVER_H__
 //******************************** Includes *********************************//
-#include <stdint.h>
-#include <stdbool.h>
+#include "board_types.h"
 
 #include "wt588_cmd.h"
 
@@ -50,19 +49,19 @@ typedef struct
 
 typedef struct 
 {
-    void (*pf_delay_ms  )(uint32_t ms);
+    void (*pf_delay_ms  )(UINT32_t ms);
 } wt_sys_interface_t;
 
 typedef struct 
 {
     wt588_status_t (*pf_pwm_dma_init       )(void        );
     void           (*pf_pwm_dma_deinit     )(void        );
-    wt588_status_t (*pf_pwm_dma_send_byte  )(uint8_t data);
+    wt588_status_t (*pf_pwm_dma_send_byte  )(UINT8_t data);
 } wt_pwm_dma_interface_t;
 
 typedef struct
 {
-    bool (*pf_is_busy)(void);
+    BOOL (*pf_is_busy)(void);
 } wt_busy_interface_t;
 
 typedef struct bsp_wt588_driver
@@ -72,10 +71,10 @@ typedef struct bsp_wt588_driver
     wt_pwm_dma_interface_t      *      p_pwm_dma_interface;
     wt_busy_interface_t         *         p_busy_interface;
 
-    wt588_status_t (*pf_start_play     )(struct bsp_wt588_driver *,  uint8_t );
+    wt588_status_t (*pf_start_play     )(struct bsp_wt588_driver *,  UINT8_t );
     wt588_status_t (*pf_stop_play      )(struct bsp_wt588_driver *);
-    wt588_status_t (*pf_set_volume     )(struct bsp_wt588_driver *,  uint8_t );
-    bool           (*pf_is_busy        )(struct bsp_wt588_driver *);
+    wt588_status_t (*pf_set_volume     )(struct bsp_wt588_driver *,  UINT8_t );
+    BOOL           (*pf_is_busy        )(struct bsp_wt588_driver *);
 } bsp_wt588_driver_t;
 
 //******************************** Defines **********************************//

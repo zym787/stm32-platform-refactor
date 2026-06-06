@@ -16,6 +16,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "osal_internal_heap.h"
 
 #include "FreeRTOS.h"
@@ -30,7 +31,7 @@
  *
  * @return Allocated memory pointer, or NULL when allocation fails.
  */
-void *osal_heap_malloc_impl(size_t size)
+void *osal_heap_malloc_impl(SIZE_t size)
 {
 	return pvPortMalloc(size);
 }

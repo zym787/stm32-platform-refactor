@@ -42,6 +42,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_cst816t_calibration.h"
 
 #include "service_storage_facade.h"
@@ -68,10 +69,10 @@
  */
 typedef struct
 {
-    uint32_t magic;
-    uint16_t schema_version;
-    uint16_t reserved;
-    uint32_t crc32;
+    UINT32_t magic;
+    UINT16_t schema_version;
+    UINT16_t reserved;
+    UINT32_t crc32;
 } __attribute__((packed)) calibration_header_t;
 
 /**
@@ -80,14 +81,14 @@ typedef struct
  */
 typedef struct
 {
-    float    matrix_a;
-    float    matrix_b;
-    float    matrix_c;
-    float    matrix_d;
-    float    matrix_e;
-    float    matrix_f;
-    uint16_t panel_w;
-    uint16_t panel_h;
+    FLOAT    matrix_a;
+    FLOAT    matrix_b;
+    FLOAT    matrix_c;
+    FLOAT    matrix_d;
+    FLOAT    matrix_e;
+    FLOAT    matrix_f;
+    UINT16_t panel_w;
+    UINT16_t panel_h;
 } __attribute__((packed)) touch_calibration_persist_t;
 //******************************** Typedefs *********************************//
 
@@ -96,7 +97,7 @@ static touch_calibration_t s_calibration;
 //******************************* Variables *********************************//
 
 //******************************* Declaring *********************************//
-static uint32_t calib_crc32(const uint8_t *data, uint32_t len);
+static UINT32_t calib_crc32(const UINT8_t *data, UINT32_t len);
 static void     identity_seed(touch_calibration_t *p);
 //******************************* Declaring *********************************//
 
@@ -107,15 +108,15 @@ static void     identity_seed(touch_calibration_t *p);
  *        Tableless — payload is only 32 bytes so 256 iterations is trivial.
  *        Avoids dragging in a 1 KB lookup table just for this one consumer.
  */
-static uint32_t calib_crc32(const uint8_t *data, uint32_t len)
+static UINT32_t calib_crc32(const UINT8_t *data, UINT32_t len)
 {
-    uint32_t crc = 0xFFFFFFFFUL;
-    for (uint32_t i = 0U; i < len; ++i)
+    UINT32_t crc = 0xFFFFFFFFUL;
+    for (UINT32_t i = 0U; i < len; ++i)
     {
-        crc ^= (uint32_t)data[i];
-        for (uint8_t b = 0U; b < 8U; ++b)
+        crc ^= (UINT32_t)data[i];
+        for (UINT8_t b = 0U; b < 8U; ++b)
         {
-            uint32_t mask = (crc & 1U) ? 0xEDB88320UL : 0U;
+            UINT32_t mask = (crc & 1U) ? 0xEDB88320UL : 0U;
             crc = (crc >> 1) ^ mask;
         }
     }
@@ -159,9 +160,9 @@ calibration_status_t touch_calibration_reset(touch_calibration_t *p_calibration)
 
 calibration_status_t touch_calibration_add_point(
         touch_calibration_t *p_calibration,
-        uint16_t raw_x, uint16_t raw_y,
-        uint16_t screen_x, uint16_t screen_y,
-        uint8_t  idx)
+        UINT16_t raw_x, UINT16_t raw_y,
+        UINT16_t screen_x, UINT16_t screen_y,
+        UINT8_t  idx)
 {
     if ((NULL == p_calibration) || (idx >= CFG_TOUCH_CALIB_POINT_COUNT))
     {
@@ -181,19 +182,19 @@ calibration_status_t touch_calibration_add_point(
  *        with Cramer's rule.  Writes the three components into (*a, *b, *c).
  *
  *        Returns the determinant (so the caller can decide if the result is
- *        meaningful).  All inputs are float to keep precision under control
+ *        meaningful).  All inputs are FLOAT to keep precision under control
  *        of the F411 single-precision FPU.
  */
-static float solve_3x3_normal(float Sxx, float Sxy, float Sx,
-                              float Syy, float Sy,  float n,
-                              float Sxv, float Syv, float Sv,
-                              float *a,  float *b,  float *c)
+static FLOAT solve_3x3_normal(FLOAT Sxx, FLOAT Sxy, FLOAT Sx,
+                              FLOAT Syy, FLOAT Sy,  FLOAT n,
+                              FLOAT Sxv, FLOAT Syv, FLOAT Sv,
+                              FLOAT *a,  FLOAT *b,  FLOAT *c)
 {
     /* | Sxx  Sxy  Sx |
      * | Sxy  Syy  Sy |
      * | Sx   Sy   n  |
      */
-    const float det = Sxx * (Syy * n  - Sy  * Sy)
+    const FLOAT det = Sxx * (Syy * n  - Sy  * Sy)
                     - Sxy * (Sxy * n  - Sy  * Sx)
                     + Sx  * (Sxy * Sy - Syy * Sx);
 
@@ -202,15 +203,15 @@ static float solve_3x3_normal(float Sxx, float Sxy, float Sx,
         return det;
     }
 
-    const float det_a = Sxv * (Syy * n  - Sy  * Sy)
+    const FLOAT det_a = Sxv * (Syy * n  - Sy  * Sy)
                       - Sxy * (Syv * n  - Sy  * Sv)
                       + Sx  * (Syv * Sy - Syy * Sv);
 
-    const float det_b = Sxx * (Syv * n  - Sy  * Sv)
+    const FLOAT det_b = Sxx * (Syv * n  - Sy  * Sv)
                       - Sxv * (Sxy * n  - Sy  * Sx)
                       + Sx  * (Sxy * Sv - Syv * Sx);
 
-    const float det_c = Sxx * (Syy * Sv - Sy  * Syv)
+    const FLOAT det_c = Sxx * (Syy * Sv - Sy  * Syv)
                       - Sxy * (Sxy * Sv - Sx  * Syv)
                       + Sxv * (Sxy * Sy - Syy * Sx);
 
@@ -232,14 +233,14 @@ calibration_status_t touch_calibration_calculate_affine(
     /* Aggregate samples — treat (0, 0) raw as "slot not populated" exactly
      * like the reference firmware does.  In practice the controller never
      * reports raw (0, 0) for a real touch on this panel. */
-    float Sx  = 0.0f, Sy  = 0.0f;
-    float Sxx = 0.0f, Syy = 0.0f, Sxy = 0.0f;
-    float SXx = 0.0f, SYx = 0.0f;     /* sum of raw_x * screen_{x,y}  */
-    float SXy = 0.0f, SYy = 0.0f;     /* sum of raw_y * screen_{x,y}  */
-    float SX  = 0.0f, SY  = 0.0f;     /* sum of screen_{x, y}         */
-    uint8_t valid = 0U;
+    FLOAT Sx  = 0.0f, Sy  = 0.0f;
+    FLOAT Sxx = 0.0f, Syy = 0.0f, Sxy = 0.0f;
+    FLOAT SXx = 0.0f, SYx = 0.0f;     /* sum of raw_x * screen_{x,y}  */
+    FLOAT SXy = 0.0f, SYy = 0.0f;     /* sum of raw_y * screen_{x,y}  */
+    FLOAT SX  = 0.0f, SY  = 0.0f;     /* sum of screen_{x, y}         */
+    UINT8_t valid = 0U;
 
-    for (uint8_t i = 0U; i < CFG_TOUCH_CALIB_POINT_COUNT; ++i)
+    for (UINT8_t i = 0U; i < CFG_TOUCH_CALIB_POINT_COUNT; ++i)
     {
         const calibration_point_t *pt = &p_calibration->points[i];
         if ((0U == pt->raw_x) && (0U == pt->raw_y))
@@ -247,10 +248,10 @@ calibration_status_t touch_calibration_calculate_affine(
             continue;
         }
 
-        const float tx = (float)pt->raw_x;
-        const float ty = (float)pt->raw_y;
-        const float sx = (float)pt->screen_x;
-        const float sy = (float)pt->screen_y;
+        const FLOAT tx = (FLOAT)pt->raw_x;
+        const FLOAT ty = (FLOAT)pt->raw_y;
+        const FLOAT sx = (FLOAT)pt->screen_x;
+        const FLOAT sy = (FLOAT)pt->screen_y;
 
         Sx  += tx;     Sy  += ty;
         Sxx += tx*tx;  Syy += ty*ty;  Sxy += tx*ty;
@@ -268,18 +269,18 @@ calibration_status_t touch_calibration_calculate_affine(
         return CALIBRATION_ERROR_INSUFFICIENT_POINTS;
     }
 
-    const float n = (float)valid;
+    const FLOAT n = (FLOAT)valid;
 
     /* Row X: screen_x = a * raw_x + b * raw_y + c */
-    float a = 0.0f, b = 0.0f, c = 0.0f;
-    const float det_x = solve_3x3_normal(Sxx, Sxy, Sx,
+    FLOAT a = 0.0f, b = 0.0f, c = 0.0f;
+    const FLOAT det_x = solve_3x3_normal(Sxx, Sxy, Sx,
                                          Syy, Sy,  n,
                                          SXx, SXy, SX,
                                          &a,  &b,  &c);
 
     /* Row Y: screen_y = d * raw_x + e * raw_y + f */
-    float d = 0.0f, e = 0.0f, f = 0.0f;
-    const float det_y = solve_3x3_normal(Sxx, Sxy, Sx,
+    FLOAT d = 0.0f, e = 0.0f, f = 0.0f;
+    const FLOAT det_y = solve_3x3_normal(Sxx, Sxy, Sx,
                                          Syy, Sy,  n,
                                          SYx, SYy, SY,
                                          &d,  &e,  &f);
@@ -291,10 +292,10 @@ calibration_status_t touch_calibration_calculate_affine(
          * dominant error on a typical install. */
         DEBUG_OUT(w, TOUCH_CALIB_LOG_TAG,
                   "calib calc: 3x3 singular (det_x=%.6f det_y=%.6f), "
-                  "fallback to indep XY", (double)det_x, (double)det_y);
+                  "fallback to indep XY", (DOUBLE)det_x, (DOUBLE)det_y);
 
-        const float denom_x = n * Sxx - Sx * Sx;
-        const float denom_y = n * Syy - Sy * Sy;
+        const FLOAT denom_x = n * Sxx - Sx * Sx;
+        const FLOAT denom_y = n * Syy - Sy * Sy;
         if ((fabsf(denom_x) < CALIB_DET_EPS) ||
             (fabsf(denom_y) < CALIB_DET_EPS))
         {
@@ -322,16 +323,16 @@ calibration_status_t touch_calibration_calculate_affine(
 
     DEBUG_OUT(i, TOUCH_CALIB_LOG_TAG,
               "calib affine: a=%.4f b=%.4f c=%.2f d=%.4f e=%.4f f=%.2f",
-              (double)a, (double)b, (double)c,
-              (double)d, (double)e, (double)f);
+              (DOUBLE)a, (DOUBLE)b, (DOUBLE)c,
+              (DOUBLE)d, (DOUBLE)e, (DOUBLE)f);
 
     return CALIBRATION_SUCCESS;
 }
 
 calibration_status_t touch_calibration_apply_matrix(
         touch_calibration_t *p_calibration,
-        uint16_t raw_x, uint16_t raw_y,
-        uint16_t *p_screen_x, uint16_t *p_screen_y)
+        UINT16_t raw_x, UINT16_t raw_y,
+        UINT16_t *p_screen_x, UINT16_t *p_screen_y)
 {
     if ((NULL == p_calibration) ||
         (NULL == p_screen_x)    || (NULL == p_screen_y))
@@ -346,13 +347,13 @@ calibration_status_t touch_calibration_apply_matrix(
         return CALIBRATION_SUCCESS;
     }
 
-    const float tx = (float)raw_x;
-    const float ty = (float)raw_y;
+    const FLOAT tx = (FLOAT)raw_x;
+    const FLOAT ty = (FLOAT)raw_y;
 
-    float fx = p_calibration->matrix_a * tx
+    FLOAT fx = p_calibration->matrix_a * tx
              + p_calibration->matrix_b * ty
              + p_calibration->matrix_c;
-    float fy = p_calibration->matrix_d * tx
+    FLOAT fy = p_calibration->matrix_d * tx
              + p_calibration->matrix_e * ty
              + p_calibration->matrix_f;
 
@@ -363,28 +364,28 @@ calibration_status_t touch_calibration_apply_matrix(
     {
         fx = 0.0f;
     }
-    else if (fx > (float)(CFG_TOUCH_PANEL_WIDTH - 1U))
+    else if (fx > (FLOAT)(CFG_TOUCH_PANEL_WIDTH - 1U))
     {
-        fx = (float)(CFG_TOUCH_PANEL_WIDTH - 1U);
+        fx = (FLOAT)(CFG_TOUCH_PANEL_WIDTH - 1U);
     }
     if (fy < 0.0f)
     {
         fy = 0.0f;
     }
-    else if (fy > (float)(CFG_TOUCH_PANEL_HEIGHT - 1U))
+    else if (fy > (FLOAT)(CFG_TOUCH_PANEL_HEIGHT - 1U))
     {
-        fy = (float)(CFG_TOUCH_PANEL_HEIGHT - 1U);
+        fy = (FLOAT)(CFG_TOUCH_PANEL_HEIGHT - 1U);
     }
 
-    *p_screen_x = (uint16_t)(fx + 0.5f);
-    *p_screen_y = (uint16_t)(fy + 0.5f);
+    *p_screen_x = (UINT16_t)(fx + 0.5f);
+    *p_screen_y = (UINT16_t)(fy + 0.5f);
     return CALIBRATION_SUCCESS;
 }
 
 calibration_status_t touch_calibration_get_standard_point(
-        uint8_t idx,
-        uint16_t *p_screen_x,
-        uint16_t *p_screen_y)
+        UINT8_t idx,
+        UINT16_t *p_screen_x,
+        UINT16_t *p_screen_y)
 {
     if ((NULL == p_screen_x) || (NULL == p_screen_y) ||
         (idx >= CFG_TOUCH_CALIB_POINT_COUNT))
@@ -392,16 +393,16 @@ calibration_status_t touch_calibration_get_standard_point(
         return CALIBRATION_ERROR_INVALID_POINT;
     }
 
-    const uint16_t W = (uint16_t)CFG_TOUCH_PANEL_WIDTH;
-    const uint16_t H = (uint16_t)CFG_TOUCH_PANEL_HEIGHT;
-    const uint16_t M = (uint16_t)CFG_TOUCH_CALIB_MARGIN;
+    const UINT16_t W = (UINT16_t)CFG_TOUCH_PANEL_WIDTH;
+    const UINT16_t H = (UINT16_t)CFG_TOUCH_PANEL_HEIGHT;
+    const UINT16_t M = (UINT16_t)CFG_TOUCH_CALIB_MARGIN;
 
-    const uint16_t col[3] = { M,
-                              (uint16_t)(W / 2U),
-                              (uint16_t)(W - 1U - M) };
-    const uint16_t row[3] = { M,
-                              (uint16_t)(H / 2U),
-                              (uint16_t)(H - 1U - M) };
+    const UINT16_t col[3] = { M,
+                              (UINT16_t)(W / 2U),
+                              (UINT16_t)(W - 1U - M) };
+    const UINT16_t row[3] = { M,
+                              (UINT16_t)(H / 2U),
+                              (UINT16_t)(H - 1U - M) };
 
     *p_screen_x = col[idx % 3U];
     *p_screen_y = row[idx / 3U];
@@ -414,8 +415,8 @@ calibration_status_t touch_calibration_get_standard_point(
  *        underneath, so bytes past the payload stay 0xFF naturally).
  */
 static void pack_image(const touch_calibration_t *p,
-                       uint8_t                   *image_buf,
-                       uint32_t                   image_len)
+                       UINT8_t                   *image_buf,
+                       UINT32_t                   image_len)
 {
     /* image_buf is exactly CALIB_PAYLOAD_OFFSET + sizeof(persist_body). */
     (void)image_len;
@@ -440,7 +441,7 @@ static void pack_image(const touch_calibration_t *p,
 
     memcpy(image_buf + CALIB_PAYLOAD_OFFSET, &body, sizeof(body));
     hdr.crc32 = calib_crc32(image_buf + CALIB_PAYLOAD_OFFSET,
-                            (uint32_t)sizeof(body));
+                            (UINT32_t)sizeof(body));
 
     memcpy(image_buf + CALIB_HEADER_OFFSET, &hdr, sizeof(hdr));
 }
@@ -460,12 +461,12 @@ calibration_status_t touch_calibration_save_to_storage(
      * read, which is what the layout expects.  Keeping the buffer on the
      * stack (~40 B) avoids burning a static 4-KB block of RAM.
      */
-    uint8_t image_buf[CALIB_PAYLOAD_OFFSET +
+    UINT8_t image_buf[CALIB_PAYLOAD_OFFSET +
                       sizeof(touch_calibration_persist_t)];
-    pack_image(p_calibration, image_buf, (uint32_t)sizeof(image_buf));
+    pack_image(p_calibration, image_buf, (UINT32_t)sizeof(image_buf));
 
     const ext_flash_status_t st = Write_CalibData(CFG_TOUCH_CALIB_OFFSET,
-                                                  (uint32_t)sizeof(image_buf),
+                                                  (UINT32_t)sizeof(image_buf),
                                                   image_buf);
     if (EXT_FLASH_OK != st)
     {
@@ -489,7 +490,7 @@ calibration_status_t touch_calibration_load_from_storage(
     /* Only need the first ~40 B but Read_CalibData accepts any size.  Read
      * header + payload in one go so we don't pay the storage round-trip
      * twice. */
-    static uint8_t s_load_buf[CALIB_PAYLOAD_OFFSET +
+    static UINT8_t s_load_buf[CALIB_PAYLOAD_OFFSET +
                               sizeof(touch_calibration_persist_t)];
     const ext_flash_status_t st = Read_CalibData(CFG_TOUCH_CALIB_OFFSET,
                                                  sizeof(s_load_buf),
@@ -523,8 +524,8 @@ calibration_status_t touch_calibration_load_from_storage(
     touch_calibration_persist_t body;
     memcpy(&body, s_load_buf + CALIB_PAYLOAD_OFFSET, sizeof(body));
 
-    const uint32_t crc_calc = calib_crc32(s_load_buf + CALIB_PAYLOAD_OFFSET,
-                                          (uint32_t)sizeof(body));
+    const UINT32_t crc_calc = calib_crc32(s_load_buf + CALIB_PAYLOAD_OFFSET,
+                                          (UINT32_t)sizeof(body));
     if (crc_calc != hdr.crc32)
     {
         DEBUG_OUT(w, TOUCH_CALIB_LOG_TAG,
@@ -555,9 +556,9 @@ calibration_status_t touch_calibration_load_from_storage(
 
     DEBUG_OUT(i, TOUCH_CALIB_LOG_TAG,
               "calib load: a=%.4f b=%.4f c=%.2f d=%.4f e=%.4f f=%.2f",
-              (double)body.matrix_a, (double)body.matrix_b,
-              (double)body.matrix_c, (double)body.matrix_d,
-              (double)body.matrix_e, (double)body.matrix_f);
+              (DOUBLE)body.matrix_a, (DOUBLE)body.matrix_b,
+              (DOUBLE)body.matrix_c, (DOUBLE)body.matrix_d,
+              (DOUBLE)body.matrix_e, (DOUBLE)body.matrix_f);
     return CALIBRATION_SUCCESS;
 }
 
@@ -566,7 +567,7 @@ touch_calibration_t *touch_calibration_get_instance(void)
     return &s_calibration;
 }
 
-bool touch_calibration_is_calibrated(void)
+BOOL touch_calibration_is_calibrated(void)
 {
     return s_calibration.is_calibrated;
 }

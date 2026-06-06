@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_temp_humi_xxx_handler.h"
 #include "Debug.h"
 
@@ -55,7 +56,7 @@ static bsp_temp_humi_xxx_handler_t *gp_temp_humi_instance = NULL;
  */
 typedef struct temp_humi_handler_private_data
 {
-    bool is_initated;             /* Initialization flag */
+    BOOL is_initated;             /* Initialization flag */
 } temp_humi_handler_private_data_t;
 
 /**
@@ -88,8 +89,8 @@ void __mount_handler(bsp_temp_humi_xxx_handler_t *instance)
 temp_humi_status_t get_temp_humi(
                         temp_humi_xxx_event_t         * const            event,
                         bsp_temp_humi_xxx_handler_t   * const handler_instance,
-                        float                         * const             temp,
-                        float                         * const             humi
+                        FLOAT                         * const             temp,
+                        FLOAT                         * const             humi
                                 )
 {
     temp_humi_status_t ret = TEMP_HUMI_OK;
@@ -106,7 +107,7 @@ temp_humi_status_t get_temp_humi(
         return ret;
     }
 
-    uint32_t tim = HANDLER_TIMEBASE->pf_get_tick_count_ms();
+    UINT32_t tim = HANDLER_TIMEBASE->pf_get_tick_count_ms();
     switch (event->event_type)
     {
     case TEMP_HUMI_EVENT_TEMP:
@@ -424,8 +425,8 @@ void temp_humi_handler_thread(void *argument)
     temp_humi_status_t              ret   =   TEMP_HUMI_OK;
     temp_humi_xxx_event_t                            event;
 
-    float temperature = 0.0f;
-    float humidity    = 0.0f;
+    FLOAT temperature = 0.0f;
+    FLOAT humidity    = 0.0f;
 
     bsp_aht21_driver_t          aht21_driver_instance = {0};
     bsp_temp_humi_xxx_handler_t      handler_instance = {0};

@@ -37,7 +37,7 @@
 #define __LV_PORT_EXTFLASH_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "board_types.h"
 #include "lvgl.h"
 //******************************** Includes *********************************//
 
@@ -66,12 +66,12 @@ extern "C" {
  */
 typedef struct
 {
-    uint32_t  magic;       /**< Must equal LV_EXTFLASH_DECODER_MAGIC.        */
-    uint32_t  ext_offset;  /**< Byte offset within the LVGL sub-region.      */
-    uint16_t  width;       /**< Pixel columns.                               */
-    uint16_t  height;      /**< Pixel rows.                                  */
-    uint8_t   px_size;     /**< Bytes per pixel (3 for RGB565+alpha).        */
-    uint8_t   reserved[3]; /**< Padding for natural alignment.               */
+    UINT32_t  magic;       /**< Must equal LV_EXTFLASH_DECODER_MAGIC.        */
+    UINT32_t  ext_offset;  /**< Byte offset within the LVGL sub-region.      */
+    UINT16_t  width;       /**< Pixel columns.                               */
+    UINT16_t  height;      /**< Pixel rows.                                  */
+    UINT8_t   px_size;     /**< Bytes per pixel (3 for RGB565+alpha).        */
+    UINT8_t   reserved[3]; /**< Padding for natural alignment.               */
 } lv_extflash_meta_t;
 //******************************* Declaring *********************************//
 

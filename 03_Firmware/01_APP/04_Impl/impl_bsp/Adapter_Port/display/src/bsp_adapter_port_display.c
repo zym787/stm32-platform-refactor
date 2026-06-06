@@ -45,7 +45,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include <stddef.h>
+#include "board_types.h"
 
 #include "bsp_adapter_port_display.h"
 #include "bsp_wrapper_display.h"
@@ -62,7 +62,7 @@
 static bsp_st7789_driver_t s_st7789_drv;
 
 /* True once bsp_st7789_driver_inst() has populated s_st7789_drv. */
-static bool s_inst_ok = false;
+static BOOL s_inst_ok = false;
 //******************************** Variables ********************************//
 
 //******************************* Functions *********************************//
@@ -162,7 +162,7 @@ static platform_err_t st7789_status_to_platform(st7789_status_t st)
  * @brief   Forward fill-screen request to the ST7789 driver.
  */
 static platform_err_t display_fill_color_adapter(
-    struct _drv_display_t *const driver_instance, uint16_t color)
+    struct _drv_display_t *const driver_instance, UINT16_t color)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_fill_color)
@@ -178,7 +178,7 @@ static platform_err_t display_fill_color_adapter(
  */
 static platform_err_t display_draw_pixel_adapter(
     struct _drv_display_t *const driver_instance,
-    uint16_t x, uint16_t y, uint16_t color)
+    UINT16_t x, UINT16_t y, UINT16_t color)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_draw_pixel)
@@ -194,8 +194,8 @@ static platform_err_t display_draw_pixel_adapter(
  */
 static platform_err_t display_fill_region_adapter(
     struct _drv_display_t *const driver_instance,
-    uint16_t x_start, uint16_t y_start,
-    uint16_t x_end,   uint16_t y_end, uint16_t color)
+    UINT16_t x_start, UINT16_t y_start,
+    UINT16_t x_end,   UINT16_t y_end, UINT16_t color)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_fill_region)
@@ -212,7 +212,7 @@ static platform_err_t display_fill_region_adapter(
  */
 static platform_err_t display_draw_line_adapter(
     struct _drv_display_t *const driver_instance,
-    uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color)
+    UINT16_t x0, UINT16_t y0, UINT16_t x1, UINT16_t y1, UINT16_t color)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_draw_line)
@@ -228,7 +228,7 @@ static platform_err_t display_draw_line_adapter(
  */
 static platform_err_t display_draw_rectangle_adapter(
     struct _drv_display_t *const driver_instance,
-    uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color)
+    UINT16_t x0, UINT16_t y0, UINT16_t x1, UINT16_t y1, UINT16_t color)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_draw_rectangle)
@@ -244,7 +244,7 @@ static platform_err_t display_draw_rectangle_adapter(
  */
 static platform_err_t display_draw_circle_adapter(
     struct _drv_display_t *const driver_instance,
-    uint16_t x_center, uint16_t y_center, uint16_t radius, uint16_t color)
+    UINT16_t x_center, UINT16_t y_center, UINT16_t radius, UINT16_t color)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_draw_circle)
@@ -260,8 +260,8 @@ static platform_err_t display_draw_circle_adapter(
  */
 static platform_err_t display_draw_image_adapter(
     struct _drv_display_t *const driver_instance,
-    uint16_t x_start, uint16_t y_start,
-    uint16_t w, uint16_t h, uint16_t const *bitmap)
+    UINT16_t x_start, UINT16_t y_start,
+    UINT16_t w, UINT16_t h, UINT16_t const *bitmap)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_draw_image)
@@ -276,7 +276,7 @@ static platform_err_t display_draw_image_adapter(
  * @brief   Forward invert-colors request to the ST7789 driver.
  */
 static platform_err_t invert_colors_adapter(
-    struct _drv_display_t *const driver_instance, uint8_t invert)
+    struct _drv_display_t *const driver_instance, UINT8_t invert)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_invert_colors)
@@ -293,7 +293,7 @@ static platform_err_t invert_colors_adapter(
  */
 static platform_err_t display_draw_char_adapter(
     struct _drv_display_t *const driver_instance,
-    uint16_t x, uint16_t y, char ch, uint16_t color, uint16_t bg_color)
+    UINT16_t x, UINT16_t y, char ch, UINT16_t color, UINT16_t bg_color)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_draw_char)
@@ -309,7 +309,7 @@ static platform_err_t display_draw_char_adapter(
  */
 static platform_err_t display_draw_string_adapter(
     struct _drv_display_t *const driver_instance,
-    uint16_t x, uint16_t y, char const *str, uint16_t color, uint16_t bg_color)
+    UINT16_t x, UINT16_t y, char const *str, UINT16_t color, UINT16_t bg_color)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_draw_string)
@@ -326,7 +326,7 @@ static platform_err_t display_draw_string_adapter(
  */
 static platform_err_t display_draw_filled_rectangle_adapter(
     struct _drv_display_t *const driver_instance,
-    uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color)
+    UINT16_t x0, UINT16_t y0, UINT16_t x1, UINT16_t y1, UINT16_t color)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_draw_filled_rectangle)
@@ -342,8 +342,8 @@ static platform_err_t display_draw_filled_rectangle_adapter(
  */
 static platform_err_t display_draw_filled_triangle_adapter(
     struct _drv_display_t *const driver_instance,
-    uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1,
-    uint16_t x2, uint16_t y2, uint16_t color)
+    UINT16_t x0, UINT16_t y0, UINT16_t x1, UINT16_t y1,
+    UINT16_t x2, UINT16_t y2, UINT16_t color)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_draw_filled_triangle)
@@ -359,7 +359,7 @@ static platform_err_t display_draw_filled_triangle_adapter(
  */
 static platform_err_t display_draw_filled_circle_adapter(
     struct _drv_display_t *const driver_instance,
-    uint16_t x_center, uint16_t y_center, uint16_t radius, uint16_t color)
+    UINT16_t x_center, UINT16_t y_center, UINT16_t radius, UINT16_t color)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_draw_filled_circle)
@@ -374,7 +374,7 @@ static platform_err_t display_draw_filled_circle_adapter(
  * @brief   Forward tear-effect request to the ST7789 driver.
  */
 static platform_err_t display_tear_effect_adapter(
-    struct _drv_display_t *const driver_instance, uint8_t enable)
+    struct _drv_display_t *const driver_instance, UINT8_t enable)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_tear_effect)

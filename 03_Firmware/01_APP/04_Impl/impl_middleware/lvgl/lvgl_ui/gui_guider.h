@@ -13,13 +13,14 @@
 extern "C" {
 #endif
 
+#include "board_types.h"
 #include "lvgl.h"
 
 typedef struct
 {
   
 	lv_obj_t *Clock_1;
-	bool Clock_1_del;
+	BOOL Clock_1_del;
 	lv_obj_t *Clock_1_label_1;
 	lv_obj_t *Clock_1_arc_1;
 	lv_obj_t *Clock_1_arc_2;
@@ -55,7 +56,7 @@ typedef struct
 	lv_obj_t *Clock_1_label_12;
 	lv_obj_t *Clock_1_cont_2;
 	lv_obj_t *Clock_2;
-	bool Clock_2_del;
+	BOOL Clock_2_del;
 	lv_obj_t *Clock_2_img_1;
 	lv_obj_t *Clock_2_label_1;
 	lv_obj_t *Clock_2_label_2;
@@ -76,7 +77,7 @@ typedef struct
 	lv_obj_t *Clock_2_label_3;
 	lv_obj_t *Clock_2_cont_2;
 	lv_obj_t *Clock_3;
-	bool Clock_3_del;
+	BOOL Clock_3_del;
 	lv_obj_t *Clock_3_analog_clock_1;
 	lv_obj_t *Clock_3_img_1;
 	lv_obj_t *Clock_3_img_2;
@@ -105,7 +106,7 @@ typedef struct
 	lv_obj_t *Clock_3_label_3;
 	lv_obj_t *Clock_3_cont_4;
 	lv_obj_t *top_lap;
-	bool top_lap_del;
+	BOOL top_lap_del;
 	lv_obj_t *top_lap_label_1;
 	lv_obj_t *top_lap_img_1;
 	lv_obj_t *top_lap_cont_1;
@@ -118,7 +119,7 @@ typedef struct
 	lv_obj_t *top_lap_img_5;
 	lv_obj_t *top_lap_slider_1;
 	lv_obj_t *under_up;
-	bool under_up_del;
+	BOOL under_up_del;
 	lv_obj_t *under_up_img_1;
 	lv_obj_t *under_up_img_6;
 	lv_obj_t *under_up_img_2;
@@ -141,11 +142,11 @@ typedef void (*ui_setup_scr_t)(lv_ui * ui);
 
 void ui_init_style(lv_style_t * style);
 
-void ui_load_scr_animation(lv_ui *ui, lv_obj_t ** new_scr, bool new_scr_del, bool * old_scr_del, ui_setup_scr_t setup_scr,
-                           lv_scr_load_anim_t anim_type, uint32_t time, uint32_t delay, bool is_clean, bool auto_del);
+void ui_load_scr_animation(lv_ui *ui, lv_obj_t ** new_scr, BOOL new_scr_del, BOOL * old_scr_del, ui_setup_scr_t setup_scr,
+                           lv_scr_load_anim_t anim_type, UINT32_t time, UINT32_t delay, BOOL is_clean, BOOL auto_del);
 
-void ui_animation(void * var, int32_t duration, int32_t delay, int32_t start_value, int32_t end_value, lv_anim_path_cb_t path_cb,
-                       uint16_t repeat_cnt, uint32_t repeat_delay, uint32_t playback_time, uint32_t playback_delay,
+void ui_animation(void * var, INT32_t duration, INT32_t delay, INT32_t start_value, INT32_t end_value, lv_anim_path_cb_t path_cb,
+                       UINT16_t repeat_cnt, UINT32_t repeat_delay, UINT32_t playback_time, UINT32_t playback_delay,
                        lv_anim_exec_xcb_t exec_cb, lv_anim_start_cb_t start_cb, lv_anim_ready_cb_t ready_cb, lv_anim_deleted_cb_t deleted_cb);
 
 

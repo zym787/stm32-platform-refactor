@@ -21,6 +21,7 @@
 #define __BSP_ADAPTER_PORT_HEART_RATE_H__
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_wrapper_heart_rate.h"
 //******************************** Includes *********************************//
 
@@ -33,7 +34,7 @@
  *
  * @return   true on success.
  * */
-bool drv_adapter_heart_rate_register(void);
+BOOL drv_adapter_heart_rate_register(void);
 //******************************* Functions *********************************//
 
 #endif /* __BSP_ADAPTER_PORT_HEART_RATE_H__ */

@@ -21,6 +21,7 @@
 #define __BSP_TEMP_HUMI_XXX_HANDLER_H__
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_aht21_driver.h"
 
 //******************************** Includes *********************************//
@@ -63,13 +64,13 @@ typedef enum
  */
 typedef struct
 {
-    float                       temperature;
-    float                          humidity;
-    uint32_t                       lifetime;
-    uint32_t                      timestamp;
+    FLOAT                       temperature;
+    FLOAT                          humidity;
+    UINT32_t                       lifetime;
+    UINT32_t                      timestamp;
     temp_humi_data_type_event_t  event_type;
     void                        *p_user_ctx;
-    void   (*pf_callback)(float *, float *, void*);
+    void   (*pf_callback)(FLOAT *, FLOAT *, void*);
 } temp_humi_xxx_event_t;
 //******************************** Typedefs *********************************//
 
@@ -81,21 +82,21 @@ typedef struct
 {   
     /** Create a message queue */
     temp_humi_status_t (*pf_os_queue_create) (
-                                                  uint32_t const      item_num,
-                                                  uint32_t const     item_size,
+                                                  UINT32_t const      item_num,
+                                                  UINT32_t const     item_size,
                                                   void **  const queue_handler
                                              );
     /** Put message into queue */
     temp_humi_status_t (*pf_os_queue_put   ) (
                                                   void *  const  queue_handler,
                                                   void *  const           item,
-                                                  uint32_t             timeout
+                                                  UINT32_t             timeout
                                              );    
     /** Get message from queue */
     temp_humi_status_t (*pf_os_queue_get   ) (
                                                   void *  const  queue_handler,
                                                   void *  const            msg,
-                                                  uint32_t             timeout
+                                                  UINT32_t             timeout
                                              );
     /** Delete queue */
     temp_humi_status_t (*pf_os_queue_delete) (
@@ -150,9 +151,9 @@ typedef struct
     void                          *     event_queue_handle;
 
     /*       Timestamp of last temperature reading       */
-    uint32_t                                last_temp_tick;
+    UINT32_t                                last_temp_tick;
     /*        Timestamp of last humidity reading         */
-    uint32_t                                last_humi_tick;
+    UINT32_t                                last_humi_tick;
 } bsp_temp_humi_xxx_handler_t;
 //******************************** Classes **********************************//
 

@@ -27,6 +27,7 @@
 #define __BSP_ADAPTER_PORT_MOTION_H__
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_wrapper_motion.h"
 //******************************** Includes *********************************//
 
@@ -38,7 +39,7 @@
  * @return  true  - Registration successful.
  *          false - Mount failed (index out of range or NULL vtable).
  */
-bool drv_adapter_motion_register(void);
+BOOL drv_adapter_motion_register(void);
 //******************************* Declaring *********************************//
 
 #endif /* __BSP_ADAPTER_PORT_MOTION_H__ */

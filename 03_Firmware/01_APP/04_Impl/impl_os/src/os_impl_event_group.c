@@ -18,6 +18,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "osal_internal_event_group.h"
 #include "osal_error.h"
 
@@ -52,7 +53,7 @@ static TickType_t osal_eg_timeout_to_ticks(osal_tick_type_t timeout)
  *
  * @return OSAL_SUCCESS on success, OSAL_EVT_GROUP_FAILURE on failure.
  */
-int32_t osal_event_group_create_impl(osal_event_group_handle_t *p_handle)
+INT32_t osal_event_group_create_impl(osal_event_group_handle_t *p_handle)
 {
     EventGroupHandle_t eg_handle;
 
@@ -84,8 +85,8 @@ void osal_event_group_delete_impl(osal_event_group_handle_t handle)
  *
  * @return OSAL_SUCCESS on success.
  */
-int32_t osal_event_group_set_bits_impl(osal_event_group_handle_t handle,
-                                        uint32_t                  bits)
+INT32_t osal_event_group_set_bits_impl(osal_event_group_handle_t handle,
+                                        UINT32_t                  bits)
 {
     xEventGroupSetBits((EventGroupHandle_t)handle, (EventBits_t)bits);
     return OSAL_SUCCESS;
@@ -99,8 +100,8 @@ int32_t osal_event_group_set_bits_impl(osal_event_group_handle_t handle,
  *
  * @return OSAL_SUCCESS on success.
  */
-int32_t osal_event_group_clear_bits_impl(osal_event_group_handle_t handle,
-                                          uint32_t                  bits)
+INT32_t osal_event_group_clear_bits_impl(osal_event_group_handle_t handle,
+                                          UINT32_t                  bits)
 {
     xEventGroupClearBits((EventGroupHandle_t)handle, (EventBits_t)bits);
     return OSAL_SUCCESS;
@@ -118,12 +119,12 @@ int32_t osal_event_group_clear_bits_impl(osal_event_group_handle_t handle,
  *
  * @return OSAL_SUCCESS if condition satisfied, OSAL_ERROR_TIMEOUT otherwise.
  */
-int32_t osal_event_group_wait_bits_impl(osal_event_group_handle_t handle,
-                                         uint32_t                  bits_to_wait,
-                                         bool                      clear_on_exit,
-                                         bool                      wait_for_all,
+INT32_t osal_event_group_wait_bits_impl(osal_event_group_handle_t handle,
+                                         UINT32_t                  bits_to_wait,
+                                         BOOL                      clear_on_exit,
+                                         BOOL                      wait_for_all,
                                          osal_tick_type_t          timeout,
-                                         uint32_t                 *p_bits_set)
+                                         UINT32_t                 *p_bits_set)
 {
     EventBits_t result;
 
@@ -136,7 +137,7 @@ int32_t osal_event_group_wait_bits_impl(osal_event_group_handle_t handle,
 
     if (p_bits_set != NULL)
     {
-        *p_bits_set = (uint32_t)result;
+        *p_bits_set = (UINT32_t)result;
     }
 
     if (wait_for_all)
@@ -166,9 +167,9 @@ int32_t osal_event_group_wait_bits_impl(osal_event_group_handle_t handle,
  *
  * @return OSAL_SUCCESS on success, OSAL_EVT_GROUP_FAILURE on failure.
  */
-int32_t osal_event_group_set_bits_from_isr_impl(
+INT32_t osal_event_group_set_bits_from_isr_impl(
     osal_event_group_handle_t  handle,
-    uint32_t                   bits,
+    UINT32_t                   bits,
     osal_base_type_t          *p_higher_priority_task_woken)
 {
     BaseType_t result;

@@ -16,6 +16,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_wt588_handler.h"
 
 //******************************** Includes *********************************//
@@ -35,7 +36,7 @@
 
 static bsp_wt588_handler_t s_wt588_handler_inst         = {0};
 static list_handler_t      s_play_request_list_instance = {0};
-static volatile bool       s_stop_requested             = false;
+static volatile BOOL       s_stop_requested             = false;
 
 //******************************** Defines **********************************//
 
@@ -86,14 +87,14 @@ void wt588_handler_thread(void * const args)
         }
     }
 
-    uint32_t            add_cnt         =     0;
-    uint32_t            finish_cnt      =     0;
+    UINT32_t            add_cnt         =     0;
+    UINT32_t            finish_cnt      =     0;
     list_voice_node_t  *p_node_add      =  NULL;
     list_voice_node_t  *p_node_del      =  NULL;
     list_voice_node_t  *p_node_highest  =  NULL;
-    bool                is_higher_node  = false;
-    static uint8_t      s_prev_cur_pri  =   15U;
-    static uint8_t      s_prev_high_pri =   15U;
+    BOOL                is_higher_node  = false;
+    static UINT8_t      s_prev_cur_pri  =   15U;
+    static UINT8_t      s_prev_high_pri =   15U;
 
     DEBUG_OUT(i, WT588_HANDLER_LOG_TAG, "wt588_handler_thread running");
     while (1)
@@ -109,9 +110,9 @@ void wt588_handler_thread(void * const args)
             list_voice_node_t      *p_drain = NULL;
             wt_os_heap_interface_t *p_heap  = HANDLER_OS_INTERFACE(
                                     &s_wt588_handler_inst)->p_os_heap_interface;
-            uint32_t drain_cnt = HANDLER_OS_INTERFACE(&s_wt588_handler_inst)->
+            UINT32_t drain_cnt = HANDLER_OS_INTERFACE(&s_wt588_handler_inst)->
                 pf_os_queue_count(s_wt588_handler_inst.voice_add_queue);
-            for (uint32_t j = 0; j < drain_cnt; j++)
+            for (UINT32_t j = 0; j < drain_cnt; j++)
             {
                 HANDLER_OS_INTERFACE(&s_wt588_handler_inst)->pf_os_queue_get(
                     s_wt588_handler_inst.voice_add_queue, &p_drain, 0);
@@ -121,7 +122,7 @@ void wt588_handler_thread(void * const args)
             // Drain voice_finish_queue (executor may have finished before stop)
             drain_cnt = HANDLER_OS_INTERFACE(&s_wt588_handler_inst)->
                 pf_os_queue_count(s_wt588_handler_inst.voice_finish_queue);
-            for (uint32_t j = 0; j < drain_cnt; j++)
+            for (UINT32_t j = 0; j < drain_cnt; j++)
             {
                 HANDLER_OS_INTERFACE(&s_wt588_handler_inst)->pf_os_queue_get(
                     s_wt588_handler_inst.voice_finish_queue, &p_drain, 0);
@@ -170,7 +171,7 @@ void wt588_handler_thread(void * const args)
         }
 
         // add new play requests to the list and sort by priority
-        for (uint32_t i = 0; i < add_cnt; i++)
+        for (UINT32_t i = 0; i < add_cnt; i++)
         {
             // get node from queue
             HANDLER_OS_INTERFACE(&s_wt588_handler_inst)->\
@@ -199,7 +200,7 @@ void wt588_handler_thread(void * const args)
             DEBUG_OUT(d, WT588_HANDLER_LOG_TAG,
                       "delete play request count in queue: %lu", finish_cnt);
         }
-        for (uint32_t i = 0; i < finish_cnt; i++)
+        for (UINT32_t i = 0; i < finish_cnt; i++)
         {
             HANDLER_OS_INTERFACE(&s_wt588_handler_inst)
                 ->pf_os_queue_get(s_wt588_handler_inst.voice_finish_queue,
@@ -229,7 +230,7 @@ void wt588_handler_thread(void * const args)
 
         // if the list is empty, reset current and highest priority
         // to lowest level (15)
-        bool is_empty = HANLDER_LINK_LIST(s_wt588_handler_inst)->\
+        BOOL is_empty = HANLDER_LINK_LIST(s_wt588_handler_inst)->\
         pf_list_is_empty(HANLDER_LINK_LIST(s_wt588_handler_inst));
         if (is_empty)
         {
@@ -238,9 +239,9 @@ void wt588_handler_thread(void * const args)
             HANLDER_LINK_LIST(s_wt588_handler_inst)->highest_priority = 15;
         }
 
-        uint8_t cur_pri  = HANLDER_LINK_LIST(s_wt588_handler_inst)->\
+        UINT8_t cur_pri  = HANLDER_LINK_LIST(s_wt588_handler_inst)->\
                                                               current_priority;
-        uint8_t high_pri = HANLDER_LINK_LIST(s_wt588_handler_inst)->\
+        UINT8_t high_pri = HANLDER_LINK_LIST(s_wt588_handler_inst)->\
                                                               highest_priority;
         if ((cur_pri != s_prev_cur_pri) || (high_pri != s_prev_high_pri))
         {
@@ -272,8 +273,8 @@ static void wt588_executor_thread(void *const args)
     DEBUG_OUT(i, WT588_HANDLER_LOG_TAG, "wt588_executor_thread running");
 
     list_voice_node_t *p_node_exec = NULL;
-    uint8_t            fail_cnt    = 0;
-    bool               busy_found  = false;
+    UINT8_t            fail_cnt    = 0;
+    BOOL               busy_found  = false;
 
     while (1)
     {
@@ -327,7 +328,7 @@ retry_play:
         s_wt588_handler_inst.p_wt588_driver->pf_set_volume(
             s_wt588_handler_inst.p_wt588_driver, p_node_exec->volume);
 
-        bool is_preempting = s_wt588_handler_inst.p_wt588_driver->pf_is_busy(
+        BOOL is_preempting = s_wt588_handler_inst.p_wt588_driver->pf_is_busy(
                                     s_wt588_handler_inst.p_wt588_driver);
         if (!is_preempting)
         {
@@ -353,7 +354,7 @@ retry_play:
                  p_node_exec->volume, p_node_exec->priority);
 
         busy_found = false;
-        for (uint16_t poll = 0; poll < WT588_BUSY_POLL_CNT; poll++)
+        for (UINT16_t poll = 0; poll < WT588_BUSY_POLL_CNT; poll++)
         {
             // Abort poll early if stop is requested
             if (s_stop_requested)
@@ -431,7 +432,7 @@ retry_play:
 static void wt588_busy_detection_thread(void *const args)
 {
     list_voice_node_t *p_node_busy     = NULL;
-    bool               is_busy          = false;
+    BOOL               is_busy          = false;
     wt_handler_status_t ret = WT_HANDLER_ERROR;
 
     DEBUG_OUT(i, WT588_HANDLER_LOG_TAG, "wt588_busy_detection_thread running");
@@ -807,9 +808,9 @@ wt_handler_status_t wt588_handler_inst(
  * @return wt_handler_status_t WT_HANDLER_OK if queued successfully, error code otherwise
  *
  * */
-wt_handler_status_t wt588_handler_play_request(uint8_t volume_addr,
-                                               uint8_t volume,
-                                               uint8_t priority)
+wt_handler_status_t wt588_handler_play_request(UINT8_t volume_addr,
+                                               UINT8_t volume,
+                                               UINT8_t priority)
 {
     wt_handler_status_t ret = WT_HANDLER_OK;
 

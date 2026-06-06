@@ -28,8 +28,7 @@
 #define __BSP_ST7789_DRIVER_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
-#include <stdbool.h>
+#include "board_types.h"
 
 //******************************** Includes *********************************//
 
@@ -53,33 +52,33 @@ typedef struct
 {
     st7789_status_t (*pf_spi_init             )(void);
     st7789_status_t (*pf_spi_deinit           )(void);
-    st7789_status_t (*pf_spi_transmit         )( uint8_t const *p_data, 
-                                                uint32_t   data_length);
-    st7789_status_t (*pf_spi_transmit_dma     )( uint8_t const *p_data, 
-                                                uint32_t   data_length);
-    st7789_status_t (*pf_spi_wait_dma_complete)(uint32_t    timeout_ms);
-    st7789_status_t (*pf_spi_write_cs_pin     )( uint8_t         state);
-    st7789_status_t (*pf_spi_write_dc_pin     )( uint8_t         state);
-    st7789_status_t (*pf_spi_write_rst_pin    )( uint8_t         state);
+    st7789_status_t (*pf_spi_transmit         )( UINT8_t const *p_data, 
+                                                UINT32_t   data_length);
+    st7789_status_t (*pf_spi_transmit_dma     )( UINT8_t const *p_data, 
+                                                UINT32_t   data_length);
+    st7789_status_t (*pf_spi_wait_dma_complete)(UINT32_t    timeout_ms);
+    st7789_status_t (*pf_spi_write_cs_pin     )( UINT8_t         state);
+    st7789_status_t (*pf_spi_write_dc_pin     )( UINT8_t         state);
+    st7789_status_t (*pf_spi_write_rst_pin    )( UINT8_t         state);
 } st7789_spi_interface_t;
 
 typedef struct 
 {
-    uint32_t (*pf_get_tick_ms)(void);
-    void     (*pf_delay_ms   )(uint32_t ms);
+    UINT32_t (*pf_get_tick_ms)(void);
+    void     (*pf_delay_ms   )(UINT32_t ms);
 } st7789_timebase_interface_t;
 
 typedef struct
 {
-    void (*pf_os_delay_ms)(uint32_t ms);
+    void (*pf_os_delay_ms)(UINT32_t ms);
 } st7789_os_interface_t;
 
 typedef struct
 {
-    uint16_t    width;        /*  Active width  in current orientation (px)  */
-    uint16_t   height;        /*  Active height in current orientation (px)  */
-    uint16_t x_offset;        /*  CASET offset for the specific panel        */
-    uint16_t y_offset;        /*  RASET offset for the specific panel        */
+    UINT16_t    width;        /*  Active width  in current orientation (px)  */
+    UINT16_t   height;        /*  Active height in current orientation (px)  */
+    UINT16_t x_offset;        /*  CASET offset for the specific panel        */
+    UINT16_t y_offset;        /*  RASET offset for the specific panel        */
 } st7789_panel_config_t;
 
 typedef struct
@@ -93,7 +92,7 @@ typedef struct
 struct bsp_st7789_driver
 {
     /************* Target of Internal Status *************/
-    bool                       is_init;
+    BOOL                       is_init;
 
     /************ Panel geometry / orientation ***********/
     st7789_panel_config_t                            panel;
@@ -108,100 +107,100 @@ struct bsp_st7789_driver
                                    bsp_st7789_driver_t *const driver_instance);
     st7789_status_t (*pf_st7789_fill_color     )(
                                    bsp_st7789_driver_t *const driver_instance, 
-                                              uint16_t                  color);
+                                              UINT16_t                  color);
     st7789_status_t (*pf_st7789_draw_pixel     )(
                                    bsp_st7789_driver_t *const driver_instance, 
-                                              uint16_t                      x,
-                                              uint16_t                      y,
-                                              uint16_t                  color);
+                                              UINT16_t                      x,
+                                              UINT16_t                      y,
+                                              UINT16_t                  color);
     st7789_status_t (*pf_st7789_fill_region    )(
                                    bsp_st7789_driver_t *const driver_instance, 
-                                              uint16_t                x_start,
-                                              uint16_t                y_start,
-                                              uint16_t                  x_end,
-                                              uint16_t                  y_end,
-                                              uint16_t                  color);
+                                              UINT16_t                x_start,
+                                              UINT16_t                y_start,
+                                              UINT16_t                  x_end,
+                                              UINT16_t                  y_end,
+                                              UINT16_t                  color);
     st7789_status_t (*pf_st7789_draw_pixel_4px )(
                                    bsp_st7789_driver_t *const driver_instance,
-                                              uint16_t                      x,
-                                              uint16_t                      y,
-                                              uint16_t                  color);
+                                              UINT16_t                      x,
+                                              UINT16_t                      y,
+                                              UINT16_t                  color);
 
     // graphic functions
     st7789_status_t (*pf_st7789_draw_line      )(
                                    bsp_st7789_driver_t *const driver_instance,
-                                              uint16_t                     x0,
-                                              uint16_t                     y0,
-                                              uint16_t                     x1,
-                                              uint16_t                     y1,
-                                              uint16_t                  color);
+                                              UINT16_t                     x0,
+                                              UINT16_t                     y0,
+                                              UINT16_t                     x1,
+                                              UINT16_t                     y1,
+                                              UINT16_t                  color);
     st7789_status_t (*pf_st7789_draw_rectangle )(
                                    bsp_st7789_driver_t *const driver_instance,
-                                              uint16_t                     x0,
-                                              uint16_t                     y0,
-                                              uint16_t                     x1,
-                                              uint16_t                     y1,
-                                              uint16_t                  color);
+                                              UINT16_t                     x0,
+                                              UINT16_t                     y0,
+                                              UINT16_t                     x1,
+                                              UINT16_t                     y1,
+                                              UINT16_t                  color);
     st7789_status_t (*pf_st7789_draw_circle    )(
                                    bsp_st7789_driver_t *const driver_instance,
-                                              uint16_t               x_center,
-                                              uint16_t               y_center,
-                                              uint16_t                 radius,
-                                              uint16_t                  color);
+                                              UINT16_t               x_center,
+                                              UINT16_t               y_center,
+                                              UINT16_t                 radius,
+                                              UINT16_t                  color);
     st7789_status_t (*pf_st7789_draw_image     )(
                                    bsp_st7789_driver_t *const driver_instance,
-                                              uint16_t                x_start,
-                                              uint16_t                y_start,
-                                              uint16_t                      w,
-                                              uint16_t                      h,
-                                              uint16_t  const*         bitmap);
+                                              UINT16_t                x_start,
+                                              UINT16_t                y_start,
+                                              UINT16_t                      w,
+                                              UINT16_t                      h,
+                                              UINT16_t  const*         bitmap);
     st7789_status_t (*pf_invert_colors         )(
                                    bsp_st7789_driver_t *const driver_instance,
-                                               uint8_t                 invert);
+                                               UINT8_t                 invert);
 
     // text functions
     st7789_status_t (*pf_st7789_draw_char      )(
                                    bsp_st7789_driver_t *const driver_instance,
-                                              uint16_t                      x,
-                                              uint16_t                      y,
+                                              UINT16_t                      x,
+                                              UINT16_t                      y,
                                                   char                     ch,
-                                              uint16_t                  color, 
-                                              uint16_t               bg_color);
+                                              UINT16_t                  color, 
+                                              UINT16_t               bg_color);
     st7789_status_t (*pf_st7789_draw_string    )(
                                    bsp_st7789_driver_t *const driver_instance,
-                                              uint16_t                      x,
-                                              uint16_t                      y,
+                                              UINT16_t                      x,
+                                              UINT16_t                      y,
                                                   char  const*            str, 
-                                              uint16_t                  color, 
-                                              uint16_t               bg_color);
+                                              UINT16_t                  color, 
+                                              UINT16_t               bg_color);
 
     // extended functions
     st7789_status_t (*pf_st7789_draw_filled_rectangle)(
                                    bsp_st7789_driver_t *const driver_instance,
-                                              uint16_t                     x0,
-                                              uint16_t                     y0,
-                                              uint16_t                     x1,
-                                              uint16_t                     y1, 
-                                              uint16_t                  color);
+                                              UINT16_t                     x0,
+                                              UINT16_t                     y0,
+                                              UINT16_t                     x1,
+                                              UINT16_t                     y1, 
+                                              UINT16_t                  color);
     st7789_status_t (*pf_st7789_draw_filled_triangle )(
                                    bsp_st7789_driver_t *const driver_instance,
-                                              uint16_t                     x0,
-                                              uint16_t                     y0,
-                                              uint16_t                     x1,
-                                              uint16_t                     y1, 
-                                              uint16_t                     x2, 
-                                              uint16_t                     y2, 
-                                              uint16_t                  color);
+                                              UINT16_t                     x0,
+                                              UINT16_t                     y0,
+                                              UINT16_t                     x1,
+                                              UINT16_t                     y1, 
+                                              UINT16_t                     x2, 
+                                              UINT16_t                     y2, 
+                                              UINT16_t                  color);
     st7789_status_t (*pf_st7789_draw_filled_circle   )(
                                    bsp_st7789_driver_t *const driver_instance,
-                                              uint16_t               x_center,
-                                              uint16_t               y_center,
-                                              uint16_t                 radius,
-                                              uint16_t                  color);
+                                              UINT16_t               x_center,
+                                              UINT16_t               y_center,
+                                              UINT16_t                 radius,
+                                              UINT16_t                  color);
 
     st7789_status_t (*pf_st7789_tear_effect          )(
                                    bsp_st7789_driver_t *const driver_instance,
-                                               uint8_t                 enable);
+                                               UINT8_t                 enable);
 };
 
 //******************************** Defines **********************************//

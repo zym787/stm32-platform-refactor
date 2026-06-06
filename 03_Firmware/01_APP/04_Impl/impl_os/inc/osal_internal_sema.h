@@ -19,6 +19,7 @@
 #define __OSAL_INTERNAL_SEMA_H__
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "osal_common_types.h"
 
 //******************************** Includes *********************************//
@@ -32,8 +33,8 @@
  *
  * @return OSAL status code.
  */
-int32_t osal_sema_create_impl       (osal_sema_handle_t * p_sema_handle,
-                                               uint32_t   initial_count);
+INT32_t osal_sema_create_impl       (osal_sema_handle_t * p_sema_handle,
+                                               UINT32_t   initial_count);
 
 /**
  * @brief Delete semaphore object.
@@ -50,7 +51,7 @@ void    osal_sema_delete_impl       (osal_sema_handle_t     sema_handle);
  *
  * @return OSAL status code.
  */
-int32_t osal_sema_take_impl         (osal_sema_handle_t     sema_handle,
+INT32_t osal_sema_take_impl         (osal_sema_handle_t     sema_handle,
                                        osal_tick_type_t         timeout);
 
 /**
@@ -60,7 +61,7 @@ int32_t osal_sema_take_impl         (osal_sema_handle_t     sema_handle,
  *
  * @return OSAL status code.
  */
-int32_t osal_sema_give_impl         (osal_sema_handle_t     sema_handle);
+INT32_t osal_sema_give_impl         (osal_sema_handle_t     sema_handle);
 
 /**
  * @brief Give semaphore object from ISR.
@@ -70,7 +71,7 @@ int32_t osal_sema_give_impl         (osal_sema_handle_t     sema_handle);
  *
  * @return OSAL status code.
  */
-int32_t osal_sema_give_from_isr_impl(osal_sema_handle_t     sema_handle,
+INT32_t osal_sema_give_from_isr_impl(osal_sema_handle_t     sema_handle,
                                        osal_base_type_t * \
                                            p_higher_priority_task_woken);
 //******************************* Functions *********************************//

@@ -37,8 +37,7 @@
 
 #include "lvgl.h"
 
-#include <stdint.h>
-#include <stddef.h>
+#include "board_types.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
@@ -102,7 +101,7 @@ static lv_res_t lv_extflash_open_cb(lv_img_decoder_t      *decoder,
     }
 
     /* Cast away const for storage in user_data; read_line_cb only reads. */
-    dsc->user_data = (void *)(uintptr_t)meta;
+    dsc->user_data = (void *)(UINTPTR_t)meta;
     dsc->img_data  = NULL;
     return LV_RES_OK;
 }
@@ -117,7 +116,7 @@ static lv_res_t lv_extflash_read_line_cb(lv_img_decoder_t      *decoder,
                                          lv_coord_t             x,
                                          lv_coord_t             y,
                                          lv_coord_t             len,
-                                         uint8_t               *buf)
+                                         UINT8_t               *buf)
 {
     LV_UNUSED(decoder);
 
@@ -128,10 +127,10 @@ static lv_res_t lv_extflash_read_line_cb(lv_img_decoder_t      *decoder,
         return LV_RES_INV;
     }
 
-    uint32_t bytes_per_line = (uint32_t)meta->width * meta->px_size;
-    uint32_t row_offset     = (uint32_t)y * bytes_per_line
-                            + (uint32_t)x * meta->px_size;
-    uint32_t bytes          = (uint32_t)len * meta->px_size;
+    UINT32_t bytes_per_line = (UINT32_t)meta->width * meta->px_size;
+    UINT32_t row_offset     = (UINT32_t)y * bytes_per_line
+                            + (UINT32_t)x * meta->px_size;
+    UINT32_t bytes          = (UINT32_t)len * meta->px_size;
 
     ext_flash_status_t st = Read_LvglData(meta->ext_offset + row_offset,
                                           bytes, buf);

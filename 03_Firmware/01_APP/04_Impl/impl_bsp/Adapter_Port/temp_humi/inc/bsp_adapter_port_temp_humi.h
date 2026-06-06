@@ -33,6 +33,7 @@
 #define __BSP_ADAPTER_PORT_TEMP_HUMI_H__
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_wrapper_temp_humi.h"
 //******************************** Includes *********************************//
 
@@ -44,7 +45,7 @@
  *
  * @return true on success.
  */
-bool drv_adapter_temp_humi_register(void);
+BOOL drv_adapter_temp_humi_register(void);
 //******************************* Functions *********************************//
 
 #endif /* __BSP_ADAPTER_PORT_TEMP_HUMI_H__ */

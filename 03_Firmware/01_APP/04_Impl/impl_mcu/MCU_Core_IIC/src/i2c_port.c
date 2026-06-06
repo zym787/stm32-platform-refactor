@@ -19,6 +19,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "i2c_port.h"
 #include "Debug.h"
 
@@ -68,7 +69,7 @@ static i2c_port_t i2c_port[MCU_I2C_BUS_MAX] = {
 
 //******************************* Functions *********************************//
 static platform_err_t mcu_hard_i2c_bus_lock(mcu_i2c_bus_t bus,
-                                         uint32_t       timeout_ms)
+                                         UINT32_t       timeout_ms)
 {
     if (bus >= MCU_I2C_BUS_MAX)
     {
@@ -109,13 +110,13 @@ platform_err_t mcu_i2c_port_init(mcu_i2c_bus_t bus)
         return PLATFORM_OK;
     }
 
-    int32_t ret = osal_mutex_init(&i2c_port[bus].os_mutexid);
+    INT32_t ret = osal_mutex_init(&i2c_port[bus].os_mutexid);
     return (ret == 0) ? PLATFORM_OK : PLATFORM_ERR_GENERAL;
 }
 
-platform_err_t mcu_hard_i2c_send_byte(mcu_i2c_bus_t bus, uint16_t dev_addr,
-                                          uint8_t *data, uint16_t size,
-                                          uint32_t timeout)
+platform_err_t mcu_hard_i2c_send_byte(mcu_i2c_bus_t bus, UINT16_t dev_addr,
+                                          UINT8_t *data, UINT16_t size,
+                                          UINT32_t timeout)
 {
     if (bus >= MCU_I2C_BUS_MAX || NULL == data)
     {
@@ -145,8 +146,8 @@ platform_err_t mcu_hard_i2c_send_byte(mcu_i2c_bus_t bus, uint16_t dev_addr,
 }
 
 platform_err_t mcu_hard_i2c_receive_byte(mcu_i2c_bus_t bus,
-                                             uint16_t dev_addr, uint8_t *data,
-                                             uint16_t size, uint32_t timeout)
+                                             UINT16_t dev_addr, UINT8_t *data,
+                                             UINT16_t size, UINT32_t timeout)
 {
     if (bus >= MCU_I2C_BUS_MAX || NULL == data)
     {
@@ -175,10 +176,10 @@ platform_err_t mcu_hard_i2c_receive_byte(mcu_i2c_bus_t bus,
     return PLATFORM_OK;
 }
 
-platform_err_t mcu_hard_i2c_mem_write(mcu_i2c_bus_t bus, uint16_t dev_addr,
-                                          uint16_t mem_addr,
-                                          uint16_t mem_add_size, uint8_t *data,
-                                          uint16_t size, uint32_t timeout)
+platform_err_t mcu_hard_i2c_mem_write(mcu_i2c_bus_t bus, UINT16_t dev_addr,
+                                          UINT16_t mem_addr,
+                                          UINT16_t mem_add_size, UINT8_t *data,
+                                          UINT16_t size, UINT32_t timeout)
 {
     if (bus >= MCU_I2C_BUS_MAX || NULL == data)
     {
@@ -209,10 +210,10 @@ platform_err_t mcu_hard_i2c_mem_write(mcu_i2c_bus_t bus, uint16_t dev_addr,
     return PLATFORM_OK;
 }
 
-platform_err_t mcu_hard_i2c_mem_read(mcu_i2c_bus_t bus, uint16_t dev_addr,
-                                         uint16_t mem_addr,
-                                         uint16_t mem_add_size, uint8_t *data,
-                                         uint16_t size, uint32_t timeout)
+platform_err_t mcu_hard_i2c_mem_read(mcu_i2c_bus_t bus, UINT16_t dev_addr,
+                                         UINT16_t mem_addr,
+                                         UINT16_t mem_add_size, UINT8_t *data,
+                                         UINT16_t size, UINT32_t timeout)
 {
     if (bus >= MCU_I2C_BUS_MAX || NULL == data)
     {
@@ -244,9 +245,9 @@ platform_err_t mcu_hard_i2c_mem_read(mcu_i2c_bus_t bus, uint16_t dev_addr,
 }
 
 static platform_err_t mcu_hard_i2c_wait_dma_done(mcu_i2c_bus_t bus,
-                                                      uint32_t timeout)
+                                                      UINT32_t timeout)
 {
-    uint32_t start_tick = HAL_GetTick();
+    UINT32_t start_tick = HAL_GetTick();
 
     while (HAL_I2C_GetState(i2c_port[bus].hard_iic_handle) != HAL_I2C_STATE_READY)
     {
@@ -274,11 +275,11 @@ static platform_err_t mcu_hard_i2c_wait_dma_done(mcu_i2c_bus_t bus,
 }
 
 platform_err_t mcu_hard_i2c_mem_read_dma(mcu_i2c_bus_t bus,
-                                             uint16_t       dev_addr,
-                                             uint16_t       mem_addr,
-                                             uint16_t       mem_add_size,
-                                             uint8_t *data, uint16_t size,
-                                             uint32_t timeout)
+                                             UINT16_t       dev_addr,
+                                             UINT16_t       mem_addr,
+                                             UINT16_t       mem_add_size,
+                                             UINT8_t *data, UINT16_t size,
+                                             UINT32_t timeout)
 {
     if (bus >= MCU_I2C_BUS_MAX || NULL == data)
     {
@@ -333,7 +334,7 @@ platform_err_t mcu_soft_i2c_stop(mcu_i2c_bus_t bus)
     return PLATFORM_OK;
 }
 
-platform_err_t mcu_soft_i2c_send_byte(mcu_i2c_bus_t bus, uint8_t data)
+platform_err_t mcu_soft_i2c_send_byte(mcu_i2c_bus_t bus, UINT8_t data)
 {
     if (bus >= MCU_I2C_BUS_MAX)
     {
@@ -359,7 +360,7 @@ platform_err_t mcu_soft_i2c_wait_ack(mcu_i2c_bus_t bus)
     return PLATFORM_ERR_GENERAL;
 }
 
-platform_err_t mcu_soft_i2c_receive_byte(mcu_i2c_bus_t bus, uint8_t *data)
+platform_err_t mcu_soft_i2c_receive_byte(mcu_i2c_bus_t bus, UINT8_t *data)
 {
     if (bus >= MCU_I2C_BUS_MAX || NULL == data)
     {

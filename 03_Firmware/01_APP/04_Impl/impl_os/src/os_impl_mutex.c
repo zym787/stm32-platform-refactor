@@ -18,6 +18,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "osal_internal_mutex.h"
 #include "osal_error.h"
 
@@ -55,7 +56,7 @@ static TickType_t osal_mutex_timeout_to_ticks(osal_tick_type_t timeout)
  *
  * @return OSAL_SUCCESS on success, otherwise OSAL_ERROR.
  */
-int32_t osal_mutex_create_impl(osal_mutex_handle_t *p_mutex_handle)
+INT32_t osal_mutex_create_impl(osal_mutex_handle_t *p_mutex_handle)
 {
 	SemaphoreHandle_t mutex_handle;
 
@@ -95,7 +96,7 @@ void osal_mutex_delete_impl(osal_mutex_handle_t mutex_handle)
  * @return OSAL_SUCCESS on success, OSAL_ERR_IN_ISR in ISR context,
  *         OSAL_ERROR_TIMEOUT on timeout/failure.
  */
-int32_t osal_mutex_take_impl(osal_mutex_handle_t mutex_handle,
+INT32_t osal_mutex_take_impl(osal_mutex_handle_t mutex_handle,
 							 osal_tick_type_t timeout)
 {
 	BaseType_t result;
@@ -124,7 +125,7 @@ int32_t osal_mutex_take_impl(osal_mutex_handle_t mutex_handle,
  * @return OSAL_SUCCESS on success, OSAL_ERR_IN_ISR in ISR context,
  *         otherwise OSAL_ERROR.
  */
-int32_t osal_mutex_give_impl(osal_mutex_handle_t mutex_handle)
+INT32_t osal_mutex_give_impl(osal_mutex_handle_t mutex_handle)
 {
 	BaseType_t result;
 

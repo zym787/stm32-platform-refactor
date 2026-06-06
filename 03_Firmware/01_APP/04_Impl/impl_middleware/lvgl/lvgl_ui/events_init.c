@@ -7,6 +7,7 @@
 * terms, then you may not retain, install, activate or otherwise use the software.
 */
 
+#include "board_types.h"
 #include "events_init.h"
 #include <stdio.h>
 #include "lvgl.h"
@@ -15,16 +16,16 @@
 #include "freemaster_client.h"
 #endif
 
-bool Clock_btn_1_is_click=0;
-bool Clock_btn_2_is_click=0;
-bool Clock_btn_3_is_click=0;
-bool Clock1_btn_1_is_click=0;
-bool Clock1_btn_2_is_click=0;
-bool Clock1_btn_3_is_click=0;
-bool Clock2_btn_1_is_click=0;
-bool Clock2_btn_2_is_click=0;
-bool Clock2_btn_3_is_click=0;
-uint8_t screen_index=0;
+BOOL Clock_btn_1_is_click=0;
+BOOL Clock_btn_2_is_click=0;
+BOOL Clock_btn_3_is_click=0;
+BOOL Clock1_btn_1_is_click=0;
+BOOL Clock1_btn_2_is_click=0;
+BOOL Clock1_btn_3_is_click=0;
+BOOL Clock2_btn_1_is_click=0;
+BOOL Clock2_btn_2_is_click=0;
+BOOL Clock2_btn_3_is_click=0;
+UINT8_t screen_index=0;
 
 static void Clock_1_event_handler (lv_event_t *e)
 {

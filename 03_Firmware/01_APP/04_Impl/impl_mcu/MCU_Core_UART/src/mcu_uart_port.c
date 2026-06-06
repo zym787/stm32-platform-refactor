@@ -30,7 +30,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "board_types.h"
 
 #include "osal_wrapper_adapter.h"
 #include "osal_error.h"
@@ -62,7 +62,7 @@ typedef struct
     UART_HandleTypeDef *hal_handle;   /* &huart1 / ... (or NULL if not init) */
     osal_sema_handle_t  byte_sem;     /* given by HAL_UART_RxCpltCallback     */
     osal_queue_handle_t frame_queue;  /* fed by HAL_UARTEx_RxEventCallback    */
-    volatile uint8_t    byte_buf;     /* 1 B IT-mode receive cell             */
+    volatile UINT8_t    byte_buf;     /* 1 B IT-mode receive cell             */
 } mcu_uart_state_t;
 
 static mcu_uart_state_t s_state[MCU_UART_COUNT];
@@ -125,7 +125,7 @@ platform_err_t mcu_uart_port_init(mcu_uart_id_t id)
     {
         if (OSAL_SUCCESS != osal_queue_create(&s_state[id].frame_queue,
                                               MCU_UART_FRAME_QUEUE_DEPTH,
-                                              sizeof(uint16_t)))
+                                              sizeof(UINT16_t)))
         {
             return PLATFORM_ERR_GENERAL;
         }
@@ -149,10 +149,10 @@ platform_err_t mcu_uart_recv_byte_arm(mcu_uart_id_t id)
     * HAL state machine surfaces as PLATFORM_ERR_BUSY instead of an infinite
     * loop.
     **/
-    for (uint32_t retry = 0U; retry < MCU_UART_BYTE_ARM_RETRY_MAX; retry++)
+    for (UINT32_t retry = 0U; retry < MCU_UART_BYTE_ARM_RETRY_MAX; retry++)
     {
         if (HAL_OK == HAL_UART_Receive_IT(s_state[id].hal_handle,
-                                          (uint8_t *)&s_state[id].byte_buf,
+                                          (UINT8_t *)&s_state[id].byte_buf,
                                           1U))
         {
             return PLATFORM_OK;
@@ -163,8 +163,8 @@ platform_err_t mcu_uart_recv_byte_arm(mcu_uart_id_t id)
 }
 
 platform_err_t mcu_uart_recv_byte_wait(mcu_uart_id_t id,
-                                           uint8_t      *out,
-                                           uint32_t      timeout_ms)
+                                           UINT8_t      *out,
+                                           UINT32_t      timeout_ms)
 {
     if (id >= MCU_UART_COUNT || NULL == out)
     {
@@ -182,8 +182,8 @@ platform_err_t mcu_uart_recv_byte_wait(mcu_uart_id_t id,
 /* ── frame path ─────────────────────────────────────────────────────── */
 
 platform_err_t mcu_uart_recv_frame_arm(mcu_uart_id_t id,
-                                           uint8_t      *buf,
-                                           uint16_t      maxlen)
+                                           UINT8_t      *buf,
+                                           UINT16_t      maxlen)
 {
     if (id >= MCU_UART_COUNT || NULL == buf || 0U == maxlen)
     {
@@ -213,14 +213,14 @@ platform_err_t mcu_uart_recv_frame_arm(mcu_uart_id_t id,
 }
 
 platform_err_t mcu_uart_recv_frame_wait(mcu_uart_id_t id,
-                                            uint16_t     *out_len,
-                                            uint32_t      timeout_ms)
+                                            UINT16_t     *out_len,
+                                            UINT32_t      timeout_ms)
 {
     if (id >= MCU_UART_COUNT || NULL == out_len)
     {
         return PLATFORM_ERR_PARAM;
     }
-    uint16_t len = 0U;
+    UINT16_t len = 0U;
     if (OSAL_SUCCESS != osal_queue_receive(s_state[id].frame_queue, &len,
                                             OS_MS_TO_TICKS(timeout_ms)))
     {
@@ -259,7 +259,7 @@ platform_err_t mcu_uart_recv_frame_abort(mcu_uart_id_t id)
 
 /* ── TX ─────────────────────────────────────────────────────────────── */
 
-platform_err_t mcu_uart_send_byte(mcu_uart_id_t id, uint8_t b)
+platform_err_t mcu_uart_send_byte(mcu_uart_id_t id, UINT8_t b)
 {
     if (id >= MCU_UART_COUNT || NULL == s_state[id].hal_handle)
     {
@@ -298,7 +298,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 *        idle line was detected (or before the buffer filled). Same
 *        dispatch model as RxCpltCallback above.
 * */
-void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, UINT16_t Size)
 {
     mcu_uart_state_t *st = state_for_handle(huart);
     if (NULL == st || NULL == st->frame_queue)

@@ -1,4 +1,5 @@
 #if defined(LV_LVGL_H_INCLUDE_SIMPLE)
+#include "board_types.h"
 #include "lvgl.h"
 #else
 #include "lvgl/lvgl.h"
@@ -13,7 +14,7 @@
 #define LV_ATTRIBUTE_IMG__TIME_ALPHA_5X8
 #endif
 
-const LV_ATTRIBUTE_MEM_ALIGN LV_ATTRIBUTE_LARGE_CONST LV_ATTRIBUTE_IMG__TIME_ALPHA_5X8 uint8_t _time_alpha_5x8_map[] = {
+const LV_ATTRIBUTE_MEM_ALIGN LV_ATTRIBUTE_LARGE_CONST LV_ATTRIBUTE_IMG__TIME_ALPHA_5X8 UINT8_t _time_alpha_5x8_map[] = {
 #if LV_COLOR_DEPTH == 1 || LV_COLOR_DEPTH == 8
   /*Pixel format: Alpha 8 bit, Red: 3 bit, Green: 3 bit, Blue: 2 bit*/
   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 

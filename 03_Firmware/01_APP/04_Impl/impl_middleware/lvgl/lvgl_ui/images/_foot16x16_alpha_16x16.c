@@ -1,4 +1,5 @@
 #if defined(LV_LVGL_H_INCLUDE_SIMPLE)
+#include "board_types.h"
 #include "lvgl.h"
 #else
 #include "lvgl/lvgl.h"
@@ -13,7 +14,7 @@
 #define LV_ATTRIBUTE_IMG__FOOT16X16_ALPHA_16X16
 #endif
 
-const LV_ATTRIBUTE_MEM_ALIGN LV_ATTRIBUTE_LARGE_CONST LV_ATTRIBUTE_IMG__FOOT16X16_ALPHA_16X16 uint8_t _foot16x16_alpha_16x16_map[] = {
+const LV_ATTRIBUTE_MEM_ALIGN LV_ATTRIBUTE_LARGE_CONST LV_ATTRIBUTE_IMG__FOOT16X16_ALPHA_16X16 UINT8_t _foot16x16_alpha_16x16_map[] = {
 #if LV_COLOR_DEPTH == 1 || LV_COLOR_DEPTH == 8
   /*Pixel format: Alpha 8 bit, Red: 3 bit, Green: 3 bit, Blue: 2 bit*/
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x09, 0x15, 0x1e, 0xbb, 0x1a, 0xfe, 0x1a, 0xd7, 0x11, 0x22, 0x00, 0x00, 

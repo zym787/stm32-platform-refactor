@@ -5,6 +5,7 @@
  ******************************************************************************/
 
 #ifdef LV_LVGL_H_INCLUDE_SIMPLE
+#include "board_types.h"
 #include "lvgl.h"
 #else
 #include "lvgl.h"
@@ -24,7 +25,7 @@
 
 /*Store the image of the glyphs*/
 #if 0 /* Stored in W25Q64 by pack_assets.py. */
-static LV_ATTRIBUTE_LARGE_CONST const uint8_t glyph_bitmap[] = {
+static LV_ATTRIBUTE_LARGE_CONST const UINT8_t glyph_bitmap[] = {
     /* U+0020 " " */
 
     /* U+0021 "!" */
@@ -1226,7 +1227,7 @@ static LV_ATTRIBUTE_LARGE_CONST const uint8_t glyph_bitmap[] = {
     0x0, 0x0, 0x0
 };
 #else
-static LV_ATTRIBUTE_LARGE_CONST const uint8_t glyph_bitmap[] = { 0x00 };
+static LV_ATTRIBUTE_LARGE_CONST const UINT8_t glyph_bitmap[] = { 0x00 };
 #endif
 
 
@@ -1397,7 +1398,7 @@ static const lv_font_fmt_txt_glyph_dsc_t glyph_dsc[] = {
  *  CHARACTER MAPPING
  *--------------------*/
 
-static const uint16_t unicode_list_1[] = {
+static const UINT16_t unicode_list_1[] = {
     0x0, 0x7, 0xa, 0xb, 0xc, 0x10, 0x12, 0x14,
     0x18, 0x1b, 0x20, 0x25, 0x26, 0x27, 0x3d, 0x42,
     0x47, 0x4a, 0x4b, 0x4c, 0x50, 0x51, 0x52, 0x53,
@@ -1427,7 +1428,7 @@ static const lv_font_fmt_txt_cmap_t cmaps[] =
 
 
 /*Map glyph_ids to kern left classes*/
-static const uint8_t kern_left_class_mapping[] =
+static const UINT8_t kern_left_class_mapping[] =
 {
     0, 0, 0, 0, 0, 0, 0, 1,
     0, 2, 0, 0, 0, 0, 0, 0,
@@ -1452,7 +1453,7 @@ static const uint8_t kern_left_class_mapping[] =
 };
 
 /*Map glyph_ids to kern right classes*/
-static const uint8_t kern_right_class_mapping[] =
+static const UINT8_t kern_right_class_mapping[] =
 {
     0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 1,
@@ -1477,7 +1478,7 @@ static const uint8_t kern_right_class_mapping[] =
 };
 
 /*Kern values between classes*/
-static const int8_t kern_class_values[] =
+static const INT8_t kern_class_values[] =
 {
     0, 0, 0, 0, 0, 10, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0,

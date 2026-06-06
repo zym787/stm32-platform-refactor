@@ -19,6 +19,7 @@
 #define __OSAL_INTERNAL_TIMER_H__
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "osal_common_types.h"
 
 //******************************** Includes *********************************//
@@ -41,7 +42,7 @@ typedef void (*osal_timer_callback_t)(void *p_arg);
  *
  * @return OSAL status code.
  */
-int32_t osal_timer_create_impl       (osal_timer_handle_t   *  p_timer_handle,
+INT32_t osal_timer_create_impl       (osal_timer_handle_t   *  p_timer_handle,
                                       const char            *    p_timer_name,
                                       osal_tick_type_t           period_ticks,
                                       osal_base_type_t            auto_reload, 
@@ -63,7 +64,7 @@ void    osal_timer_delete_impl       (osal_timer_handle_t        timer_handle);
  *
  * @return OSAL status code.
  */
-int32_t osal_timer_start_impl        (osal_timer_handle_t        timer_handle,
+INT32_t osal_timer_start_impl        (osal_timer_handle_t        timer_handle,
                                         osal_tick_type_t              timeout);
 
 /**
@@ -74,7 +75,7 @@ int32_t osal_timer_start_impl        (osal_timer_handle_t        timer_handle,
  *
  * @return OSAL status code.
  */
-int32_t osal_timer_stop_impl         (osal_timer_handle_t        timer_handle,
+INT32_t osal_timer_stop_impl         (osal_timer_handle_t        timer_handle,
                                         osal_tick_type_t              timeout);
 
 /**
@@ -85,7 +86,7 @@ int32_t osal_timer_stop_impl         (osal_timer_handle_t        timer_handle,
  *
  * @return OSAL status code.
  */
-int32_t osal_timer_reset_impl        (osal_timer_handle_t        timer_handle,
+INT32_t osal_timer_reset_impl        (osal_timer_handle_t        timer_handle,
                                          osal_tick_type_t             timeout);
 
 /**
@@ -97,7 +98,7 @@ int32_t osal_timer_reset_impl        (osal_timer_handle_t        timer_handle,
  *
  * @return OSAL status code.
  */
-int32_t osal_timer_change_period_impl(osal_timer_handle_t        timer_handle,
+INT32_t osal_timer_change_period_impl(osal_timer_handle_t        timer_handle,
                                          osal_tick_type_t    new_period_ticks,
                                          osal_tick_type_t             timeout);
 

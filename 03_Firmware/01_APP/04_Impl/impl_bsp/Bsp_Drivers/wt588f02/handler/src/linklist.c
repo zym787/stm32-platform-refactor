@@ -16,6 +16,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "linklist.h"
 //******************************** Includes *********************************//
 
@@ -192,7 +193,7 @@ list_status_t (list_add_node)(list_handler_t *handler_inst,
     }
 
     /*************** 3. Find the tail node ***************/
-    uint8_t index = node->priority;
+    UINT8_t index = node->priority;
     list_voice_node_t *tail = &(handler_inst->priority_list_heads[index]);
     while (tail->next != NULL)
     {
@@ -272,7 +273,7 @@ list_status_t (list_del_node)(list_handler_t *handler_inst,
     }
 
     /*************** 3. Find the del node ****************/
-    uint8_t index = node->priority;
+    UINT8_t index = node->priority;
     list_voice_node_t *cur_node =  &(handler_inst->priority_list_heads[index]);
     cur_node = cur_node->next;
     while (cur_node)
@@ -292,7 +293,7 @@ list_status_t (list_del_node)(list_handler_t *handler_inst,
             // if no node left in this priority, update highest priority
             handler_inst->highest_priority = WT588_MAX_PRIORITY;
             // update highest priority if has the node
-            for (uint8_t i = 0; i < WT588_MAX_PRIORITY; i++)
+            for (UINT8_t i = 0; i < WT588_MAX_PRIORITY; i++)
             {
                 if (handler_inst->node_count_by_priority[i] > 0)
                 {
@@ -325,7 +326,7 @@ list_status_t (list_del_node)(list_handler_t *handler_inst,
  * @return list_status_t LIST_OK if successful, error code otherwise
  *
  * */
-list_status_t (list_sort    )(list_handler_t *handler_inst, uint8_t priority)
+list_status_t (list_sort    )(list_handler_t *handler_inst, UINT8_t priority)
 {
     list_status_t ret = LIST_OK;
     /************ 1.Checking input parameters ************/
@@ -390,7 +391,7 @@ list_voice_node_t *(get_first_node)(list_handler_t *handler_inst)
         return NULL;
     }
 
-    uint8_t highest_priority = handler_inst->highest_priority;
+    UINT8_t highest_priority = handler_inst->highest_priority;
     if (highest_priority >= WT588_MAX_PRIORITY)
     {
         DEBUG_OUT(e, LIST_ERR_LOG_TAG, 
@@ -416,10 +417,10 @@ list_voice_node_t *(get_first_node)(list_handler_t *handler_inst)
  *
  * @param[in] handler_inst : Pointer to list handler instance
  *
- * @return bool true if all lists empty, false otherwise
+ * @return BOOL true if all lists empty, false otherwise
  *
  * */
-bool (list_is_empty)(list_handler_t *handler_inst)
+BOOL (list_is_empty)(list_handler_t *handler_inst)
 {
     /************ 1.Checking input parameters ************/
     if (NULL == handler_inst)
@@ -429,7 +430,7 @@ bool (list_is_empty)(list_handler_t *handler_inst)
         return true;
     }
 
-    for (uint8_t i = 0; i < WT588_MAX_PRIORITY; i++)
+    for (UINT8_t i = 0; i < WT588_MAX_PRIORITY; i++)
     {
         if (handler_inst->node_count_by_priority[i] > 0)
         {
@@ -478,7 +479,7 @@ list_status_t list_handler_construct(list_handler_t   *          list_instance,
 
     /************ 3.Initialize the Resources *************/
     memset(list_instance->node_count_by_priority, 0, \
-                     sizeof(uint8_t) * WT588_MAX_PRIORITY);
+                     sizeof(UINT8_t) * WT588_MAX_PRIORITY);
     memset(list_instance->priority_list_heads,    0, \
            sizeof(list_voice_node_t) * WT588_MAX_PRIORITY);
     list_instance->current_priority  =  WT588_MAX_PRIORITY;

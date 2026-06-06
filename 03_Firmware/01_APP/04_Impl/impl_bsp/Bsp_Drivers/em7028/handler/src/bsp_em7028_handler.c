@@ -29,6 +29,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_em7028_handler.h"
 #include "Debug.h"
 //******************************** Includes *********************************//
@@ -55,9 +56,9 @@
  */
 struct em7028_handler_private
 {
-    bool is_init;        /* set true after bsp_em7028_handler_inst OK   */
-    bool is_active;      /* set true between START and STOP events      */
-    bool exit_request;   /* set true by DEINIT to break the loop        */
+    BOOL is_init;        /* set true after bsp_em7028_handler_inst OK   */
+    BOOL is_active;      /* set true between START and STOP events      */
+    BOOL exit_request;   /* set true by DEINIT to break the loop        */
 };
 
 /**
@@ -413,7 +414,7 @@ em7028_handler_status_t bsp_em7028_handler_reconfigure(
  * */
 em7028_handler_status_t bsp_em7028_handler_get_frame(
                                   em7028_ppg_frame_t * const p_frame,
-                                  uint32_t                   timeout_ms)
+                                  UINT32_t                   timeout_ms)
 {
     if (NULL == p_frame)
     {
@@ -505,7 +506,7 @@ void em7028_handler_thread(void *argument)
             break;
         }
 
-        const uint32_t wait =
+        const UINT32_t wait =
             (private_data.is_active) ? EM7028_HANDLER_SAMPLE_PERIOD_MS
                                      : EM7028_HANDLER_QUEUE_FOREVER;
 

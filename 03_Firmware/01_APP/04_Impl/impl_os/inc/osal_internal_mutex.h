@@ -19,6 +19,7 @@
 #define __OSAL_INTERNAL_MUTEX_H__
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "osal_common_types.h"
 
 //******************************** Includes *********************************//
@@ -31,7 +32,7 @@
  *
  * @return OSAL status code.
  */
-int32_t osal_mutex_create_impl(osal_mutex_handle_t *p_mutex_handle);
+INT32_t osal_mutex_create_impl(osal_mutex_handle_t *p_mutex_handle);
 
 /**
  * @brief Delete mutex object.
@@ -48,7 +49,7 @@ void    osal_mutex_delete_impl(osal_mutex_handle_t    mutex_handle);
  *
  * @return OSAL status code.
  */
-int32_t osal_mutex_take_impl  (osal_mutex_handle_t    mutex_handle,
+INT32_t osal_mutex_take_impl  (osal_mutex_handle_t    mutex_handle,
                                   osal_tick_type_t         timeout);
 
 /**
@@ -58,7 +59,7 @@ int32_t osal_mutex_take_impl  (osal_mutex_handle_t    mutex_handle,
  *
  * @return OSAL status code.
  */
-int32_t osal_mutex_give_impl  (osal_mutex_handle_t    mutex_handle);
+INT32_t osal_mutex_give_impl  (osal_mutex_handle_t    mutex_handle);
 //******************************* Functions *********************************//
 
 #endif /* __OSAL_INTERNAL_MUTEX_H__ */

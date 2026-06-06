@@ -26,31 +26,30 @@
 #include "lvgl.h"
 #include "src/font/lv_font_fmt_txt.h"
 
-#include <stdint.h>
-#include <stddef.h>
+#include "board_types.h"
 //******************************** Includes *********************************//
 
 //******************************* Variables *********************************//
-static uint8_t s_au8GlyphBuf[CFG_LVGL_FONT_GLYPH_BUFFER_SIZE];
+static UINT8_t s_au8GlyphBuf[CFG_LVGL_FONT_GLYPH_BUFFER_SIZE];
 //******************************* Variables *********************************//
 
 //******************************* Functions *********************************//
 /**
- * @brief Locate a value in a sorted uint16_t list.
+ * @brief Locate a value in a sorted UINT16_t list.
  *
- * @param[in] : list Sorted uint16_t list.
+ * @param[in] : list Sorted UINT16_t list.
  * @param[in] : listLen Number of entries in list.
  * @param[in] : value Value to find.
  * @param[out] : indexOut Matching index when the function returns true.
  *
  * @return true when found, otherwise false.
  * */
-static bool extfont_find_u16(const uint16_t *list,
-                             uint16_t       listLen,
-                             uint16_t       value,
-                             uint16_t      *indexOut)
+static BOOL extfont_find_u16(const UINT16_t *list,
+                             UINT16_t       listLen,
+                             UINT16_t       value,
+                             UINT16_t      *indexOut)
 {
-    uint16_t index;
+    UINT16_t index;
 
     if ((NULL == list) || (NULL == indexOut))
     {
@@ -77,10 +76,10 @@ static bool extfont_find_u16(const uint16_t *list,
  *
  * @return LVGL glyph ID, or 0 when not found.
  * */
-static uint32_t extfont_get_glyph_id(const lv_font_t *font, uint32_t letter)
+static UINT32_t extfont_get_glyph_id(const lv_font_t *font, UINT32_t letter)
 {
     const lv_font_fmt_txt_dsc_t *fdsc;
-    uint16_t cmapIndex;
+    UINT16_t cmapIndex;
 
     if ((NULL == font) || (NULL == font->dsc) || ('\0' == letter))
     {
@@ -96,8 +95,8 @@ static uint32_t extfont_get_glyph_id(const lv_font_t *font, uint32_t letter)
     for (cmapIndex = 0U; cmapIndex < fdsc->cmap_num; cmapIndex++)
     {
         const lv_font_fmt_txt_cmap_t *cmap = &fdsc->cmaps[cmapIndex];
-        uint32_t rcp;
-        uint32_t glyphId = 0U;
+        UINT32_t rcp;
+        UINT32_t glyphId = 0U;
 
         if (letter < cmap->range_start)
         {
@@ -112,39 +111,39 @@ static uint32_t extfont_get_glyph_id(const lv_font_t *font, uint32_t letter)
 
         if (LV_FONT_FMT_TXT_CMAP_FORMAT0_TINY == cmap->type)
         {
-            glyphId = (uint32_t)cmap->glyph_id_start + rcp;
+            glyphId = (UINT32_t)cmap->glyph_id_start + rcp;
         }
         else if (LV_FONT_FMT_TXT_CMAP_FORMAT0_FULL == cmap->type)
         {
-            const uint8_t *glyphOfs = (const uint8_t *)cmap->glyph_id_ofs_list;
+            const UINT8_t *glyphOfs = (const UINT8_t *)cmap->glyph_id_ofs_list;
 
             if (NULL != glyphOfs)
             {
-                glyphId = (uint32_t)cmap->glyph_id_start + glyphOfs[rcp];
+                glyphId = (UINT32_t)cmap->glyph_id_start + glyphOfs[rcp];
             }
         }
         else
         {
-            uint16_t listIndex = 0U;
+            UINT16_t listIndex = 0U;
 
             if ((rcp <= UINT16_MAX) &&
                 extfont_find_u16(cmap->unicode_list,
                                  cmap->list_length,
-                                 (uint16_t)rcp,
+                                 (UINT16_t)rcp,
                                  &listIndex))
             {
                 if (LV_FONT_FMT_TXT_CMAP_SPARSE_TINY == cmap->type)
                 {
-                    glyphId = (uint32_t)cmap->glyph_id_start + listIndex;
+                    glyphId = (UINT32_t)cmap->glyph_id_start + listIndex;
                 }
                 else if (LV_FONT_FMT_TXT_CMAP_SPARSE_FULL == cmap->type)
                 {
-                    const uint16_t *glyphOfs =
-                        (const uint16_t *)cmap->glyph_id_ofs_list;
+                    const UINT16_t *glyphOfs =
+                        (const UINT16_t *)cmap->glyph_id_ofs_list;
 
                     if (NULL != glyphOfs)
                     {
-                        glyphId = (uint32_t)cmap->glyph_id_start +
+                        glyphId = (UINT32_t)cmap->glyph_id_start +
                                   glyphOfs[listIndex];
                     }
                 }
@@ -171,18 +170,18 @@ static uint32_t extfont_get_glyph_id(const lv_font_t *font, uint32_t letter)
  *
  * @return Number of bytes needed for this glyph bitmap.
  * */
-static uint32_t extfont_get_glyph_size(
+static UINT32_t extfont_get_glyph_size(
     const lv_font_fmt_txt_glyph_dsc_t *gdsc,
-    uint8_t                            bpp)
+    UINT8_t                            bpp)
 {
-    uint32_t bitCount;
+    UINT32_t bitCount;
 
     if ((NULL == gdsc) || (0U == gdsc->box_w) || (0U == gdsc->box_h))
     {
         return 0U;
     }
 
-    bitCount = (uint32_t)gdsc->box_w * gdsc->box_h * bpp;
+    bitCount = (UINT32_t)gdsc->box_w * gdsc->box_h * bpp;
     return (bitCount + 7U) / 8U;
 }
 
@@ -196,15 +195,15 @@ static uint32_t extfont_get_glyph_size(
  *
  * @return Pointer to a transient glyph bitmap buffer, or NULL on failure.
  * */
-static const uint8_t *extfont_get_bitmap(const lv_font_t *font,
-                                         uint32_t         letter,
-                                         uint32_t         bitmapOffset,
-                                         uint32_t         bitmapSize)
+static const UINT8_t *extfont_get_bitmap(const lv_font_t *font,
+                                         UINT32_t         letter,
+                                         UINT32_t         bitmapOffset,
+                                         UINT32_t         bitmapSize)
 {
     const lv_font_fmt_txt_dsc_t       *fdsc;
     const lv_font_fmt_txt_glyph_dsc_t *gdsc;
-    uint32_t                           glyphId;
-    uint32_t                           glyphSize;
+    UINT32_t                           glyphId;
+    UINT32_t                           glyphSize;
     ext_flash_status_t                 st;
 
     if ((NULL == font) || (NULL == font->dsc))
@@ -226,7 +225,7 @@ static const uint8_t *extfont_get_bitmap(const lv_font_t *font,
     }
 
     gdsc = &fdsc->glyph_dsc[glyphId];
-    glyphSize = extfont_get_glyph_size(gdsc, (uint8_t)fdsc->bpp);
+    glyphSize = extfont_get_glyph_size(gdsc, (UINT8_t)fdsc->bpp);
     if (0U == glyphSize)
     {
         return NULL;
@@ -257,9 +256,9 @@ static const uint8_t *extfont_get_bitmap(const lv_font_t *font,
 }
 
 #define LV_EXTFONT_DEFINE(fontName, offsetMacro, sizeMacro)                  \
-    const uint8_t *lv_port_extfont_get_bitmap_##fontName(                   \
+    const UINT8_t *lv_port_extfont_get_bitmap_##fontName(                   \
         const lv_font_t *font,                                               \
-        uint32_t         letter)                                             \
+        UINT32_t         letter)                                             \
     {                                                                        \
         return extfont_get_bitmap(font, letter, offsetMacro, sizeMacro);     \
     }

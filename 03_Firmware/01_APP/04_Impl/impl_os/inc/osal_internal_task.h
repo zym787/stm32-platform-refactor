@@ -20,6 +20,7 @@
 #define __OSAL_INTERNAL_TASK_H__
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "osal_common_types.h"
 #include "osal_task.h"
 
@@ -42,12 +43,12 @@
  *
  * @return OSAL status code.
  */
-int32_t osal_task_create_impl(osal_task_handle_t *p_task_handle,
+INT32_t osal_task_create_impl(osal_task_handle_t *p_task_handle,
                          const char *p_task_name,
                          void *p_arg,
                          osal_task_entry_t task_entry,
-                         uint32_t stack_depth,
-                         uint32_t priority);
+                         UINT32_t stack_depth,
+                         UINT32_t priority);
 
 /**
  * @brief Create task object from caller-provided static storage.
@@ -63,13 +64,13 @@ int32_t osal_task_create_impl(osal_task_handle_t *p_task_handle,
  *
  * @return OSAL status code.
  */
-int32_t osal_task_create_static_impl(osal_task_handle_t *p_task_handle,
+INT32_t osal_task_create_static_impl(osal_task_handle_t *p_task_handle,
                          const char *p_task_name,
                          void *p_arg,
                          osal_task_entry_t task_entry,
-                         uint32_t stack_depth,
-                         uint32_t priority,
-                         uint32_t *p_stack,
+                         UINT32_t stack_depth,
+                         UINT32_t priority,
+                         UINT32_t *p_stack,
                          void *p_tcb);
 
 /**

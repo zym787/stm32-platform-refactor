@@ -28,7 +28,7 @@
 #define __BSP_CST816T_DRIVER_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "board_types.h"
 
 //******************************** Includes *********************************//
 
@@ -61,48 +61,48 @@ typedef struct
 
     /**/
     cst816t_status_t (*pf_iic_mem_write   ) (void    *i2c,
-                                        uint16_t des_addr,
-                                        uint16_t mem_addr,
-                                        uint16_t mem_size,
-                                        uint8_t   *p_data,
-                                        uint16_t     size,
-                                        uint32_t  timeout);
+                                        UINT16_t des_addr,
+                                        UINT16_t mem_addr,
+                                        UINT16_t mem_size,
+                                        UINT8_t   *p_data,
+                                        UINT16_t     size,
+                                        UINT32_t  timeout);
     cst816t_status_t (*pf_iic_mem_read    ) (void    *i2c,
-                                        uint16_t des_addr,
-                                        uint16_t mem_addr,
-                                        uint16_t mem_size,
-                                        uint8_t   *p_data,
-                                        uint16_t     size,
-                                        uint32_t  timeout);
+                                        UINT16_t des_addr,
+                                        UINT16_t mem_addr,
+                                        UINT16_t mem_size,
+                                        UINT8_t   *p_data,
+                                        UINT16_t     size,
+                                        UINT32_t  timeout);
 } cst816t_iic_driver_interface_t;
 
 /*        Delay Interface            */
 typedef struct
 {
     void             (*pf_delay_init       )        (void);
-    void             (*pf_delay_ms         ) (uint32_t \
+    void             (*pf_delay_ms         ) (UINT32_t \
                                                  const ms);
-    void             (*pf_delay_us         ) (uint32_t \
+    void             (*pf_delay_us         ) (UINT32_t \
                                                  const us);
 } cst816t_delay_interface_t;
 
 /*        Yield Interface            */
 typedef struct
 {
-    void             (*pf_rtos_yield       ) (uint32_t \
+    void             (*pf_rtos_yield       ) (UINT32_t \
                                                  const ms);
 } cst816t_os_delay_interface_t;
 
 /*        Timebase Interface         */
 typedef struct
 {
-    uint32_t         (*pf_get_tick_count   )        (void);
+    UINT32_t         (*pf_get_tick_count   )        (void);
 } cst816t_timebase_interface_t;
 
 typedef struct
 {
-	uint16_t x_pos;
-	uint16_t y_pos;
+	UINT16_t x_pos;
+	UINT16_t y_pos;
 } cst816t_xy_t;
 
 typedef enum
@@ -168,10 +168,10 @@ struct bsp_cst816t_driver
                                             cst816t_xy_t * const    p_xy_axis);
     cst816t_status_t (*pf_cst816t_get_chip_id   ) (
                                     bsp_cst816t_driver_t   const, 
-                                                 uint8_t * const    p_chip_id);
+                                                 UINT8_t * const    p_chip_id);
     cst816t_status_t (*pf_cst816t_get_finger_num) (
                                     bsp_cst816t_driver_t   const, 
-                                                 uint8_t * const p_finger_num);
+                                                 UINT8_t * const p_finger_num);
 
     /********* CST816T configuration functions ***********/
     cst816t_status_t (*pf_cst816t_sleep              ) (
@@ -183,47 +183,47 @@ struct bsp_cst816t_driver
                                        cst816_err_reset_ctl_t   err_reset_ctl);
     cst816t_status_t (*pf_cst816t_set_long_press_tick) (
                                          bsp_cst816t_driver_t const,
-                                                      uint8_t long_press_tick);
+                                                      UINT8_t long_press_tick);
     cst816t_status_t (*pf_cst816t_set_motion_mask    ) (
                                          bsp_cst816t_driver_t const, 
                                          cst816_motion_mask_t     motion_mask);
     cst816t_status_t (*pf_cst816t_set_irq_pulse_width) (
                                          bsp_cst816t_driver_t const, 
-                                                      uint8_t irq_pulse_width);
+                                                      UINT8_t irq_pulse_width);
     // Set the normal scan period
     cst816t_status_t (*pf_cst816t_set_nor_scan_per            )(
                                       bsp_cst816t_driver_t * const,
-                                                   uint8_t        scan_period);
+                                                   UINT8_t        scan_period);
     // Set the motion slope angle
     cst816t_status_t (*pf_cst816t_set_motion_slope_angle      )(
                                       bsp_cst816t_driver_t * const,
-                                                   uint8_t x_right_y_up_angle);
+                                                   UINT8_t x_right_y_up_angle);
     // Set the auto calibration period in low power mode
     cst816t_status_t (*pf_cst816t_set_low_power_auto_wake_time)(
                                       bsp_cst816t_driver_t * const,
-                                                   uint8_t               time);
+                                                   UINT8_t               time);
     // Set the low power scan threshold
     cst816t_status_t (*pf_cst816t_set_lp_scan_th)(
                                       bsp_cst816t_driver_t * const,
-                                                   uint8_t          threshold);
+                                                   UINT8_t          threshold);
     // Set the low power scan range, can select 0,1,2,3
     // 3 is the default range.
     cst816t_status_t (*pf_cst816t_set_lp_scan_win)(
                                       bsp_cst816t_driver_t * const,
-                                                   uint8_t             window);
+                                                   UINT8_t             window);
     // Set the long press scan frequency, can select 1 - 255
     // 7 is the default frequency.
     cst816t_status_t (*pf_cst816t_set_lp_scan_freq)(
                                       bsp_cst816t_driver_t * const,
-                                                   uint8_t          frequency);
+                                                   UINT8_t          frequency);
     // Set the low power scan current, can select 1 - 255
     cst816t_status_t (*pf_cst816t_set_lp_scan_idac)(
                                       bsp_cst816t_driver_t * const,
-                                                   uint8_t               idac);
+                                                   UINT8_t               idac);
     // Set the auto sleep time
     cst816t_status_t (*pf_cst816t_set_auto_sleep_time)(
                                       bsp_cst816t_driver_t * const,
-                                                   uint8_t               time);
+                                                   UINT8_t               time);
     // Set the interrupt control
     cst816t_status_t (*pf_cst816t_set_irq_ctl)(
                                       bsp_cst816t_driver_t * const,
@@ -231,19 +231,19 @@ struct bsp_cst816t_driver
     // Set the auto reset time
     cst816t_status_t (*pf_cst816t_set_auto_reset)(
                                       bsp_cst816t_driver_t * const,
-                                                   uint8_t               time);
+                                                   UINT8_t               time);
     // Set the long press time for reset
     cst816t_status_t (*pf_cst816t_set_long_press_time)(
                                       bsp_cst816t_driver_t * const,
-                                                   uint8_t               time);
+                                                   UINT8_t               time);
     // Set the IO control mode
     cst816t_status_t (*pf_cst816t_set_io_ctl)(
                                       bsp_cst816t_driver_t * const,
-                                                   uint8_t               mode);
+                                                   UINT8_t               mode);
     // Disable auto sleep function
     cst816t_status_t (*pf_cst816t_disable_auto_sleep)(
                                       bsp_cst816t_driver_t * const,
-                                                   uint8_t            disable);                                          
+                                                   UINT8_t            disable);                                          
 };
 
 //******************************** Defines **********************************//

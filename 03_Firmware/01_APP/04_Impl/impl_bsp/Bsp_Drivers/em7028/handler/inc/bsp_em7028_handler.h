@@ -30,6 +30,7 @@
 #define __BSP_EM7028_HANDLER_H__
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_em7028_driver.h"
 //******************************** Includes *********************************//
 
@@ -73,17 +74,17 @@ typedef struct
 typedef struct
 {
     em7028_handler_status_t (*pf_os_queue_create)(
-                                              uint32_t const      item_num,
-                                              uint32_t const     item_size,
+                                              UINT32_t const      item_num,
+                                              UINT32_t const     item_size,
                                               void  ** const  queue_handler);
     em7028_handler_status_t (*pf_os_queue_put   )(
                                               void  * const   queue_handler,
                                               void  * const            item,
-                                              uint32_t              timeout);
+                                              UINT32_t              timeout);
     em7028_handler_status_t (*pf_os_queue_get   )(
                                               void  * const   queue_handler,
                                               void  * const             msg,
-                                              uint32_t              timeout);
+                                              UINT32_t              timeout);
     em7028_handler_status_t (*pf_os_queue_delete)(
                                               void  * const   queue_handler);
 } em7028_handler_os_queue_t;
@@ -198,7 +199,7 @@ em7028_handler_status_t bsp_em7028_handler_reconfigure(
  * */
 em7028_handler_status_t bsp_em7028_handler_get_frame(
                                   em7028_ppg_frame_t * const p_frame,
-                                  uint32_t                   timeout_ms);
+                                  UINT32_t                   timeout_ms);
 
 /**
  * @brief EM7028 handler thread entry point. Allocates the handler /

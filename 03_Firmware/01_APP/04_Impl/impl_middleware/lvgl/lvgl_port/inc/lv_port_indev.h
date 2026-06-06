@@ -29,8 +29,7 @@
 #define __LV_PORT_INDEV_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
-#include <stdbool.h>
+#include "board_types.h"
 //******************************** Includes *********************************//
 
 //******************************* Functions *********************************//
@@ -42,7 +41,7 @@
  *
  * @return     true on success, false on LVGL registration error.
  * */
-bool lv_port_indev_init(void);
+BOOL lv_port_indev_init(void);
 
 /**
  * @brief      Toggle the calibration-bypass flag in the indev read path.
@@ -59,7 +58,7 @@ bool lv_port_indev_init(void);
  *
  * @param[in]  bypass  true to skip apply_matrix, false to resume.
  */
-void lv_port_indev_set_bypass(bool bypass);
+void lv_port_indev_set_bypass(BOOL bypass);
 //******************************* Functions *********************************//
 
 #endif /* __LV_PORT_INDEV_H__ */

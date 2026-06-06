@@ -29,6 +29,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "osal_heap.h"
 #include "circular_buffer.h"
 //******************************** Includes *********************************//
@@ -65,9 +66,9 @@ circular_buffer_t * circular_buffer_get_instance(void)
  *          address.
  * 
  * */
-static uint8_t *(get_rbuffer_addr)(circular_buffer_t const * const  p_buffer)
+static UINT8_t *(get_rbuffer_addr)(circular_buffer_t const * const  p_buffer)
 {
-    return (uint8_t *)(p_buffer->buffer + 
+    return (UINT8_t *)(p_buffer->buffer + 
                                  (p_buffer->rflag * MPUXXXX_DATA_PACKET_SIZE));
 }
 
@@ -84,9 +85,9 @@ static uint8_t *(get_rbuffer_addr)(circular_buffer_t const * const  p_buffer)
  *          address.
  * 
  * */
-static uint8_t *(get_wbuffer_addr)(circular_buffer_t const * const  p_buffer)
+static UINT8_t *(get_wbuffer_addr)(circular_buffer_t const * const  p_buffer)
 {
-    return (uint8_t *)(p_buffer->buffer + 
+    return (UINT8_t *)(p_buffer->buffer + 
                                  (p_buffer->wflag * MPUXXXX_DATA_PACKET_SIZE));
 }
 
@@ -147,7 +148,7 @@ static void     (data_readed     )(circular_buffer_t * const p_buffer)
  * @return  None
  * 
  * */
-void circular_buffer_init(circular_buffer_t * const p_buffer, uint8_t size)
+void circular_buffer_init(circular_buffer_t * const p_buffer, UINT8_t size)
 {
     if (NULL == p_buffer || size == 0)
     {
@@ -158,7 +159,7 @@ void circular_buffer_init(circular_buffer_t * const p_buffer, uint8_t size)
     p_buffer->rflag    = 0;
     p_buffer->wflag    = 0;
 
-    p_buffer->buffer = (uint8_t *)osal_heap_malloc(size * MPUXXXX_DATA_PACKET_SIZE);
+    p_buffer->buffer = (UINT8_t *)osal_heap_malloc(size * MPUXXXX_DATA_PACKET_SIZE);
     if (NULL == p_buffer->buffer)
     {
         return;

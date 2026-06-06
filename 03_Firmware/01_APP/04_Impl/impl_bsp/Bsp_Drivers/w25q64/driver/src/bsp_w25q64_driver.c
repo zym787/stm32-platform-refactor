@@ -23,6 +23,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_w25q64_driver.h"
 #include "bsp_w25q64_reg.h"
 #include "Debug.h"
@@ -81,7 +82,7 @@
  * */
 static w25q64_status_t __w25q64_write_command(
     bsp_w25q64_driver_t *const driver_instance,
-    uint8_t                     command)
+    UINT8_t                     command)
 {
     w25q64_status_t ret = W25Q64_OK;
 
@@ -108,18 +109,18 @@ static w25q64_status_t __w25q64_write_command(
  * */
 static w25q64_status_t __w25q64_write_command_addr_data(
     bsp_w25q64_driver_t *const driver_instance,
-    uint8_t                     command,
-    uint32_t                    address,
-    uint8_t             const  *p_data,
-    uint32_t                    data_length)
+    UINT8_t                     command,
+    UINT32_t                    address,
+    UINT8_t             const  *p_data,
+    UINT32_t                    data_length)
 {
     w25q64_status_t ret = W25Q64_OK;
-    uint8_t cmd_addr[4];
+    UINT8_t cmd_addr[4];
 
     cmd_addr[0] = command;
-    cmd_addr[1] = (uint8_t)((address >> 16) & 0xFFU);
-    cmd_addr[2] = (uint8_t)((address >>  8) & 0xFFU);
-    cmd_addr[3] = (uint8_t)((address      ) & 0xFFU);
+    cmd_addr[1] = (UINT8_t)((address >> 16) & 0xFFU);
+    cmd_addr[2] = (UINT8_t)((address >>  8) & 0xFFU);
+    cmd_addr[3] = (UINT8_t)((address      ) & 0xFFU);
 
     SPI_INSTANCE(driver_instance)->pf_spi_write_cs_pin(W25Q64_PIN_LOW);
 
@@ -153,18 +154,18 @@ static w25q64_status_t __w25q64_write_command_addr_data(
  * */
 static w25q64_status_t __w25q64_read_command_addr_data(
     bsp_w25q64_driver_t *const driver_instance,
-    uint8_t                     command,
-    uint32_t                    address,
-    uint8_t                    *p_buffer,
-    uint32_t                    buffer_length)
+    UINT8_t                     command,
+    UINT32_t                    address,
+    UINT8_t                    *p_buffer,
+    UINT32_t                    buffer_length)
 {
     w25q64_status_t ret = W25Q64_OK;
-    uint8_t cmd_addr[4];
+    UINT8_t cmd_addr[4];
 
     cmd_addr[0] = command;
-    cmd_addr[1] = (uint8_t)((address >> 16) & 0xFFU);
-    cmd_addr[2] = (uint8_t)((address >>  8) & 0xFFU);
-    cmd_addr[3] = (uint8_t)((address      ) & 0xFFU);
+    cmd_addr[1] = (UINT8_t)((address >> 16) & 0xFFU);
+    cmd_addr[2] = (UINT8_t)((address >>  8) & 0xFFU);
+    cmd_addr[3] = (UINT8_t)((address      ) & 0xFFU);
 
     SPI_INSTANCE(driver_instance)->pf_spi_write_cs_pin(W25Q64_PIN_LOW);
 
@@ -194,14 +195,14 @@ static w25q64_status_t __w25q64_read_command_addr_data(
  * */
 static w25q64_status_t __w25q64_read_status_reg(
     bsp_w25q64_driver_t *const driver_instance,
-    uint8_t                    *p_status)
+    UINT8_t                    *p_status)
 {
     w25q64_status_t ret = W25Q64_OK;
 
     SPI_INSTANCE(driver_instance)->pf_spi_write_cs_pin(W25Q64_PIN_LOW);
 
     ret = SPI_INSTANCE(driver_instance)->pf_spi_transmit(
-        &(uint8_t){W25Q64_CMD_READ_REG}, 1U);
+        &(UINT8_t){W25Q64_CMD_READ_REG}, 1U);
     if (W25Q64_OK != ret)
     {
         SPI_INSTANCE(driver_instance)->pf_spi_write_cs_pin(
@@ -228,8 +229,8 @@ static w25q64_status_t __w25q64_wait_write_complete(
     bsp_w25q64_driver_t *const driver_instance)
 {
     w25q64_status_t ret = W25Q64_OK;
-    uint8_t status = 0;
-    uint32_t retries = 0;
+    UINT8_t status = 0;
+    UINT32_t retries = 0;
 
     while (retries < W25Q64_WRITE_POLL_MAX_RETRIES)
     {
@@ -270,15 +271,15 @@ static w25q64_status_t __w25q64_wait_write_complete(
  * */
 static w25q64_status_t __w25q64_read_jedec_id(
     bsp_w25q64_driver_t *const driver_instance,
-    uint8_t                    *p_id_buffer,
-    uint32_t                    buffer_length)
+    UINT8_t                    *p_id_buffer,
+    UINT32_t                    buffer_length)
 {
     w25q64_status_t ret = W25Q64_OK;
 
     SPI_INSTANCE(driver_instance)->pf_spi_write_cs_pin(W25Q64_PIN_LOW);
 
     ret = SPI_INSTANCE(driver_instance)->pf_spi_transmit(
-        &(uint8_t){W25Q64_CMD_JEDEC_ID}, 1U);
+        &(UINT8_t){W25Q64_CMD_JEDEC_ID}, 1U);
     if (W25Q64_OK != ret)
     {
         SPI_INSTANCE(driver_instance)->pf_spi_write_cs_pin(
@@ -307,10 +308,10 @@ static w25q64_status_t __w25q64_read_jedec_id(
  * */
 static w25q64_status_t __w25q64_erase_sector(
     bsp_w25q64_driver_t *const driver_instance,
-    uint32_t                    address)
+    UINT32_t                    address)
 {
     w25q64_status_t ret = W25Q64_OK;
-    uint8_t cmd_buf[4];
+    UINT8_t cmd_buf[4];
 
     ret = __w25q64_write_command(driver_instance,
                                 W25Q64_CMD_WRITE_ENABLE);
@@ -320,9 +321,9 @@ static w25q64_status_t __w25q64_erase_sector(
     }
 
     cmd_buf[0] = W25Q64_CMD_ERASE_SECTOR;
-    cmd_buf[1] = (uint8_t)((address >> 16) & 0xFFU);
-    cmd_buf[2] = (uint8_t)((address >>  8) & 0xFFU);
-    cmd_buf[3] = (uint8_t)((address      ) & 0xFFU);
+    cmd_buf[1] = (UINT8_t)((address >> 16) & 0xFFU);
+    cmd_buf[2] = (UINT8_t)((address >>  8) & 0xFFU);
+    cmd_buf[3] = (UINT8_t)((address      ) & 0xFFU);
 
     SPI_INSTANCE(driver_instance)->pf_spi_write_cs_pin(W25Q64_PIN_LOW);
 
@@ -387,7 +388,7 @@ static w25q64_status_t w25q64_init(
      * or uninitialized SPI peripheral.
      **/
     {
-        uint8_t id_buf[3] = {0};
+        UINT8_t id_buf[3] = {0};
         w25q64_status_t ret = __w25q64_read_jedec_id(
             driver_instance, id_buf, 3U);
         if (W25Q64_OK != ret)
@@ -455,8 +456,8 @@ static w25q64_status_t w25q64_deinit(
  * */
 static w25q64_status_t w25q64_read_id(
     bsp_w25q64_driver_t *const driver_instance,
-    uint8_t                    *p_id_buffer,
-    uint32_t                    buffer_length)
+    UINT8_t                    *p_id_buffer,
+    UINT32_t                    buffer_length)
 {
     if ((NULL == driver_instance) ||
         (NULL == p_id_buffer)    ||
@@ -487,9 +488,9 @@ static w25q64_status_t w25q64_read_id(
  * */
 static w25q64_status_t w25q64_read_data(
     bsp_w25q64_driver_t *const driver_instance,
-    uint32_t                     address,
-    uint8_t                     *p_data_buffer,
-    uint32_t                     buffer_length)
+    UINT32_t                     address,
+    UINT8_t                     *p_data_buffer,
+    UINT32_t                     buffer_length)
 {
     if ((NULL == driver_instance) ||
         (NULL == p_data_buffer)   ||
@@ -536,9 +537,9 @@ static w25q64_status_t w25q64_read_data(
  * */
 static w25q64_status_t w25q64_write_data_noerase(
     bsp_w25q64_driver_t *const driver_instance,
-    uint32_t                     address,
-    uint8_t             const   *p_data_buffer,
-    uint32_t                     data_length)
+    UINT32_t                     address,
+    UINT8_t             const   *p_data_buffer,
+    UINT32_t                     data_length)
 {
     w25q64_status_t ret = W25Q64_OK;
 
@@ -566,14 +567,14 @@ static w25q64_status_t w25q64_write_data_noerase(
     * Write Enable must be re-issued before each Page Program; the WEL
     * bit auto-clears after each program completes.
     **/
-    uint32_t bytes_written = 0U;
+    UINT32_t bytes_written = 0U;
     while (bytes_written < data_length)
     {
-        uint32_t cur_addr       = address + bytes_written;
-        uint32_t offset_in_page = cur_addr & (W25Q64_PAGE_SIZE - 1U);
-        uint32_t space_in_page  = W25Q64_PAGE_SIZE - offset_in_page;
-        uint32_t remaining      = data_length - bytes_written;
-        uint32_t chunk_size = (remaining < space_in_page) ? remaining
+        UINT32_t cur_addr       = address + bytes_written;
+        UINT32_t offset_in_page = cur_addr & (W25Q64_PAGE_SIZE - 1U);
+        UINT32_t space_in_page  = W25Q64_PAGE_SIZE - offset_in_page;
+        UINT32_t remaining      = data_length - bytes_written;
+        UINT32_t chunk_size = (remaining < space_in_page) ? remaining
                                                           : space_in_page;
 
         ret = __w25q64_write_command(driver_instance,
@@ -625,12 +626,12 @@ static w25q64_status_t w25q64_write_data_noerase(
  * */
 static w25q64_status_t w25q64_write_data_erase(
     bsp_w25q64_driver_t *const driver_instance,
-    uint32_t                     address,
-    uint8_t             const   *p_data_buffer,
-    uint32_t                     data_length)
+    UINT32_t                     address,
+    UINT8_t             const   *p_data_buffer,
+    UINT32_t                     data_length)
 {
     w25q64_status_t ret = W25Q64_OK;
-    uint32_t bytes_written = 0;
+    UINT32_t bytes_written = 0;
 
     if ((NULL == driver_instance) ||
         (NULL == p_data_buffer)   ||
@@ -665,12 +666,12 @@ static w25q64_status_t w25q64_write_data_erase(
     **/
     while (bytes_written < data_length)
     {
-        uint32_t cur_addr = address + bytes_written;
+        UINT32_t cur_addr = address + bytes_written;
 
         /* Erase the 4 KB sector only on entering a new sector. */
         if (((cur_addr) & (W25Q64_SECTOR_SIZE - 1U)) == 0U)
         {
-            uint32_t sector_base = cur_addr & ~(W25Q64_SECTOR_SIZE - 1U);
+            UINT32_t sector_base = cur_addr & ~(W25Q64_SECTOR_SIZE - 1U);
             ret = __w25q64_erase_sector(driver_instance, sector_base);
             if (W25Q64_OK != ret)
             {
@@ -681,7 +682,7 @@ static w25q64_status_t w25q64_write_data_erase(
         {
             /* First chunk lands in the middle of a sector — erase the
                containing sector before any write touches it. */
-            uint32_t sector_base = cur_addr & ~(W25Q64_SECTOR_SIZE - 1U);
+            UINT32_t sector_base = cur_addr & ~(W25Q64_SECTOR_SIZE - 1U);
             ret = __w25q64_erase_sector(driver_instance, sector_base);
             if (W25Q64_OK != ret)
             {
@@ -692,12 +693,12 @@ static w25q64_status_t w25q64_write_data_erase(
         /* Per-page-program chunk: limited by both the remaining bytes,
            the rest of the current page, and the rest of the current
            sector (we re-erase per sector). */
-        uint32_t offset_in_page = cur_addr & (W25Q64_PAGE_SIZE - 1U);
-        uint32_t space_in_page  = W25Q64_PAGE_SIZE - offset_in_page;
-        uint32_t offset_in_sector = cur_addr & (W25Q64_SECTOR_SIZE - 1U);
-        uint32_t space_in_sector  = W25Q64_SECTOR_SIZE - offset_in_sector;
-        uint32_t remaining = data_length - bytes_written;
-        uint32_t chunk_size = remaining;
+        UINT32_t offset_in_page = cur_addr & (W25Q64_PAGE_SIZE - 1U);
+        UINT32_t space_in_page  = W25Q64_PAGE_SIZE - offset_in_page;
+        UINT32_t offset_in_sector = cur_addr & (W25Q64_SECTOR_SIZE - 1U);
+        UINT32_t space_in_sector  = W25Q64_SECTOR_SIZE - offset_in_sector;
+        UINT32_t remaining = data_length - bytes_written;
+        UINT32_t chunk_size = remaining;
         if (chunk_size > space_in_page)   { chunk_size = space_in_page; }
         if (chunk_size > space_in_sector) { chunk_size = space_in_sector; }
 
@@ -788,7 +789,7 @@ static w25q64_status_t w25q64_erase_chip(
  * */
 static w25q64_status_t w25q64_erase_sector(
     bsp_w25q64_driver_t *const driver_instance,
-    uint32_t                    address)
+    UINT32_t                    address)
 {
     if (NULL == driver_instance)
     {

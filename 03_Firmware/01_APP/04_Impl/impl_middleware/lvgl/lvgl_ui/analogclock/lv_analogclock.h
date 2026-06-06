@@ -19,6 +19,7 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
+#include "board_types.h"
 #include"lvgl.h"
  #define LV_USE_ANALOGCLOCK 1
 #if LV_USE_ANALOGCLOCK != 0
@@ -38,24 +39,24 @@ extern "C" {
 
 typedef struct {
     lv_color_t tick_color;
-    uint16_t tick_cnt;
-    uint16_t tick_length;
-    uint16_t tick_width;
+    UINT16_t tick_cnt;
+    UINT16_t tick_length;
+    UINT16_t tick_width;
 
     lv_color_t tick_major_color;
-    uint16_t tick_major_nth;
-    uint16_t tick_major_length;
-    uint16_t tick_major_width;
+    UINT16_t tick_major_nth;
+    UINT16_t tick_major_length;
+    UINT16_t tick_major_width;
 
-    bool hide_label;
-    int16_t label_gap;
-    int16_t label_color;
+    BOOL hide_label;
+    INT16_t label_gap;
+    INT16_t label_color;
 
-    int32_t min;
-    int32_t max;
-    int16_t r_mod;
-    uint16_t angle_range;
-    int16_t rotation;
+    INT32_t min;
+    INT32_t max;
+    INT16_t r_mod;
+    UINT16_t angle_range;
+    INT16_t rotation;
 } lv_analogclock_scale_t;
 
 enum {
@@ -64,35 +65,35 @@ enum {
     LV_analogclock_INDICATOR_TYPE_SCALE_LINES,
     LV_analogclock_INDICATOR_TYPE_ARC,
 };
-typedef uint8_t lv_analogclock_indicator_type_t;
+typedef UINT8_t lv_analogclock_indicator_type_t;
 
 typedef struct {
     lv_analogclock_scale_t * scale;
     lv_analogclock_indicator_type_t type;
     lv_opa_t opa;
-    int32_t start_value;
-    int32_t end_value;
+    INT32_t start_value;
+    INT32_t end_value;
     union {
         struct {
             const void * src;
             lv_point_t pivot;
         } needle_img;
         struct {
-            uint16_t width;
-            int16_t r_mod;
+            UINT16_t width;
+            INT16_t r_mod;
             lv_color_t color;
         } needle_line;
         struct {
-            uint16_t width;
+            UINT16_t width;
             const void * src;
             lv_color_t color;
-            int16_t r_mod;
+            INT16_t r_mod;
         } arc;
         struct {
-            int16_t width_mod;
+            INT16_t width_mod;
             lv_color_t color_start;
             lv_color_t color_end;
-            uint8_t local_grad  : 1;
+            UINT8_t local_grad  : 1;
         } scale_lines;
     } type_data;
 } lv_analogclock_indicator_t;
@@ -103,7 +104,7 @@ typedef struct {
     lv_ll_t scale_ll;
     lv_analogclock_scale_t * scale;
     lv_ll_t indicator_ll;
-    bool hide_point;
+    BOOL hide_point;
     lv_analogclock_indicator_t * hour_indic;
     lv_analogclock_indicator_t * min_indic;
     lv_analogclock_indicator_t * sec_indic;
@@ -157,7 +158,7 @@ lv_analogclock_scale_t * lv_analogclock_add_scale(lv_obj_t * obj);
  * @param len       length of tick lines
  * @param color     color of tick lines
  */
-void lv_analogclock_set_ticks(lv_obj_t * obj, uint16_t width, uint16_t len, lv_color_t color);
+void lv_analogclock_set_ticks(lv_obj_t * obj, UINT16_t width, UINT16_t len, lv_color_t color);
 
 /**
  * Make some "normal" ticks major ticks and set their attributes.
@@ -170,7 +171,7 @@ void lv_analogclock_set_ticks(lv_obj_t * obj, uint16_t width, uint16_t len, lv_c
  * @param color         color of the major ticks
  * @param label_gap     gap between the major ticks and the labels
  */
-void lv_analogclock_set_major_ticks(lv_obj_t * obj, uint16_t width, uint16_t len, lv_color_t color, int16_t label_gap);
+void lv_analogclock_set_major_ticks(lv_obj_t * obj, UINT16_t width, UINT16_t len, lv_color_t color, INT16_t label_gap);
 
 
 /**
@@ -182,9 +183,9 @@ void lv_analogclock_set_major_ticks(lv_obj_t * obj, uint16_t width, uint16_t len
  * @param angle_range   the angular range of the scale
  * @param rotation      the angular offset from the 3 o'clock position (clock-wise)
  */
-void lv_analogclock_set_scale_range(lv_obj_t * obj, lv_analogclock_scale_t * scale, int32_t min, int32_t max,
-                                    uint32_t angle_range,
-                                    uint32_t rotation);
+void lv_analogclock_set_scale_range(lv_obj_t * obj, lv_analogclock_scale_t * scale, INT32_t min, INT32_t max,
+                                    UINT32_t angle_range,
+                                    UINT32_t rotation);
 
 /*=====================
  * Hide digits / centerpoint
@@ -195,14 +196,14 @@ void lv_analogclock_set_scale_range(lv_obj_t * obj, lv_analogclock_scale_t * sca
  * @param obj           pointer to a analogclock object
  * @param hide_digits   set whether has digits
  */
-void lv_analogclock_hide_digits(lv_obj_t * obj, bool hide_digits);
+void lv_analogclock_hide_digits(lv_obj_t * obj, BOOL hide_digits);
 
 /**
  * Hide the center point or not
  * @param obj           pointer to a analogclock object
  * @param hide_point    set whether has center point
  */
-void lv_analogclock_hide_point(lv_obj_t * obj, bool hide_point);
+void lv_analogclock_hide_point(lv_obj_t * obj, BOOL hide_point);
 
 /*=====================
  * Add indicator
@@ -218,14 +219,14 @@ void lv_analogclock_hide_point(lv_obj_t * obj, bool hide_point);
  * @return              the new indicator
  */
 lv_analogclock_indicator_t * lv_analogclock_add_needle_line(lv_obj_t * obj, lv_analogclock_scale_t * scale,
-                                                            uint16_t width,
-                                                            lv_color_t color, int16_t r_mod);
-void lv_analogclock_set_hour_needle_line(lv_obj_t * obj, uint16_t width,
-                                         lv_color_t color, int16_t r_mod);
-void lv_analogclock_set_min_needle_line(lv_obj_t * obj, uint16_t width,
-                                        lv_color_t color, int16_t r_mod);
-void lv_analogclock_set_sec_needle_line(lv_obj_t * obj, uint16_t width,
-                                        lv_color_t color, int16_t r_mod);
+                                                            UINT16_t width,
+                                                            lv_color_t color, INT16_t r_mod);
+void lv_analogclock_set_hour_needle_line(lv_obj_t * obj, UINT16_t width,
+                                         lv_color_t color, INT16_t r_mod);
+void lv_analogclock_set_min_needle_line(lv_obj_t * obj, UINT16_t width,
+                                        lv_color_t color, INT16_t r_mod);
+void lv_analogclock_set_sec_needle_line(lv_obj_t * obj, UINT16_t width,
+                                        lv_color_t color, INT16_t r_mod);
 
 /**
  * Add a needle image indicator the scale
@@ -256,8 +257,8 @@ void lv_analogclock_set_sec_needle_img(lv_obj_t * obj, const void * src,
  * @param r_mod         the radius modifier (added to the scale's radius) to get the outer radius of the arc
  * @return              the new indicator
  */
-lv_analogclock_indicator_t * lv_analogclock_add_arc(lv_obj_t * obj, uint16_t width, lv_color_t color,
-                                                    int16_t r_mod);
+lv_analogclock_indicator_t * lv_analogclock_add_arc(lv_obj_t * obj, UINT16_t width, lv_color_t color,
+                                                    INT16_t r_mod);
 
 
 /**
@@ -271,7 +272,7 @@ lv_analogclock_indicator_t * lv_analogclock_add_arc(lv_obj_t * obj, uint16_t wid
  * @return              the new indicator
  */
 lv_analogclock_indicator_t * lv_analogclock_add_scale_lines(lv_obj_t * obj, lv_color_t color_start,
-                                                            lv_color_t color_end, bool local, int16_t width_mod);
+                                                            lv_color_t color_end, BOOL local, INT16_t width_mod);
 
 /*=====================
  * Set indicator value
@@ -283,7 +284,7 @@ lv_analogclock_indicator_t * lv_analogclock_add_scale_lines(lv_obj_t * obj, lv_c
  * @param indic         pointer to an indicator
  * @param value         the new value
  */
-void lv_analogclock_set_indicator_value(lv_obj_t * obj, lv_analogclock_indicator_t * indic, int32_t value);
+void lv_analogclock_set_indicator_value(lv_obj_t * obj, lv_analogclock_indicator_t * indic, INT32_t value);
 
 /**
  * Set the start value of the indicator.
@@ -291,7 +292,7 @@ void lv_analogclock_set_indicator_value(lv_obj_t * obj, lv_analogclock_indicator
  * @param indic         pointer to an indicator
  * @param value         the new value
  */
-void lv_analogclock_set_indicator_start_value(lv_obj_t * obj, lv_analogclock_indicator_t * indic, int32_t value);
+void lv_analogclock_set_indicator_start_value(lv_obj_t * obj, lv_analogclock_indicator_t * indic, INT32_t value);
 
 /**
  * Set the start value of the indicator.
@@ -299,7 +300,7 @@ void lv_analogclock_set_indicator_start_value(lv_obj_t * obj, lv_analogclock_ind
  * @param indic         pointer to an indicator
  * @param value         the new value
  */
-void lv_analogclock_set_indicator_end_value(lv_obj_t * obj, lv_analogclock_indicator_t * indic, int32_t value);
+void lv_analogclock_set_indicator_end_value(lv_obj_t * obj, lv_analogclock_indicator_t * indic, INT32_t value);
 
 /**
  * Set the time of clock.
@@ -308,7 +309,7 @@ void lv_analogclock_set_indicator_end_value(lv_obj_t * obj, lv_analogclock_indic
  * @param min           minute value
  * @param sec           second value
  */
-void lv_analogclock_set_time(lv_obj_t * obj, int32_t hour, int32_t min, int32_t sec);
+void lv_analogclock_set_time(lv_obj_t * obj, INT32_t hour, INT32_t min, INT32_t sec);
 
 /**********************
  *      MACROS

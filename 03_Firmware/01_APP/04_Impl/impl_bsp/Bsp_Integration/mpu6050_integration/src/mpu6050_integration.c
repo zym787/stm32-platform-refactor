@@ -24,6 +24,7 @@
  *
  *****************************************************************************/
 
+#include "board_types.h"
 #include "bsp_mpuxxxx_handler.h"
 
 #include "main.h"
@@ -80,12 +81,12 @@ mpuxxxx_status_t iic_driver_deinit(void const *const iic_bus)
  * @return MPUXXXX_OK on success, MPUXXXX_ERROR on bus failure.
  */
 mpuxxxx_status_t iic_mem_read(void *hi2c,
-                              uint16_t dst_address,
-                              uint16_t mem_addr,
-                              uint16_t mem_size,
-                              uint8_t *p_data,
-                              uint16_t size,
-                              uint32_t timeout)
+                              UINT16_t dst_address,
+                              UINT16_t mem_addr,
+                              UINT16_t mem_size,
+                              UINT8_t *p_data,
+                              UINT16_t size,
+                              UINT32_t timeout)
 {
     platform_err_t ret = SENSOR_HARDWARE_I2C_MEM_READ(
         dst_address, mem_addr, mem_size, p_data, size, timeout);
@@ -115,12 +116,12 @@ mpuxxxx_status_t iic_mem_read(void *hi2c,
  * @return MPUXXXX_OK on success, MPUXXXX_ERROR on bus or timeout failure.
  */
 mpuxxxx_status_t iic_mem_write(void *hi2c,
-                               uint16_t dst_address,
-                               uint16_t mem_addr,
-                               uint16_t mem_size,
-                               uint8_t *p_data,
-                               uint16_t size,
-                               uint32_t timeout)
+                               UINT16_t dst_address,
+                               UINT16_t mem_addr,
+                               UINT16_t mem_size,
+                               UINT8_t *p_data,
+                               UINT16_t size,
+                               UINT32_t timeout)
 {
     platform_err_t ret = SENSOR_HARDWARE_I2C_MEM_WRITE(
         dst_address, mem_addr, mem_size, p_data, size, timeout);
@@ -158,11 +159,11 @@ mpuxxxx_status_t iic_mem_write(void *hi2c,
  * @return MPUXXXX_OK on completion, MPUXXXX_ERROR on timeout or bus failure.
  */
 mpuxxxx_status_t iic_mem_read_dma(void *hi2c,
-                                  uint16_t dst_address,
-                                  uint16_t mem_addr,
-                                  uint16_t mem_size,
-                                  uint8_t *p_data,
-                                  uint16_t size)
+                                  UINT16_t dst_address,
+                                  UINT16_t mem_addr,
+                                  UINT16_t mem_size,
+                                  UINT8_t *p_data,
+                                  UINT16_t size)
 {
     platform_err_t ret = SENSOR_HARDWARE_I2C_MEM_READ_DMA(
         dst_address, mem_addr, mem_size, p_data, size,
@@ -195,7 +196,7 @@ timebase_interface_t timebase_interface = {
 
 /*****************************************************************************/
 #if OS_SUPPORTING
-static void osal_yield_wrapper(uint32_t const ms)
+static void osal_yield_wrapper(UINT32_t const ms)
 {
     osal_task_delay((osal_tick_type_t)ms);
 }
@@ -206,12 +207,12 @@ yield_interface_t yield_interface = {
 #endif
 /*****************************************************************************/
 /**
- * @brief  ms busy-wait wrapper — driver vtable expects (uint32_t ms),
+ * @brief  ms busy-wait wrapper — driver vtable expects (UINT32_t ms),
  *         core_dwt_delay_us takes us, so trampoline through *1000.
  *         Kept busy-wait (not osal_task_delay) because the MPU init path
  *         may run before the scheduler starts.
  */
-static void mpu_dwt_delay_ms(uint32_t ms)
+static void mpu_dwt_delay_ms(UINT32_t ms)
 {
     core_dwt_delay_us(ms * 1000U);
 }
@@ -224,12 +225,12 @@ delay_interface_t delay_interface = {
 /*****************************************************************************/
 // os interface
 #if OS_SUPPORTING
-static mpuxxxx_status_t os_queue_create(uint32_t const queue_size,
-                                        uint32_t const item_size,
+static mpuxxxx_status_t os_queue_create(UINT32_t const queue_size,
+                                        UINT32_t const item_size,
                                         void         **queue_handle)
 {
-    int32_t ret = osal_queue_create((osal_queue_handle_t *)queue_handle,
-                                   (size_t)queue_size, (size_t)item_size);
+    INT32_t ret = osal_queue_create((osal_queue_handle_t *)queue_handle,
+                                   (SIZE_t)queue_size, (SIZE_t)item_size);
     return (ret == 0) ? MPUXXXX_OK : MPUXXXX_ERROR;
 }
 
@@ -241,9 +242,9 @@ static mpuxxxx_status_t os_queue_delete(void *const queue_handle)
 
 static mpuxxxx_status_t os_queue_put(void *const queue_handle,
                                      void *const item,
-                                     uint32_t const timeout)
+                                     UINT32_t const timeout)
 {
-    int32_t ret = osal_queue_send((osal_queue_handle_t)queue_handle, item,
+    INT32_t ret = osal_queue_send((osal_queue_handle_t)queue_handle, item,
                                  (osal_tick_type_t)timeout);
     return (ret == 0) ? MPUXXXX_OK : MPUXXXX_ERROR;
 }
@@ -252,7 +253,7 @@ static mpuxxxx_status_t os_queue_put_isr(void *const queue_handle,
                                          void *const item,
                                          long *const HigherPriorityTaskWoken)
 {
-    int32_t ret = osal_queue_send_from_isr(
+    INT32_t ret = osal_queue_send_from_isr(
         (osal_queue_handle_t)queue_handle, item,
         (osal_base_type_t *)HigherPriorityTaskWoken);
     return (ret == 0) ? MPUXXXX_OK : MPUXXXX_ERROR;
@@ -260,16 +261,16 @@ static mpuxxxx_status_t os_queue_put_isr(void *const queue_handle,
 
 static mpuxxxx_status_t os_queue_get(void *const queue_handle,
                                      void *const item,
-                                     uint32_t const timeout)
+                                     UINT32_t const timeout)
 {
-    int32_t ret = osal_queue_receive((osal_queue_handle_t)queue_handle, item,
+    INT32_t ret = osal_queue_receive((osal_queue_handle_t)queue_handle, item,
                                     (osal_tick_type_t)timeout);
     return (ret == 0) ? MPUXXXX_OK : MPUXXXX_ERROR;
 }
 
 static mpuxxxx_status_t os_semaphore_create_mutex(void **mutex_handle)
 {
-    int32_t ret = osal_mutex_init((osal_mutex_handle_t *)mutex_handle);
+    INT32_t ret = osal_mutex_init((osal_mutex_handle_t *)mutex_handle);
     return (ret == 0) ? MPUXXXX_OK : MPUXXXX_ERROR;
 }
 
@@ -280,22 +281,22 @@ static mpuxxxx_status_t os_semaphore_delete_mutex(void *const mutex_handle)
 }
 
 static mpuxxxx_status_t os_semaphore_lock_mutex(void *const    mutex_handle,
-                                                 uint32_t const timeout)
+                                                 UINT32_t const timeout)
 {
-    int32_t ret = osal_mutex_take((osal_mutex_handle_t)mutex_handle,
+    INT32_t ret = osal_mutex_take((osal_mutex_handle_t)mutex_handle,
                                  (osal_tick_type_t)timeout);
     return (ret == 0) ? MPUXXXX_OK : MPUXXXX_ERROR;
 }
 
 static mpuxxxx_status_t os_semaphore_unlock_mutex(void *const mutex_handle)
 {
-    int32_t ret = osal_mutex_give((osal_mutex_handle_t)mutex_handle);
+    INT32_t ret = osal_mutex_give((osal_mutex_handle_t)mutex_handle);
     return (ret == 0) ? MPUXXXX_OK : MPUXXXX_ERROR;
 }
 
 static mpuxxxx_status_t os_semaphore_create_binary(void **binary_handle)
 {
-    int32_t ret = osal_sema_init((osal_sema_handle_t *)binary_handle, 0);
+    INT32_t ret = osal_sema_init((osal_sema_handle_t *)binary_handle, 0);
     return (ret == 0) ? MPUXXXX_OK : MPUXXXX_ERROR;
 }
 
@@ -307,23 +308,23 @@ static mpuxxxx_status_t os_semaphore_delete_binary(void *const binary_handle)
 
 static mpuxxxx_status_t os_semaphore_signal_binary(void *const binary_handle)
 {
-    int32_t ret = osal_sema_give((osal_sema_handle_t)binary_handle);
+    INT32_t ret = osal_sema_give((osal_sema_handle_t)binary_handle);
     return (ret == 0) ? MPUXXXX_OK : MPUXXXX_ERROR;
 }
 
 static mpuxxxx_status_t os_semaphore_wait_binary(void *const binary_handle)
 {
-    int32_t ret = osal_sema_take((osal_sema_handle_t)binary_handle,
+    INT32_t ret = osal_sema_take((osal_sema_handle_t)binary_handle,
                                 OSAL_MAX_DELAY);
     return (ret == 0) ? MPUXXXX_OK : MPUXXXX_ERROR;
 }
 
 static mpuxxxx_status_t
-os_semaphore_signal_notify_isr(void *const notify_handle, uint32_t ulValue,
-                               uint32_t    eAction,
+os_semaphore_signal_notify_isr(void *const notify_handle, UINT32_t ulValue,
+                               UINT32_t    eAction,
                                long *const HigherPriorityTaskWoken)
 {
-    int32_t ret = osal_notify_send_from_isr(
+    INT32_t ret = osal_notify_send_from_isr(
         (osal_task_handle_t)notify_handle,
         ulValue,
         (osal_notify_action_t)eAction,
@@ -331,12 +332,12 @@ os_semaphore_signal_notify_isr(void *const notify_handle, uint32_t ulValue,
     return (ret == 0) ? MPUXXXX_OK : MPUXXXX_ERROR;
 }
 
-static mpuxxxx_status_t os_semaphore_wait_notify(uint32_t  ulBitsToClearOnEntry,
-                                                  uint32_t  ulBitsToClearOnExit,
-                                                  uint32_t *pulNotificationValue,
-                                                  uint32_t  timeout)
+static mpuxxxx_status_t os_semaphore_wait_notify(UINT32_t  ulBitsToClearOnEntry,
+                                                  UINT32_t  ulBitsToClearOnExit,
+                                                  UINT32_t *pulNotificationValue,
+                                                  UINT32_t  timeout)
 {
-    int32_t ret = osal_notify_wait(ulBitsToClearOnEntry, ulBitsToClearOnExit,
+    INT32_t ret = osal_notify_wait(ulBitsToClearOnEntry, ulBitsToClearOnExit,
                                    pulNotificationValue,
                                    (osal_tick_type_t)timeout);
     /* DMA complete: release bus mutex in task context (mutex cannot be given

@@ -20,6 +20,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include <string.h>
 
 #include "iflash_port.h"
@@ -28,9 +29,9 @@
 //******************************** Includes *********************************//
 
 //******************************* Functions *********************************//
-platform_err_t mcu_iflash_erase_sector(uint8_t sector)
+platform_err_t mcu_iflash_erase_sector(UINT8_t sector)
 {
-    uint32_t primask = __get_PRIMASK();
+    UINT32_t primask = __get_PRIMASK();
     __disable_irq();
 
     platform_err_t result = PLATFORM_ERR_HW_FAULT;
@@ -46,7 +47,7 @@ platform_err_t mcu_iflash_erase_sector(uint8_t sector)
     erase_init.Sector       = sector;
     erase_init.NbSectors    = 1U;
 
-    uint32_t sector_error = 0xFFFFFFFFU;
+    UINT32_t sector_error = 0xFFFFFFFFU;
     if (HAL_FLASHEx_Erase(&erase_init, &sector_error) == HAL_OK)
     {
         result = PLATFORM_OK;
@@ -66,16 +67,16 @@ exit:
     return result;
 }
 
-platform_err_t mcu_iflash_program_words(uint32_t        addr,
-                                const uint32_t *src,
-                                uint32_t        n_words)
+platform_err_t mcu_iflash_program_words(UINT32_t        addr,
+                                const UINT32_t *src,
+                                UINT32_t        n_words)
 {
     if ((src == NULL) || ((addr & 0x3U) != 0U))
     {
         return PLATFORM_ERR_PARAM;
     }
 
-    uint32_t primask = __get_PRIMASK();
+    UINT32_t primask = __get_PRIMASK();
     __disable_irq();
 
     platform_err_t result = PLATFORM_ERR_HW_FAULT;
@@ -86,10 +87,10 @@ platform_err_t mcu_iflash_program_words(uint32_t        addr,
     }
 
     HAL_StatusTypeDef hs = HAL_OK;
-    for (uint32_t i = 0U; i < n_words; i++)
+    for (UINT32_t i = 0U; i < n_words; i++)
     {
         hs = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD,
-                               addr + (i * sizeof(uint32_t)),
+                               addr + (i * sizeof(UINT32_t)),
                                src[i]);
         if (hs != HAL_OK)
         {
@@ -107,7 +108,7 @@ platform_err_t mcu_iflash_program_words(uint32_t        addr,
         **/
         if (memcmp((const void *)addr,
                    (const void *)src,
-                   n_words * sizeof(uint32_t)) == 0)
+                   n_words * sizeof(UINT32_t)) == 0)
         {
             result = PLATFORM_OK;
         }

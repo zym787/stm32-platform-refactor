@@ -24,6 +24,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_aht21_driver.h"
 #include "Debug.h"
 
@@ -41,7 +42,7 @@
 
 static aht21_status_t aht21_read_status   (
                                            bsp_aht21_driver_t * const     this,
-                                                      uint8_t * const rec_data
+                                                      UINT8_t * const rec_data
                                           );
 #if USE_HARDWARE_I2C
 static aht21_status_t __calibration_init  (bsp_aht21_driver_t * const     this);
@@ -49,7 +50,7 @@ static aht21_status_t __calibration_init  (bsp_aht21_driver_t * const     this);
 //******************************** Defines **********************************//
 
 //******************************* Variables *********************************//
-static uint8_t g_device_id              =                 0;
+static UINT8_t g_device_id              =                 0;
 //******************************* Variables *********************************//
 
 /**
@@ -61,18 +62,18 @@ static uint8_t g_device_id              =                 0;
  * @param[in] p_data Pointer to data buffer
  * @param[in] length Length of data in bytes
  *
- * @return uint8_t Calculated CRC8 checksum
+ * @return UINT8_t Calculated CRC8 checksum
  *
  * @note Used for data integrity verification in AHT21 communication
  */
-static uint8_t CheckCrc8(uint8_t const *p_data, uint8_t const length)
+static UINT8_t CheckCrc8(UINT8_t const *p_data, UINT8_t const length)
 {
-    uint8_t crc = CRC8_INITIAL;
+    UINT8_t crc = CRC8_INITIAL;
 
-    for (uint8_t i = 0; i < length; i++)
+    for (UINT8_t i = 0; i < length; i++)
     {
         crc ^= p_data[i];
-        for (uint8_t j = 0; j < 8; j++)
+        for (UINT8_t j = 0; j < 8; j++)
         {
             if (crc & 0x80)
             {
@@ -116,16 +117,16 @@ static uint8_t CheckCrc8(uint8_t const *p_data, uint8_t const length)
 static aht21_status_t __calibration_init(bsp_aht21_driver_t * const this)
 {
     aht21_status_t ret = AHT21_OK;
-    uint8_t        cmd[3];
+    UINT8_t        cmd[3];
 
-    static const uint8_t k_regs[3] = {AHT21_REG_CAL_1B, 
+    static const UINT8_t k_regs[3] = {AHT21_REG_CAL_1B, 
                                       AHT21_REG_CAL_1C, 
                                       AHT21_REG_CAL_1E};
-    for (uint8_t i = 0; i < 3; i++)
+    for (UINT8_t i = 0; i < 3; i++)
     {
         cmd[0] = k_regs[i]; cmd[1] = 0x00; cmd[2] = 0x00;
         ret = this->p_iic_driver_instance->pf_i2c_master_write(
-            NULL, (uint16_t)(AHT21_IIC_ADDR << 1), cmd, 3);
+            NULL, (UINT16_t)(AHT21_IIC_ADDR << 1), cmd, 3);
         if (AHT21_OK != ret)
         {
             DEBUG_OUT(e, AHT21_ERR_LOG_TAG, 
@@ -144,7 +145,7 @@ static aht21_status_t __calibration_init(bsp_aht21_driver_t * const this)
 static aht21_status_t __read_id(bsp_aht21_driver_t * const this)
 {
     aht21_status_t ret  = AHT21_OK;
-    uint8_t        data =        0;
+    UINT8_t        data =        0;
 
     if (NULL == this)
     {
@@ -176,7 +177,7 @@ static aht21_status_t __read_id(bsp_aht21_driver_t * const this)
 #endif
 #else
     ret = this->p_iic_driver_instance->pf_i2c_master_read(
-        NULL, (uint16_t)(AHT21_IIC_ADDR << 1), &data, 1);
+        NULL, (UINT16_t)(AHT21_IIC_ADDR << 1), &data, 1);
     if (AHT21_OK != ret)
     {
         return ret;
@@ -194,7 +195,7 @@ static aht21_status_t __read_id(bsp_aht21_driver_t * const this)
         }
 
         ret = this->p_iic_driver_instance->pf_i2c_master_read(
-            NULL, (uint16_t)(AHT21_IIC_ADDR << 1), &data, 1);
+            NULL, (UINT16_t)(AHT21_IIC_ADDR << 1), &data, 1);
         if (AHT21_OK != ret)
         {
             return ret;
@@ -234,8 +235,8 @@ static aht21_status_t __read_id(bsp_aht21_driver_t * const this)
 static aht21_status_t __trigger_measurement(bsp_aht21_driver_t * const this)
 {
     aht21_status_t ret      = AHT21_OK;
-    uint8_t        rec_flag =        0;
-    uint8_t        err_time =        5;
+    UINT8_t        rec_flag =        0;
+    UINT8_t        err_time =        5;
 
 
     if (NULL == this)
@@ -277,13 +278,13 @@ static aht21_status_t __trigger_measurement(bsp_aht21_driver_t * const this)
     this->p_iic_driver_instance->pf_critical_exit();
 #endif
 #else
-    uint8_t cmd[3] = {
+    UINT8_t cmd[3] = {
         AHT21_REG_POINTER_AC,
         AHT21_REG_MEASURE_CMD_ARGS1,
         AHT21_REG_MEASURE_CMD_ARGS2
     };
     ret = this->p_iic_driver_instance->pf_i2c_master_write(
-        NULL, (uint16_t)(AHT21_IIC_ADDR << 1), cmd, 3);
+        NULL, (UINT16_t)(AHT21_IIC_ADDR << 1), cmd, 3);
     if (AHT21_OK != ret)
     {
         return ret;
@@ -294,7 +295,7 @@ static aht21_status_t __trigger_measurement(bsp_aht21_driver_t * const this)
 #if OS_SUPPORTING
     this->p_yield_instance->pf_rtos_yield(AHT21_MEASURE_WATTING_TIME);
 #else
-    uint32_t start_time =  this->p_timebase_instance->pf_get_tick_count_ms();
+    UINT32_t start_time =  this->p_timebase_instance->pf_get_tick_count_ms();
     while (this->p_timebase_instance->pf_get_tick_count_ms() - 
                                     start_time < AHT21_MEASURE_WATTING_TIME)
     {
@@ -310,7 +311,7 @@ static aht21_status_t __trigger_measurement(bsp_aht21_driver_t * const this)
 #if OS_SUPPORTING
         this->p_yield_instance->pf_rtos_yield(5);
 #else
-        uint32_t start_time = this->p_timebase_instance->\
+        UINT32_t start_time = this->p_timebase_instance->\
                                           pf_get_tick_count_ms();
         while (this->p_timebase_instance->pf_get_tick_count_ms() -
                                         start_time < 5)
@@ -356,15 +357,15 @@ static aht21_status_t __trigger_measurement(bsp_aht21_driver_t * const this)
  */
 static aht21_status_t __start_receive(
                                       bsp_aht21_driver_t * const     this,
-                                      uint8_t            * const byte_1th,
-                                      uint8_t            * const byte_2th,
-                                      uint8_t            * const byte_3th,
-                                      uint8_t            * const byte_4th,
-                                      uint8_t            * const byte_5th,
-                                      uint8_t            * const byte_6th)
+                                      UINT8_t            * const byte_1th,
+                                      UINT8_t            * const byte_2th,
+                                      UINT8_t            * const byte_3th,
+                                      UINT8_t            * const byte_4th,
+                                      UINT8_t            * const byte_5th,
+                                      UINT8_t            * const byte_6th)
 {
     aht21_status_t ret = AHT21_OK;
-    uint8_t   byte_crc =        0;
+    UINT8_t   byte_crc =        0;
 
     if (
         NULL ==     this      ||
@@ -428,9 +429,9 @@ static aht21_status_t __start_receive(
 #endif
 #else
     /* Hardware I2C: read all 7 bytes (6 data + 1 CRC) in one transaction */
-    uint8_t rx_buf[7] = {0};
+    UINT8_t rx_buf[7] = {0};
     ret = this->p_iic_driver_instance->pf_i2c_master_read(
-        NULL, (uint16_t)(AHT21_IIC_ADDR << 1), rx_buf, 7);
+        NULL, (UINT16_t)(AHT21_IIC_ADDR << 1), rx_buf, 7);
     if (AHT21_OK != ret)
     {
         return ret;
@@ -445,7 +446,7 @@ static aht21_status_t __start_receive(
 #endif // USE_HARDWARE_I2C    
 
     // CRC Check
-    uint8_t data_for_crc[6] = 
+    UINT8_t data_for_crc[6] = 
     {
         *byte_1th,  
         *byte_2th,
@@ -454,7 +455,7 @@ static aht21_status_t __start_receive(
         *byte_5th,  
         *byte_6th 
     };
-    uint8_t crc_cal = CheckCrc8(data_for_crc, 6);
+    UINT8_t crc_cal = CheckCrc8(data_for_crc, 6);
     if (crc_cal != byte_crc)
     {
         ret = AHT21_ERROR;
@@ -481,7 +482,7 @@ static aht21_status_t __start_receive(
  * @note Status byte bit[7] indicates busy flag (1=busy, 0=ready)
  */
 static aht21_status_t aht21_read_status(bsp_aht21_driver_t * const     this,
-                                                   uint8_t * const rec_data)
+                                                   UINT8_t * const rec_data)
 {
     aht21_status_t ret = AHT21_OK;
 
@@ -517,7 +518,7 @@ static aht21_status_t aht21_read_status(bsp_aht21_driver_t * const     this,
 #endif
 #else
     ret = this->p_iic_driver_instance->pf_i2c_master_read(
-        NULL, (uint16_t)(AHT21_IIC_ADDR << 1), rec_data, 1);
+        NULL, (UINT16_t)(AHT21_IIC_ADDR << 1), rec_data, 1);
     if (AHT21_OK != ret)
     {
         return ret;
@@ -563,7 +564,7 @@ static aht21_status_t aht21_init (bsp_aht21_driver_t * const this)
 #if OS_SUPPORTING
     this->p_yield_instance->pf_rtos_yield(100);
 #else
-    uint32_t start_time =  this->p_timebase_instance->pf_get_tick_count_ms();
+    UINT32_t start_time =  this->p_timebase_instance->pf_get_tick_count_ms();
     while (this->p_timebase_instance->pf_get_tick_count_ms() - 
                                               start_time < 100)
     {
@@ -636,7 +637,7 @@ static aht21_status_t aht21_deinit (bsp_aht21_driver_t  * const this)
  * @note This function returns the cached ID from initialization
  */
 static aht21_status_t aht21_read_id (bsp_aht21_driver_t  * const   this,
-                                               uint32_t  * const p_addr)
+                                               UINT32_t  * const p_addr)
 {
     aht21_status_t ret = AHT21_OK;
 
@@ -681,18 +682,18 @@ static aht21_status_t aht21_read_id (bsp_aht21_driver_t  * const   this,
 static aht21_status_t aht21_read_temp_humi
                                        (
                                          bsp_aht21_driver_t * const   this,
-                                                      float * const p_temp,
-                                                      float * const p_humi
+                                                      FLOAT * const p_temp,
+                                                      FLOAT * const p_humi
                                        )
 {
     // Define Receive data variables
-    uint8_t     byte_1th = 0;
-    uint8_t     byte_2th = 0;
-    uint8_t     byte_3th = 0;
-    uint8_t     byte_4th = 0;
-    uint8_t     byte_5th = 0;
-    uint8_t     byte_6th = 0;
-    int32_t     res_data = 0;
+    UINT8_t     byte_1th = 0;
+    UINT8_t     byte_2th = 0;
+    UINT8_t     byte_3th = 0;
+    UINT8_t     byte_4th = 0;
+    UINT8_t     byte_5th = 0;
+    UINT8_t     byte_6th = 0;
+    INT32_t     res_data = 0;
 
     aht21_status_t ret = AHT21_OK;
     
@@ -760,17 +761,17 @@ static aht21_status_t aht21_read_temp_humi
  */
 static aht21_status_t aht21_read_humi  (
                                          bsp_aht21_driver_t * const   this,
-                                                      float * const p_humi
+                                                      FLOAT * const p_humi
                                        )
 {
     // Define Receive data variables
-    uint8_t     byte_1th = 0;
-    uint8_t     byte_2th = 0;
-    uint8_t     byte_3th = 0;
-    uint8_t     byte_4th = 0;
-    uint8_t     byte_5th = 0;
-    uint8_t     byte_6th = 0;
-    int32_t     res_data = 0;
+    UINT8_t     byte_1th = 0;
+    UINT8_t     byte_2th = 0;
+    UINT8_t     byte_3th = 0;
+    UINT8_t     byte_4th = 0;
+    UINT8_t     byte_5th = 0;
+    UINT8_t     byte_6th = 0;
+    INT32_t     res_data = 0;
     
     aht21_status_t ret = AHT21_OK;
 
@@ -829,17 +830,17 @@ static aht21_status_t aht21_read_humi  (
  */
 static aht21_status_t aht21_read_temp  (
                                          bsp_aht21_driver_t * const   this,
-                                                      float * const p_temp
+                                                      FLOAT * const p_temp
                                        )
 {
     // Define Receive data variables
-    uint8_t     byte_1th = 0;
-    uint8_t     byte_2th = 0;
-    uint8_t     byte_3th = 0;
-    uint8_t     byte_4th = 0;
-    uint8_t     byte_5th = 0;
-    uint8_t     byte_6th = 0;
-    int32_t     res_data = 0;
+    UINT8_t     byte_1th = 0;
+    UINT8_t     byte_2th = 0;
+    UINT8_t     byte_3th = 0;
+    UINT8_t     byte_4th = 0;
+    UINT8_t     byte_5th = 0;
+    UINT8_t     byte_6th = 0;
+    INT32_t     res_data = 0;
     
     aht21_status_t ret = AHT21_OK;
 

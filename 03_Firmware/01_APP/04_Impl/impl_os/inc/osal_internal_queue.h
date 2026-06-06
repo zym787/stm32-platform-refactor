@@ -19,6 +19,7 @@
 #define __OSAL_INTERNAL_QUEUE_H__
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "osal_common_types.h"
 
 //******************************** Includes *********************************//
@@ -33,9 +34,9 @@
  *
  * @return OSAL status code.
  */
-int32_t osal_queue_create_impl       (osal_queue_handle_t  *   p_queue_handle,
-                                                   size_t         queue_depth, 
-                                                   size_t           item_size);
+INT32_t osal_queue_create_impl       (osal_queue_handle_t  *   p_queue_handle,
+                                                   SIZE_t         queue_depth, 
+                                                   SIZE_t           item_size);
 
 /**
  * @brief Delete queue object.
@@ -53,7 +54,7 @@ void osal_queue_delete_impl          (osal_queue_handle_t        queue_handle);
  *
  * @return OSAL status code.
  */
-int32_t osal_queue_send_impl         (osal_queue_handle_t        queue_handle, 
+INT32_t osal_queue_send_impl         (osal_queue_handle_t        queue_handle, 
                                                const void  *           p_data,
                                          osal_tick_type_t             timeout);
    
@@ -66,7 +67,7 @@ int32_t osal_queue_send_impl         (osal_queue_handle_t        queue_handle,
  *
  * @return OSAL status code.
  */
-int32_t osal_queue_receive_impl      (osal_queue_handle_t        queue_handle, 
+INT32_t osal_queue_receive_impl      (osal_queue_handle_t        queue_handle, 
                                                      void  *           p_data,
                                          osal_tick_type_t             timeout);
    
@@ -79,7 +80,7 @@ int32_t osal_queue_receive_impl      (osal_queue_handle_t        queue_handle,
  *
  * @return OSAL status code.
  */
-int32_t osal_queue_send_from_isr_impl(osal_queue_handle_t        queue_handle,
+INT32_t osal_queue_send_from_isr_impl(osal_queue_handle_t        queue_handle,
                                                const void  *           p_data,
                                          osal_base_type_t  *\
                                                  p_higher_priority_task_woken);
@@ -92,7 +93,7 @@ int32_t osal_queue_send_from_isr_impl(osal_queue_handle_t        queue_handle,
  *
  * @return OSAL status code.
  */
-int32_t osal_mailbox_overwrite_impl  (osal_queue_handle_t         queue_handle,
+INT32_t osal_mailbox_overwrite_impl  (osal_queue_handle_t         queue_handle,
                                                const void  *           p_data);
 
 /**
@@ -102,7 +103,7 @@ int32_t osal_mailbox_overwrite_impl  (osal_queue_handle_t         queue_handle,
  *
  * @return OSAL status code.
  */
-int32_t osal_mailbox_peek_impl       (osal_queue_handle_t  *   p_queue_handle);
+INT32_t osal_mailbox_peek_impl       (osal_queue_handle_t  *   p_queue_handle);
 
 /**
  * @brief Get number of items currently in the queue.
@@ -111,7 +112,7 @@ int32_t osal_mailbox_peek_impl       (osal_queue_handle_t  *   p_queue_handle);
  *
  * @return Number of items waiting in the queue.
  */
-uint32_t osal_queue_messages_waiting_impl(osal_queue_handle_t queue_handle);
+UINT32_t osal_queue_messages_waiting_impl(osal_queue_handle_t queue_handle);
 
 //******************************* Functions *********************************//
 

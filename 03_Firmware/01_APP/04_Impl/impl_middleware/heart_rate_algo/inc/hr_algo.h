@@ -29,9 +29,7 @@
 #define __HR_ALGO_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
-#include <stdbool.h>
-#include <stddef.h>
+#include "board_types.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
@@ -59,10 +57,10 @@ typedef enum
  */
 typedef struct
 {
-    uint16_t bpm;             /* Beats per minute; 0 = not yet available       */
-    uint8_t  confidence;      /* 0-100, ratio of valid peaks to total detected */
-    uint32_t timestamp_ms;    /* Timestamp of the triggering sample            */
-    bool     beat_detected;   /* true if this sample triggered a new beat      */
+    UINT16_t bpm;             /* Beats per minute; 0 = not yet available       */
+    UINT8_t  confidence;      /* 0-100, ratio of valid peaks to total detected */
+    UINT32_t timestamp_ms;    /* Timestamp of the triggering sample            */
+    BOOL     beat_detected;   /* true if this sample triggered a new beat      */
 } hr_algo_result_t;
 
 /**
@@ -70,12 +68,12 @@ typedef struct
  */
 typedef struct
 {
-    float    alpha_dc;                /* DC removal EMA coefficient,      default 0.01f  */
-    float    alpha_sm;                /* Smoothing EMA coefficient,       default 0.2f   */
-    float    peak_threshold_frac;     /* Peak amplitude threshold as a fraction
+    FLOAT    alpha_dc;                /* DC removal EMA coefficient,      default 0.01f  */
+    FLOAT    alpha_sm;                /* Smoothing EMA coefficient,       default 0.2f   */
+    FLOAT    peak_threshold_frac;     /* Peak amplitude threshold as a fraction
                                        * of recent max,                   default 0.4f   */
-    uint32_t min_peak_interval_ms;    /* Min time between peaks,          default 250    */
-    uint8_t  ibi_window_size;         /* Number of IBIs in sliding window,default 8      */
+    UINT32_t min_peak_interval_ms;    /* Min time between peaks,          default 250    */
+    UINT8_t  ibi_window_size;         /* Number of IBIs in sliding window,default 8      */
 } hr_algo_simple_cfg_t;
 
 /**
@@ -83,13 +81,13 @@ typedef struct
  */
 typedef struct
 {
-    float    freq_low_hz;             /* Bandpass lower -3 dB,            default 0.5f   */
-    float    freq_high_hz;            /* Bandpass upper -3 dB,            default 5.0f   */
-    float    sample_rate_hz;          /* Sample rate,                     default 40.0f  */
-    float    adaptive_env_alpha;      /* Envelope tracking EMA,           default 0.05f  */
-    float    peak_threshold_frac;     /* Adaptive threshold fraction,     default 0.35f  */
-    uint32_t min_peak_interval_ms;    /* Min time between peaks,          default 250    */
-    uint8_t  ibi_window_size;         /* Number of IBIs in sliding window,default 8      */
+    FLOAT    freq_low_hz;             /* Bandpass lower -3 dB,            default 0.5f   */
+    FLOAT    freq_high_hz;            /* Bandpass upper -3 dB,            default 5.0f   */
+    FLOAT    sample_rate_hz;          /* Sample rate,                     default 40.0f  */
+    FLOAT    adaptive_env_alpha;      /* Envelope tracking EMA,           default 0.05f  */
+    FLOAT    peak_threshold_frac;     /* Adaptive threshold fraction,     default 0.35f  */
+    UINT32_t min_peak_interval_ms;    /* Min time between peaks,          default 250    */
+    UINT8_t  ibi_window_size;         /* Number of IBIs in sliding window,default 8      */
 } hr_algo_biquad_cfg_t;
 
 /**
@@ -111,9 +109,9 @@ typedef struct
  */
 typedef struct
 {
-    float b0, b1, b2;       /* numerator coefficients          */
-    float a1, a2;           /* denominator (a0 = 1)            */
-    float z1, z2;           /* filter state                    */
+    FLOAT b0, b1, b2;       /* numerator coefficients          */
+    FLOAT a1, a2;           /* denominator (a0 = 1)            */
+    FLOAT z1, z2;           /* filter state                    */
 } hr_biquad_section_t;
 
 /**
@@ -128,21 +126,21 @@ typedef struct hr_algo_state_s
     hr_algo_type_t type;
 
     /* ---- Common peak detection state (both variants) ---- */
-    bool     rising;
-    float    prev_signal;
-    float    peak_value;
-    uint32_t last_peak_ts_ms;
-    bool     first_peak;
+    BOOL     rising;
+    FLOAT    prev_signal;
+    FLOAT    peak_value;
+    UINT32_t last_peak_ts_ms;
+    BOOL     first_peak;
 
     /* ---- IBI ring buffer ---- */
-    uint32_t ibi_buf[HR_ALGO_IBI_WINDOW_MAX];
-    uint8_t  ibi_idx;
-    uint8_t  ibi_count;
-    uint8_t  outlier_streak;
+    UINT32_t ibi_buf[HR_ALGO_IBI_WINDOW_MAX];
+    UINT8_t  ibi_idx;
+    UINT8_t  ibi_count;
+    UINT8_t  outlier_streak;
 
     /* ---- Statistics ---- */
-    uint32_t total_peaks;
-    uint32_t valid_peaks;
+    UINT32_t total_peaks;
+    UINT32_t valid_peaks;
 
     /* ---- Algorithm-specific state ---- */
     union
@@ -150,9 +148,9 @@ typedef struct hr_algo_state_s
         /* SIMPLE variant */
         struct
         {
-            float dc;               /* DC estimate for high-pass EMA       */
-            float smooth;           /* Low-pass smoothed signal            */
-            float recent_max;       /* Running max amplitude for threshold  */
+            FLOAT dc;               /* DC estimate for high-pass EMA       */
+            FLOAT smooth;           /* Low-pass smoothed signal            */
+            FLOAT recent_max;       /* Running max amplitude for threshold  */
             hr_algo_simple_cfg_t cfg;
         } simple;
 
@@ -160,7 +158,7 @@ typedef struct hr_algo_state_s
         struct
         {
             hr_biquad_section_t bp[2];  /* Cascade of 2 biquad sections    */
-            float               envelope; /* Adaptive signal envelope        */
+            FLOAT               envelope; /* Adaptive signal envelope        */
             hr_algo_biquad_cfg_t cfg;
         } biquad;
     } inner;
@@ -180,7 +178,7 @@ typedef struct hr_algo_state_s
  *
  * @return     0 on success, -1 on invalid parameter.
  */
-int32_t hr_algo_get_default_config(hr_algo_type_t  type,
+INT32_t hr_algo_get_default_config(hr_algo_type_t  type,
                                    hr_algo_config_t *p_cfg);
 
 /**
@@ -192,7 +190,7 @@ int32_t hr_algo_get_default_config(hr_algo_type_t  type,
  *
  * @return     0 on success, -1 on invalid parameter.
  */
-int32_t hr_algo_init(hr_algo_state_t          *p_state,
+INT32_t hr_algo_init(hr_algo_state_t          *p_state,
                      hr_algo_config_t   const *p_cfg);
 
 /**
@@ -208,9 +206,9 @@ int32_t hr_algo_init(hr_algo_state_t          *p_state,
  *
  * @return     0 on success, -1 on invalid parameter.
  */
-int32_t hr_algo_process(hr_algo_state_t    *p_state,
-                        uint32_t            sample,
-                        uint32_t            timestamp_ms,
+INT32_t hr_algo_process(hr_algo_state_t    *p_state,
+                        UINT32_t            sample,
+                        UINT32_t            timestamp_ms,
                         hr_algo_result_t   *p_result);
 
 /**
@@ -221,7 +219,7 @@ int32_t hr_algo_process(hr_algo_state_t    *p_state,
  *
  * @return     0 on success, -1 on invalid parameter.
  */
-int32_t hr_algo_reset(hr_algo_state_t *p_state);
+INT32_t hr_algo_reset(hr_algo_state_t *p_state);
 
 //******************************* Functions *********************************//
 

@@ -19,8 +19,7 @@
 #define __LINKLIST_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
-#include <stdbool.h>
+#include "board_types.h"
 #include <string.h>
 
 #include "Debug.h"
@@ -47,15 +46,15 @@ typedef enum
 
 typedef struct 
 {
-    void *( *pf_list_malloc )(size_t );
+    void *( *pf_list_malloc )(SIZE_t );
     void  ( *pf_list_free   )(void * );
 } list_malloc_interface_t;
 
 typedef struct list_voice_node
 {
-    uint8_t                     volume;
-    uint8_t                   priority;
-    uint8_t                volume_addr;
+    UINT8_t                     volume;
+    UINT8_t                   priority;
+    UINT8_t                volume_addr;
 
     struct list_voice_node    *   next;
     struct list_voice_node    *   prev;
@@ -66,19 +65,19 @@ struct list_handler
 {
     list_malloc_interface_t *list_malloc_interface;
 
-    uint8_t node_count_by_priority[WT588_MAX_PRIORITY];
+    UINT8_t node_count_by_priority[WT588_MAX_PRIORITY];
     list_voice_node_t priority_list_heads[WT588_MAX_PRIORITY];
 
-    uint8_t current_priority;
-    uint8_t highest_priority;
+    UINT8_t current_priority;
+    UINT8_t highest_priority;
 
     list_status_t (*pf_list_add_node)(list_handler_t *, list_voice_node_t *);
     list_status_t (*pf_list_del_node)(list_handler_t *, list_voice_node_t *);
-    list_status_t (*pf_list_sort    )(list_handler_t *, uint8_t            );
+    list_status_t (*pf_list_sort    )(list_handler_t *, UINT8_t            );
 
     list_voice_node_t *(*pf_get_first_node)(list_handler_t *);
     
-    bool (*pf_list_is_empty)(list_handler_t *);
+    BOOL (*pf_list_is_empty)(list_handler_t *);
 };
 
 //******************************* Declaring *********************************//

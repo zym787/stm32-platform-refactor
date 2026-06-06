@@ -28,6 +28,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_mpuxxxx_handler.h"
 #include "bsp_adapter_port_motion.h"
 
@@ -93,7 +94,7 @@ static platform_err_t mpuxxxx_drv_get_req(motion_drv_t *const dev)
     /* Blocking receive — releases only when the handler sends a notification.
      * A local dummy buffer is required; the payload is a 1-byte token
      * whose value is irrelevant (notification only). */
-    uint32_t dummy = 0;
+    UINT32_t dummy = 0;
     ret = p_handler->p_input_args->p_os_interface->pf_os_queue_receive(
                                           p_handler->p_unpack_queue_handler,
                                                                      &dummy,
@@ -116,7 +117,7 @@ static platform_err_t mpuxxxx_drv_get_req(motion_drv_t *const dev)
  *
  * @return  Pointer to the 14-byte MPU6050 data packet, or NULL on error.
  */
-static uint8_t *mpuxxxx_get_data_addr(motion_drv_t *const dev)
+static UINT8_t *mpuxxxx_get_data_addr(motion_drv_t *const dev)
 {
     (void)dev;
     circular_buffer_t *p_cbuf = circular_buffer_get_instance();
@@ -142,7 +143,7 @@ static void mpuxxxx_read_data_done(motion_drv_t *const dev)
  * @return  true  - Registration successful.
  *          false - Mount failed.
  */
-bool drv_adapter_motion_register(void)
+BOOL drv_adapter_motion_register(void)
 {
     motion_drv_t motion_drv = {
         .dev_id                    =                       0,

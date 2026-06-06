@@ -19,6 +19,7 @@
 #define __OSAL_INTERNAL_HEAP_H__
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "osal_common_types.h"
 
 //******************************** Includes *********************************//
@@ -31,7 +32,7 @@
  *
  * @return Allocated pointer on success, NULL on failure.
  */
-void *osal_heap_malloc_impl(size_t size);
+void *osal_heap_malloc_impl(SIZE_t size);
 
 /**
  * @brief Free heap memory in OS implementation layer.

@@ -34,6 +34,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "st7789_integration.h"
 
 #include "spi_port.h"
@@ -85,14 +86,14 @@ static st7789_status_t st7789_spi_deinit(void)
  * @param[in] data_length  : Number of bytes to send.
  *
  * @return ST7789_OK on success, ST7789_ERRORPARAMETER if length exceeds
- *         the HAL uint16_t Size cap, ST7789_ERRORTIMEOUT if the bus mutex
+ *         the HAL UINT16_t Size cap, ST7789_ERRORTIMEOUT if the bus mutex
  *         times out, ST7789_ERROR on bus failure.
  */
-static st7789_status_t st7789_spi_transmit(uint8_t const *p_data,
-                                           uint32_t       data_length)
+static st7789_status_t st7789_spi_transmit(UINT8_t const *p_data,
+                                           UINT32_t       data_length)
 {
     /**
-     * HAL_SPI_Transmit Size is uint16_t; bail loudly if a future caller
+     * HAL_SPI_Transmit Size is UINT16_t; bail loudly if a future caller
      * exceeds that.
      **/
     if (data_length > UINT16_MAX)
@@ -101,7 +102,7 @@ static st7789_status_t st7789_spi_transmit(uint8_t const *p_data,
     }
 
     platform_err_t st = DISPLAY_HARDWARE_SPI_TRANSMIT(
-        (uint8_t *)p_data, (uint16_t)data_length, ST7789_HAL_SPI_TX_TIMEOUT_MS);
+        (UINT8_t *)p_data, (UINT16_t)data_length, ST7789_HAL_SPI_TX_TIMEOUT_MS);
     if (PLATFORM_ERR_TIMEOUT == st)
     {
         return ST7789_ERRORTIMEOUT;
@@ -121,8 +122,8 @@ static st7789_status_t st7789_spi_transmit(uint8_t const *p_data,
  *         ST7789_ERRORTIMEOUT if the bus mutex times out, ST7789_ERROR on
  *         bus failure.
  */
-static st7789_status_t st7789_spi_transmit_dma(uint8_t const *p_data,
-                                               uint32_t       data_length)
+static st7789_status_t st7789_spi_transmit_dma(UINT8_t const *p_data,
+                                               UINT32_t       data_length)
 {
     if (data_length > UINT16_MAX)
     {
@@ -130,7 +131,7 @@ static st7789_status_t st7789_spi_transmit_dma(uint8_t const *p_data,
     }
 
     platform_err_t st = DISPLAY_HARDWARE_SPI_TRANSMIT_DMA(
-        (uint8_t *)p_data, (uint16_t)data_length);
+        (UINT8_t *)p_data, (UINT16_t)data_length);
     if (PLATFORM_ERR_TIMEOUT == st)
     {
         return ST7789_ERRORTIMEOUT;
@@ -148,7 +149,7 @@ static st7789_status_t st7789_spi_transmit_dma(uint8_t const *p_data,
  * @return ST7789_OK on completion, ST7789_ERRORTIMEOUT if the peripheral
  *         did not idle in time.
  */
-static st7789_status_t st7789_spi_wait_dma_complete(uint32_t timeout_ms)
+static st7789_status_t st7789_spi_wait_dma_complete(UINT32_t timeout_ms)
 {
     platform_err_t st = DISPLAY_HARDWARE_SPI_WAIT_COMPLETE(timeout_ms);
     if (PLATFORM_ERR_TIMEOUT == st)
@@ -165,7 +166,7 @@ static st7789_status_t st7789_spi_wait_dma_complete(uint32_t timeout_ms)
  *
  * @return ST7789_OK
  */
-static st7789_status_t st7789_spi_write_cs_pin(uint8_t state)
+static st7789_status_t st7789_spi_write_cs_pin(UINT8_t state)
 {
     DISPLAY_GPIO_WRITE_CS((0U != state) ? MCU_GPIO_SET : MCU_GPIO_RESET);
     return ST7789_OK;
@@ -178,7 +179,7 @@ static st7789_status_t st7789_spi_write_cs_pin(uint8_t state)
  *
  * @return ST7789_OK
  */
-static st7789_status_t st7789_spi_write_dc_pin(uint8_t state)
+static st7789_status_t st7789_spi_write_dc_pin(UINT8_t state)
 {
     DISPLAY_GPIO_WRITE_DC((0U != state) ? MCU_GPIO_SET : MCU_GPIO_RESET);
     return ST7789_OK;
@@ -191,7 +192,7 @@ static st7789_status_t st7789_spi_write_dc_pin(uint8_t state)
  *
  * @return ST7789_OK
  */
-static st7789_status_t st7789_spi_write_rst_pin(uint8_t state)
+static st7789_status_t st7789_spi_write_rst_pin(UINT8_t state)
 {
     DISPLAY_GPIO_WRITE_RST((0U != state) ? MCU_GPIO_SET : MCU_GPIO_RESET);
     return ST7789_OK;
@@ -204,7 +205,7 @@ static st7789_status_t st7789_spi_write_rst_pin(uint8_t state)
  *
  * @return Current ms tick.
  */
-static uint32_t st7789_tb_get_tick_ms(void)
+static UINT32_t st7789_tb_get_tick_ms(void)
 {
     return core_systick_get_ms();
 }
@@ -217,7 +218,7 @@ static uint32_t st7789_tb_get_tick_ms(void)
  *
  * @param[in] ms : Milliseconds to wait.
  */
-static void st7789_tb_delay_ms(uint32_t ms)
+static void st7789_tb_delay_ms(UINT32_t ms)
 {
     osal_task_delay(ms);
 }
@@ -227,7 +228,7 @@ static void st7789_tb_delay_ms(uint32_t ms)
  *
  * @param[in] ms : Milliseconds to wait.
  */
-static void st7789_os_delay_ms(uint32_t ms)
+static void st7789_os_delay_ms(UINT32_t ms)
 {
     osal_task_delay(ms);
 }

@@ -23,6 +23,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "hr_algo.h"
 
 #include <string.h>
@@ -65,21 +66,21 @@
  * @param[in]  fs         : Sample rate in Hz.
  */
 static void calc_lowpass_coeffs(hr_biquad_section_t *p_s,
-                                float cutoff_hz,
-                                float fs)
+                                FLOAT cutoff_hz,
+                                FLOAT fs)
 {
-    float omega = 2.0f * PI_F * cutoff_hz / fs;
-    float sin_om = sinf(omega);
-    float cos_om = cosf(omega);
-    float alpha = sin_om / (2.0f * BIQUAD_BUTTERWORTH_Q);
+    FLOAT omega = 2.0f * PI_F * cutoff_hz / fs;
+    FLOAT sin_om = sinf(omega);
+    FLOAT cos_om = cosf(omega);
+    FLOAT alpha = sin_om / (2.0f * BIQUAD_BUTTERWORTH_Q);
 
-    float a0 = 1.0f + alpha;
-    float a1 = -2.0f * cos_om;
-    float a2 =  1.0f - alpha;
+    FLOAT a0 = 1.0f + alpha;
+    FLOAT a1 = -2.0f * cos_om;
+    FLOAT a2 =  1.0f - alpha;
 
-    float b0 = (1.0f - cos_om) * 0.5f;
-    float b1 =  1.0f - cos_om;
-    float b2 = (1.0f - cos_om) * 0.5f;
+    FLOAT b0 = (1.0f - cos_om) * 0.5f;
+    FLOAT b1 =  1.0f - cos_om;
+    FLOAT b2 = (1.0f - cos_om) * 0.5f;
 
     p_s->b0 = b0 / a0;
     p_s->b1 = b1 / a0;
@@ -94,21 +95,21 @@ static void calc_lowpass_coeffs(hr_biquad_section_t *p_s,
  * @brief      Compute a 2nd-order Butterworth high-pass section.
  */
 static void calc_highpass_coeffs(hr_biquad_section_t *p_s,
-                                 float cutoff_hz,
-                                 float fs)
+                                 FLOAT cutoff_hz,
+                                 FLOAT fs)
 {
-    float omega = 2.0f * PI_F * cutoff_hz / fs;
-    float sin_om = sinf(omega);
-    float cos_om = cosf(omega);
-    float alpha = sin_om / (2.0f * BIQUAD_BUTTERWORTH_Q);
+    FLOAT omega = 2.0f * PI_F * cutoff_hz / fs;
+    FLOAT sin_om = sinf(omega);
+    FLOAT cos_om = cosf(omega);
+    FLOAT alpha = sin_om / (2.0f * BIQUAD_BUTTERWORTH_Q);
 
-    float a0 = 1.0f + alpha;
-    float a1 = -2.0f * cos_om;
-    float a2 =  1.0f - alpha;
+    FLOAT a0 = 1.0f + alpha;
+    FLOAT a1 = -2.0f * cos_om;
+    FLOAT a2 =  1.0f - alpha;
 
-    float b0 = (1.0f + cos_om) * 0.5f;
-    float b1 = -(1.0f + cos_om);
-    float b2 = (1.0f + cos_om) * 0.5f;
+    FLOAT b0 = (1.0f + cos_om) * 0.5f;
+    FLOAT b1 = -(1.0f + cos_om);
+    FLOAT b2 = (1.0f + cos_om) * 0.5f;
 
     p_s->b0 = b0 / a0;
     p_s->b1 = b1 / a0;
@@ -129,39 +130,39 @@ static void calc_highpass_coeffs(hr_biquad_section_t *p_s,
  *
  * @return     Filtered output sample.
  */
-static float biquad_process(hr_biquad_section_t *p_s, float input)
+static FLOAT biquad_process(hr_biquad_section_t *p_s, FLOAT input)
 {
-    float out = p_s->b0 * input + p_s->z1;
+    FLOAT out = p_s->b0 * input + p_s->z1;
     p_s->z1   = p_s->b1 * input - p_s->a1 * out + p_s->z2;
     p_s->z2   = p_s->b2 * input - p_s->a2 * out;
     return out;
 }
 
 /**
- * @brief      Compute the mean of a uint32_t array.
+ * @brief      Compute the mean of a UINT32_t array.
  */
-static uint32_t mean_uint32(const uint32_t *buf, uint8_t len)
+static UINT32_t mean_uint32(const UINT32_t *buf, UINT8_t len)
 {
-    uint32_t sum = 0U;
-    for (uint8_t i = 0U; i < len; i++)
+    UINT32_t sum = 0U;
+    for (UINT8_t i = 0U; i < len; i++)
     {
         sum += buf[i];
     }
-    return sum / (uint32_t)len;
+    return sum / (UINT32_t)len;
 }
 
 /**
- * @brief      Compute the median of a uint32_t array via insertion sort.
+ * @brief      Compute the median of a UINT32_t array via insertion sort.
  */
-static uint32_t median_uint32(const uint32_t *buf, uint8_t len)
+static UINT32_t median_uint32(const UINT32_t *buf, UINT8_t len)
 {
-    uint32_t tmp[HR_ALGO_IBI_WINDOW_MAX];
-    memcpy(tmp, buf, (size_t)len * sizeof(uint32_t));
+    UINT32_t tmp[HR_ALGO_IBI_WINDOW_MAX];
+    memcpy(tmp, buf, (SIZE_t)len * sizeof(UINT32_t));
 
-    for (uint8_t i = 1U; i < len; i++)
+    for (UINT8_t i = 1U; i < len; i++)
     {
-        uint32_t key = tmp[i];
-        uint8_t  j   = i;
+        UINT32_t key = tmp[i];
+        UINT8_t  j   = i;
         while ((j > 0U) && (tmp[j - 1U] > key))
         {
             tmp[j] = tmp[j - 1U];
@@ -174,47 +175,47 @@ static uint32_t median_uint32(const uint32_t *buf, uint8_t len)
 }
 
 /**
- * @brief      Compute the standard deviation of a uint32_t array.
+ * @brief      Compute the standard deviation of a UINT32_t array.
  */
-static float stddev_uint32(const uint32_t *buf, uint8_t len)
+static FLOAT stddev_uint32(const UINT32_t *buf, UINT8_t len)
 {
     if (len < 2U)
     {
         return 0.0f;
     }
 
-    float mean = (float)mean_uint32(buf, len);
-    float sum_sq = 0.0f;
+    FLOAT mean = (FLOAT)mean_uint32(buf, len);
+    FLOAT sum_sq = 0.0f;
 
-    for (uint8_t i = 0U; i < len; i++)
+    for (UINT8_t i = 0U; i < len; i++)
     {
-        float d = (float)buf[i] - mean;
+        FLOAT d = (FLOAT)buf[i] - mean;
         sum_sq += d * d;
     }
 
-    return sqrtf(sum_sq / (float)(len - 1U));
+    return sqrtf(sum_sq / (FLOAT)(len - 1U));
 }
 
 /**
  * @brief      Check whether an IBI is an outlier.
  */
-static bool ibi_is_outlier(const hr_algo_state_t *p_state, uint32_t ibi_ms)
+static BOOL ibi_is_outlier(const hr_algo_state_t *p_state, UINT32_t ibi_ms)
 {
     if (p_state->ibi_count < BIQUAD_MIN_IBI_FOR_BPM)
     {
         return false;
     }
 
-    uint32_t med = median_uint32(p_state->ibi_buf, p_state->ibi_count);
-    float    dev = fabsf((float)(int32_t)ibi_ms - (float)(int32_t)med);
+    UINT32_t med = median_uint32(p_state->ibi_buf, p_state->ibi_count);
+    FLOAT    dev = fabsf((FLOAT)(INT32_t)ibi_ms - (FLOAT)(INT32_t)med);
 
-    return (dev > BIQUAD_OUTLIER_FRAC * (float)med);
+    return (dev > BIQUAD_OUTLIER_FRAC * (FLOAT)med);
 }
 
 /**
  * @brief      Validate the biquad algorithm configuration.
  */
-static bool biquad_cfg_is_valid(hr_algo_biquad_cfg_t const *p_cfg)
+static BOOL biquad_cfg_is_valid(hr_algo_biquad_cfg_t const *p_cfg)
 {
     if (p_cfg == NULL)
     {
@@ -272,13 +273,13 @@ static void biquad_clear_beat_history(hr_algo_state_t *p_state)
 /**
  * @brief      Append one accepted IBI into the sliding window.
  */
-static void biquad_push_ibi(hr_algo_state_t *p_state, uint32_t interval_ms)
+static void biquad_push_ibi(hr_algo_state_t *p_state, UINT32_t interval_ms)
 {
     hr_algo_biquad_cfg_t const *cfg = &p_state->inner.biquad.cfg;
-    uint8_t idx = p_state->ibi_idx;
+    UINT8_t idx = p_state->ibi_idx;
 
     p_state->ibi_buf[idx] = interval_ms;
-    p_state->ibi_idx = (uint8_t)((idx + 1U) % cfg->ibi_window_size);
+    p_state->ibi_idx = (UINT8_t)((idx + 1U) % cfg->ibi_window_size);
     if (p_state->ibi_count < cfg->ibi_window_size)
     {
         p_state->ibi_count++;
@@ -292,7 +293,7 @@ static void biquad_push_ibi(hr_algo_state_t *p_state, uint32_t interval_ms)
 /**
  * @brief      Initialize the biquad algorithm.
  */
-int32_t hr_algo_biquad_init_inner(hr_algo_state_t            *p_state,
+INT32_t hr_algo_biquad_init_inner(hr_algo_state_t            *p_state,
                                   hr_algo_biquad_cfg_t const *p_cfg)
 {
     if ((p_state == NULL) || (!biquad_cfg_is_valid(p_cfg)))
@@ -320,9 +321,9 @@ int32_t hr_algo_biquad_init_inner(hr_algo_state_t            *p_state,
 /**
  * @brief      Process one PPG sample through the biquad algorithm.
  */
-int32_t hr_algo_biquad_process_inner(hr_algo_state_t    *p_state,
-                                     uint32_t            sample,
-                                     uint32_t            timestamp_ms,
+INT32_t hr_algo_biquad_process_inner(hr_algo_state_t    *p_state,
+                                     UINT32_t            sample,
+                                     UINT32_t            timestamp_ms,
                                      hr_algo_result_t   *p_result)
 {
     if ((p_state == NULL) || (p_result == NULL))
@@ -345,12 +346,12 @@ int32_t hr_algo_biquad_process_inner(hr_algo_state_t    *p_state,
     }
 
     /* 1. Cascade of two biquad sections (4th-order bandpass). */
-    float filtered = (float)sample;
+    FLOAT filtered = (FLOAT)sample;
     filtered = biquad_process(&p_state->inner.biquad.bp[0], filtered);
     filtered = biquad_process(&p_state->inner.biquad.bp[1], filtered);
 
     /* 2. Adaptive envelope tracking. */
-    float abs_val = fabsf(filtered);
+    FLOAT abs_val = fabsf(filtered);
     p_state->inner.biquad.envelope =
         cfg->adaptive_env_alpha * abs_val
         + (1.0f - cfg->adaptive_env_alpha) * p_state->inner.biquad.envelope;
@@ -369,7 +370,7 @@ int32_t hr_algo_biquad_process_inner(hr_algo_state_t    *p_state,
         p_state->rising = false;
         p_state->total_peaks++;
 
-        float threshold = p_state->inner.biquad.envelope
+        FLOAT threshold = p_state->inner.biquad.envelope
                         * cfg->peak_threshold_frac;
 
         /* Enforce a minimum absolute threshold to avoid noise triggers. */
@@ -388,7 +389,7 @@ int32_t hr_algo_biquad_process_inner(hr_algo_state_t    *p_state,
             }
             else
             {
-                uint32_t interval = timestamp_ms - p_state->last_peak_ts_ms;
+                UINT32_t interval = timestamp_ms - p_state->last_peak_ts_ms;
 
                 if (interval >= cfg->min_peak_interval_ms)
                 {
@@ -427,41 +428,41 @@ int32_t hr_algo_biquad_process_inner(hr_algo_state_t    *p_state,
     /* 4. BPM from IBI window median. */
     if (p_state->ibi_count >= BIQUAD_MIN_IBI_FOR_BPM)
     {
-        uint32_t med = median_uint32(p_state->ibi_buf, p_state->ibi_count);
+        UINT32_t med = median_uint32(p_state->ibi_buf, p_state->ibi_count);
         if (med > 0U)
         {
-            p_result->bpm = (uint16_t)(60000.0f / (float)med + 0.5f);
+            p_result->bpm = (UINT16_t)(60000.0f / (FLOAT)med + 0.5f);
         }
     }
 
     /* 5. Confidence with CV penalty. */
     if (p_state->total_peaks > 0U)
     {
-        uint32_t conf = (p_state->valid_peaks * 100U) / p_state->total_peaks;
+        UINT32_t conf = (p_state->valid_peaks * 100U) / p_state->total_peaks;
 
         /* Penalise if IBI variance is high. */
         if (p_state->ibi_count >= BIQUAD_MIN_IBI_FOR_BPM)
         {
-            float mean = (float)mean_uint32(p_state->ibi_buf,
+            FLOAT mean = (FLOAT)mean_uint32(p_state->ibi_buf,
                                             p_state->ibi_count);
             if (mean > 0.0f)
             {
-                float sd  = stddev_uint32(p_state->ibi_buf,
+                FLOAT sd  = stddev_uint32(p_state->ibi_buf,
                                           p_state->ibi_count);
-                float cv  = sd / mean;
+                FLOAT cv  = sd / mean;
                 if (cv > BIQUAD_CV_THRESHOLD)
                 {
-                    float penalty = cv;
+                    FLOAT penalty = cv;
                     if (penalty > 0.5f)
                     {
                         penalty = 0.5f;
                     }
-                    conf = (uint32_t)((float)conf * (1.0f - penalty));
+                    conf = (UINT32_t)((FLOAT)conf * (1.0f - penalty));
                 }
             }
         }
 
-        p_result->confidence = (uint8_t)conf;
+        p_result->confidence = (UINT8_t)conf;
     }
 
     return 0;

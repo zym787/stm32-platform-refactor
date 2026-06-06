@@ -20,6 +20,7 @@
 #define __BSP_WT588_HANDLER_H__
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_wt588_driver.h"
 
 #include "osal_task.h"
@@ -44,12 +45,12 @@ typedef enum
 
 typedef struct 
 {
-    void (*pf_os_delay_ms)(uint32_t ms);
+    void (*pf_os_delay_ms)(UINT32_t ms);
 } wt_os_delay_interface_t;
 
 typedef struct
 {
-    void *(*pf_os_malloc)(size_t size);
+    void *(*pf_os_malloc)(SIZE_t size);
     void  (*pf_os_free  )(void  * ptr);
 } wt_os_heap_interface_t;
 
@@ -59,26 +60,26 @@ typedef struct
                                               void   *             parameters,
                                      void (*)(void   *    const          args), 
                                               char        const         *name, 
-                                              uint16_t            stack_depth, 
-                                              uint32_t               priority);
+                                              UINT16_t            stack_depth, 
+                                              UINT32_t               priority);
     wt_handler_status_t (*pf_task_delete    )(void   *    const   task_handle);
 
     wt_handler_status_t (*pf_os_queue_create)(void   **   const  queue_handle,
-                                              uint32_t    const  queue_length,
-                                              uint32_t    const     item_size);
+                                              UINT32_t    const  queue_length,
+                                              UINT32_t    const     item_size);
     wt_handler_status_t (*pf_os_queue_delete)(void   *    const  queue_handle);
     wt_handler_status_t (*pf_os_queue_send  )(void   *    const  queue_handle, 
                                               void   *    const          item, 
-                                              uint32_t                timeout);
+                                              UINT32_t                timeout);
     wt_handler_status_t (*pf_os_queue_get   )(void   *    const  queue_handle, 
                                               void   *    const          item, 
-                                              uint32_t                timeout);
-    uint32_t            (*pf_os_queue_count )(void   *    const  queue_handle);        
+                                              UINT32_t                timeout);
+    UINT32_t            (*pf_os_queue_count )(void   *    const  queue_handle);        
 
     wt_handler_status_t (*pf_os_sema_create )(void   **   const   sema_handle);
     wt_handler_status_t (*pf_os_sema_delete )(void   *    const   sema_handle);
     wt_handler_status_t (*pf_os_sema_take   )(void   *    const   sema_handle,
-                                              uint32_t                timeout);
+                                              UINT32_t                timeout);
     wt_handler_status_t (*pf_os_sema_give   )(void   *    const   sema_handle);
     
     wt_os_delay_interface_t * const p_os_delay_interface;
@@ -163,9 +164,9 @@ wt_handler_status_t wt588_handler_inst(
                             bsp_wt588_handler_t  * const   p_handler_instance,
                         wt_handler_input_args_t  * const p_handler_input_args);
 
-wt_handler_status_t wt588_handler_play_request(uint8_t volume_addr,
-                                               uint8_t volume,
-                                               uint8_t priority);
+wt_handler_status_t wt588_handler_play_request(UINT8_t volume_addr,
+                                               UINT8_t volume,
+                                               UINT8_t priority);
 
 wt_handler_status_t wt588_handler_stop(void);
 //******************************* Functions *********************************//

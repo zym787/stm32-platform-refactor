@@ -30,6 +30,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "w25q64_integration.h"
 
 #include "spi_port.h"
@@ -85,12 +86,12 @@ static w25q64_status_t w25q64_spi_deinit(void)
  * @return W25Q64_OK on success, W25Q64_ERRORPARAMETER on bad args,
  *         W25Q64_ERROR on bus failure or timeout.
  */
-static w25q64_status_t w25q64_spi_transmit(uint8_t const *p_data,
-                                            uint32_t       data_length)
+static w25q64_status_t w25q64_spi_transmit(UINT8_t const *p_data,
+                                            UINT32_t       data_length)
 {
     /**
      * Input validation: NULL guard plus 16-bit width guard, since the
-     * underlying HAL transfer counter is uint16_t.
+     * underlying HAL transfer counter is UINT16_t.
      **/
     if (NULL == p_data || data_length > UINT16_MAX)
     {
@@ -103,8 +104,8 @@ static w25q64_status_t w25q64_spi_transmit(uint8_t const *p_data,
      * prototype.
      **/
     platform_err_t ret = FLASH_HARDWARE_SPI_TRANSMIT(
-        (uint8_t *)p_data,
-        (uint16_t)data_length,
+        (UINT8_t *)p_data,
+        (UINT16_t)data_length,
         W25Q64_SPI_TIMEOUT_MS);
 
     return (PLATFORM_OK == ret) ? W25Q64_OK : W25Q64_ERROR;
@@ -119,8 +120,8 @@ static w25q64_status_t w25q64_spi_transmit(uint8_t const *p_data,
  * @return W25Q64_OK on success, W25Q64_ERRORPARAMETER on bad args,
  *         W25Q64_ERROR on bus failure or timeout.
  */
-static w25q64_status_t w25q64_spi_read(uint8_t  *p_buffer,
-                                        uint32_t  buffer_length)
+static w25q64_status_t w25q64_spi_read(UINT8_t  *p_buffer,
+                                        UINT32_t  buffer_length)
 {
     /**
      * Input validation: same NULL + 16-bit width contract as the
@@ -133,7 +134,7 @@ static w25q64_status_t w25q64_spi_read(uint8_t  *p_buffer,
 
     platform_err_t ret = FLASH_HARDWARE_SPI_RECEIVE(
         p_buffer,
-        (uint16_t)buffer_length,
+        (UINT16_t)buffer_length,
         W25Q64_SPI_TIMEOUT_MS);
 
     return (PLATFORM_OK == ret) ? W25Q64_OK : W25Q64_ERROR;
@@ -144,8 +145,8 @@ static w25q64_status_t w25q64_spi_read(uint8_t  *p_buffer,
  *
  * @return W25Q64_ERRORUNSUPPORTED
  */
-static w25q64_status_t w25q64_spi_transmit_dma(uint8_t const *p_data,
-                                                uint32_t       data_length)
+static w25q64_status_t w25q64_spi_transmit_dma(UINT8_t const *p_data,
+                                                UINT32_t       data_length)
 {
     (void)p_data;
     (void)data_length;
@@ -157,7 +158,7 @@ static w25q64_status_t w25q64_spi_transmit_dma(uint8_t const *p_data,
  *
  * @return W25Q64_ERRORUNSUPPORTED
  */
-static w25q64_status_t w25q64_spi_wait_dma_complete(uint32_t timeout_ms)
+static w25q64_status_t w25q64_spi_wait_dma_complete(UINT32_t timeout_ms)
 {
     (void)timeout_ms;
     return W25Q64_ERRORUNSUPPORTED;
@@ -171,7 +172,7 @@ static w25q64_status_t w25q64_spi_wait_dma_complete(uint32_t timeout_ms)
  * @return W25Q64_OK on success, W25Q64_ERROR if the port layer rejects
  *         the request (e.g. invalid bus index).
  */
-static w25q64_status_t w25q64_spi_write_cs_pin(uint8_t state)
+static w25q64_status_t w25q64_spi_write_cs_pin(UINT8_t state)
 {
     /**
      * The CS GPIO (PB13) is registered on MCU_SPI_BUS_2; let the port
@@ -189,7 +190,7 @@ static w25q64_status_t w25q64_spi_write_cs_pin(uint8_t state)
  *
  * @return W25Q64_OK
  */
-static w25q64_status_t w25q64_spi_write_dc_pin(uint8_t state)
+static w25q64_status_t w25q64_spi_write_dc_pin(UINT8_t state)
 {
     (void)state;
     return W25Q64_OK;
@@ -202,7 +203,7 @@ static w25q64_status_t w25q64_spi_write_dc_pin(uint8_t state)
  *
  * @return Current ms tick.
  */
-static uint32_t w25q64_tb_get_tick_ms(void)
+static UINT32_t w25q64_tb_get_tick_ms(void)
 {
     return core_systick_get_ms();
 }
@@ -213,7 +214,7 @@ static uint32_t w25q64_tb_get_tick_ms(void)
  *
  * @param[in] ms : Milliseconds to wait.
  */
-static void w25q64_tb_delay_ms(uint32_t ms)
+static void w25q64_tb_delay_ms(UINT32_t ms)
 {
     osal_task_delay(ms);
 }
@@ -223,7 +224,7 @@ static void w25q64_tb_delay_ms(uint32_t ms)
  *
  * @param[in] ms : Milliseconds to wait.
  */
-static void w25q64_drv_delay_ms(uint32_t ms)
+static void w25q64_drv_delay_ms(UINT32_t ms)
 {
     osal_task_delay(ms);
 }
@@ -235,7 +236,7 @@ static void w25q64_drv_delay_ms(uint32_t ms)
  *
  * @return FLASH_HANLDER_OK always.
  */
-static flash_handler_status_t w25q64_os_delay_ms(uint32_t ms)
+static flash_handler_status_t w25q64_os_delay_ms(UINT32_t ms)
 {
     osal_task_delay(ms);
     return FLASH_HANLDER_OK;
@@ -253,14 +254,14 @@ static flash_handler_status_t w25q64_os_delay_ms(uint32_t ms)
  * @return FLASH_HANLDER_OK on success, FLASH_HANLDER_ERROR on failure.
  */
 static flash_handler_status_t w25q64_os_queue_create(
-    uint32_t const   item_num,
-    uint32_t const   item_size,
+    UINT32_t const   item_num,
+    UINT32_t const   item_size,
     void    **const  queue_handler)
 {
-    int32_t ret = osal_queue_create(
+    INT32_t ret = osal_queue_create(
         (osal_queue_handle_t *)queue_handler,
-        (size_t)item_num,
-        (size_t)item_size);
+        (SIZE_t)item_num,
+        (SIZE_t)item_size);
     return (OSAL_SUCCESS == ret) ? FLASH_HANLDER_OK : FLASH_HANLDER_ERROR;
 }
 
@@ -276,9 +277,9 @@ static flash_handler_status_t w25q64_os_queue_create(
 static flash_handler_status_t w25q64_os_queue_put(
     void     *const  queue_handler,
     void     *const  item,
-    uint32_t         timeout)
+    UINT32_t         timeout)
 {
-    int32_t ret = osal_queue_send(
+    INT32_t ret = osal_queue_send(
         (osal_queue_handle_t)queue_handler,
         item,
         (osal_tick_type_t)timeout);
@@ -297,9 +298,9 @@ static flash_handler_status_t w25q64_os_queue_put(
 static flash_handler_status_t w25q64_os_queue_get(
     void     *const  queue_handler,
     void     *const  msg,
-    uint32_t         timeout)
+    UINT32_t         timeout)
 {
-    int32_t ret = osal_queue_receive(
+    INT32_t ret = osal_queue_receive(
         (osal_queue_handle_t)queue_handler,
         msg,
         (osal_tick_type_t)timeout);

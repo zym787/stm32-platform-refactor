@@ -26,8 +26,7 @@
 #define __BSP_EM7028_DRIVER_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
-#include <stdbool.h>
+#include "board_types.h"
 
 #include "bsp_em7028_reg.h"
 //******************************** Includes *********************************//
@@ -99,11 +98,11 @@ typedef enum
  * the algorithm layer can feed straight into the band-pass filter.    */
 typedef struct
 {
-    uint32_t timestamp_ms;                       /* tick at read       */
-    uint16_t hrs1_pixel[EM7028_HRS_PIXEL_NUM];   /* 0x28..0x2F         */
-    uint16_t hrs2_pixel[EM7028_HRS_PIXEL_NUM];   /* 0x20..0x27         */
-    uint32_t hrs1_sum;                           /* sum of 4 pixels    */
-    uint32_t hrs2_sum;
+    UINT32_t timestamp_ms;                       /* tick at read       */
+    UINT16_t hrs1_pixel[EM7028_HRS_PIXEL_NUM];   /* 0x28..0x2F         */
+    UINT16_t hrs2_pixel[EM7028_HRS_PIXEL_NUM];   /* 0x20..0x27         */
+    UINT32_t hrs1_sum;                           /* sum of 4 pixels    */
+    UINT32_t hrs2_sum;
 } em7028_ppg_frame_t;
 
 /* Sensor parameters applied in one shot by pf_apply_config.
@@ -118,23 +117,23 @@ typedef struct
 typedef struct
 {
     /* Channel enables -- HRS_CFG (0x01) bit 7 / bit 3                 */
-    bool                enable_hrs1;
-    bool                enable_hrs2;
+    BOOL                enable_hrs1;
+    BOOL                enable_hrs2;
 
     /* HRS1 channel parameters -- HRS1_CTRL (0x0D)                     */
-    bool                hrs1_gain_high;   /* HRS_GAIN:  false=x1 true=x5 */
-    bool                hrs1_range_high;  /* HRS_RANGE: false=x1 true=x8 */
+    BOOL                hrs1_gain_high;   /* HRS_GAIN:  false=x1 true=x5 */
+    BOOL                hrs1_range_high;  /* HRS_RANGE: false=x1 true=x8 */
     em7028_hrs1_freq_t  hrs1_freq;        /* HRS_FREQ[5:3]               */
     em7028_hrs_res_t    hrs1_res;         /* HRS_RES[2:1]                */
 
     /* HRS2 channel parameters -- HRS2_CTRL (0x09) + HRS2_GAIN_CTRL    */
     em7028_hrs2_mode_t  hrs2_mode;        /* HRS2_CTRL[7]                */
     em7028_hrs2_wait_t  hrs2_wait;        /* HRS2_CTRL[6:4]              */
-    bool                hrs2_gain_high;   /* HRS2_GAIN: false=x1 true=x10*/
-    uint8_t             hrs2_pos_mask;    /* HRS2_POS[6:0] pixel mask    */
+    BOOL                hrs2_gain_high;   /* HRS2_GAIN: false=x1 true=x10*/
+    UINT8_t             hrs2_pos_mask;    /* HRS2_POS[6:0] pixel mask    */
 
     /* Common -- LED current driver setting -- LED_CRT (0x07)          */
-    uint8_t             led_current;
+    UINT8_t             led_current;
 } em7028_config_t;
 
 /*============================ Injected Interfaces ==========================*/
@@ -148,26 +147,26 @@ typedef struct
     em7028_status_t (*pf_iic_deinit   )(void *);
 
     em7028_status_t (*pf_iic_mem_write)(void    *     i2c,
-                                        uint16_t des_addr,
-                                        uint16_t mem_addr,
-                                        uint16_t mem_size,
-                                        uint8_t *  p_data,
-                                        uint16_t     size,
-                                        uint32_t  timeout);
+                                        UINT16_t des_addr,
+                                        UINT16_t mem_addr,
+                                        UINT16_t mem_size,
+                                        UINT8_t *  p_data,
+                                        UINT16_t     size,
+                                        UINT32_t  timeout);
 
     em7028_status_t (*pf_iic_mem_read )(void    *     i2c,
-                                        uint16_t des_addr,
-                                        uint16_t mem_addr,
-                                        uint16_t mem_size,
-                                        uint8_t *  p_data,
-                                        uint16_t     size,
-                                        uint32_t  timeout);
+                                        UINT16_t des_addr,
+                                        UINT16_t mem_addr,
+                                        UINT16_t mem_size,
+                                        UINT8_t *  p_data,
+                                        UINT16_t     size,
+                                        UINT32_t  timeout);
 } em7028_iic_driver_interface_t;
 
 /* Monotonic millisecond tick -- used for timeouts and frame stamps.    */
 typedef struct
 {
-    uint32_t (*pf_get_tick_count)(void);
+    UINT32_t (*pf_get_tick_count)(void);
 } em7028_timebase_interface_t;
 
 /* Hardware-grade blocking delay (DWT) -- needed for power-up and
@@ -175,15 +174,15 @@ typedef struct
 typedef struct
 {
     void (*pf_delay_init)(void);
-    void (*pf_delay_ms  )(uint32_t const ms);
-    void (*pf_delay_us  )(uint32_t const us);
+    void (*pf_delay_ms  )(UINT32_t const ms);
+    void (*pf_delay_us  )(UINT32_t const us);
 } em7028_delay_interface_t;
 
 /* OS-yield delay -- used for ms-scale waits inside thread context so
  * other tasks can run instead of busy-waiting.                         */
 typedef struct
 {
-    void (*pf_rtos_delay)(uint32_t const ms);
+    void (*pf_rtos_delay)(UINT32_t const ms);
 } em7028_os_delay_interface_t;
 
 /*============================ Driver Main Object ===========================*/
@@ -214,7 +213,7 @@ typedef struct bsp_em7028_driver
 
     /* Read ID register (0x00); caller checks against EM7028_ID.        */
     em7028_status_t (*pf_read_id     )(struct bsp_em7028_driver *const self,
-                                       uint8_t                  *const   id);
+                                       UINT8_t                  *const   id);
 
     /* Apply a full config struct in one shot; cached inside priv.      */
     em7028_status_t (*pf_apply_config)(struct bsp_em7028_driver *const self,
@@ -232,11 +231,11 @@ typedef struct bsp_em7028_driver
 
     /* Low-level register access -- thresholds / INT_CTRL / debug.      */
     em7028_status_t (*pf_read_reg    )(struct bsp_em7028_driver *const self,
-                                       uint8_t                     reg_addr,
-                                       uint8_t                  *const   val);
+                                       UINT8_t                     reg_addr,
+                                       UINT8_t                  *const   val);
     em7028_status_t (*pf_write_reg   )(struct bsp_em7028_driver *const self,
-                                       uint8_t                     reg_addr,
-                                       uint8_t                          val);
+                                       UINT8_t                     reg_addr,
+                                       UINT8_t                          val);
 } bsp_em7028_driver_t;
 //******************************** Defines **********************************//
 

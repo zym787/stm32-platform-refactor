@@ -32,8 +32,7 @@
 
 //******************************** Includes *********************************//
 #include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
+#include "board_types.h"
 
 #include "bsp_aht21_reg.h"
 //******************************** Includes *********************************//
@@ -67,13 +66,13 @@ typedef struct
     aht21_status_t (*pf_iic_init        ) (void *);/* IIC init     interface */
     aht21_status_t (*pf_iic_deinit      ) (void *);/* IIC deinit   interface */
     aht21_status_t (*pf_i2c_master_write) (void *,
-                                           uint16_t       dev_addr,
-                                           uint8_t           *data,
-                                           uint16_t           size);
+                                           UINT16_t       dev_addr,
+                                           UINT8_t           *data,
+                                           UINT16_t           size);
     aht21_status_t (*pf_i2c_master_read ) (void *,
-                                           uint16_t       dev_addr,
-                                           uint8_t           *data,
-                                           uint16_t           size);
+                                           UINT16_t       dev_addr,
+                                           UINT8_t           *data,
+                                           UINT16_t           size);
 
 } aht21_iic_driver_interface_t;
 #else            /*   SOFTWARE IIC   */
@@ -88,10 +87,10 @@ typedef struct
     aht21_status_t (*pf_iic_send_no_ack )( void *);/* IIC s-n-ack  interface */
                                                    /* IIC s-byte   interface */
     aht21_status_t (*pf_iic_send_byte   )( void *,
-                                           uint8_t   const addr );
+                                           UINT8_t   const addr );
                                                    /* IIC r-byte   interface */
     aht21_status_t (*pf_iic_receive_byte)( void *,
-                                           uint8_t * const data );
+                                           UINT8_t * const data );
                                                     
 #if OS_SUPPORTING                                          
     aht21_status_t (*pf_critical_enter  )(void);  /* Enter critical section */
@@ -105,14 +104,14 @@ typedef struct
 /*     From Core Layer: TimeBase     */
 typedef struct
 {
-    uint32_t (*pf_get_tick_count_ms) (void);       /*   delay ms interface   */
+    UINT32_t (*pf_get_tick_count_ms) (void);       /*   delay ms interface   */
 } aht21_timebase_interface_t;
 
 #if OS_SUPPORTING
 /*      From OS Layer: TimeBase      */
 typedef struct
 {
-    void (*pf_rtos_yield)(uint32_t const);         /* OS None-Blocking Delay */
+    void (*pf_rtos_yield)(UINT32_t const);         /* OS None-Blocking Delay */
 } aht21_yield_interface_t;
 #endif // OS_SUPPORTING
 
@@ -131,7 +130,7 @@ typedef struct
 typedef struct bsp_aht21_driver
 {
     /************* Target of Internal Status *************/
-    bool                                     aht21_is_init;
+    BOOL                                     aht21_is_init;
 
     /*********** The interface from core layer ***********/
     aht21_iic_driver_interface_t  *  p_iic_driver_instance;
@@ -147,20 +146,20 @@ typedef struct bsp_aht21_driver
     aht21_status_t (*pf_deinit        ) (struct bsp_aht21_driver  *const);
     aht21_status_t (*pf_read_id       ) (
                                          struct bsp_aht21_driver  *const ,
-                                                        uint32_t  *const
+                                                        UINT32_t  *const
                                         );
     aht21_status_t (*pf_read_temp_humi) (
                                          struct bsp_aht21_driver  *const , 
-                                                            float *const temp,
-                                                            float *const humi
+                                                            FLOAT *const temp,
+                                                            FLOAT *const humi
                                         );
     aht21_status_t (*pf_read_humi     ) (
                                          struct bsp_aht21_driver  *const , 
-                                                            float *const
+                                                            FLOAT *const
                                         );
     aht21_status_t (*pf_read_temp     ) (
                                          struct bsp_aht21_driver  *const , 
-                                                            float *const
+                                                            FLOAT *const
                                         );
     aht21_status_t (*pf_sleep         ) (struct bsp_aht21_driver  *const);
     aht21_status_t (*pf_wakeup        ) (struct bsp_aht21_driver  *const);

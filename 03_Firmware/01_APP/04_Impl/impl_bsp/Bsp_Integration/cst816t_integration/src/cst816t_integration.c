@@ -30,6 +30,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "cst816t_integration.h"
 
 #include "i2c_port.h"
@@ -88,12 +89,12 @@ static cst816t_status_t cst816t_iic_deinit(void const *const hi2c)
  * @return CST816T_OK on success, CST816T_ERROR on bus failure.
  */
 static cst816t_status_t cst816t_iic_mem_write(void    *i2c,
-                                              uint16_t des_addr,
-                                              uint16_t mem_addr,
-                                              uint16_t mem_size,
-                                              uint8_t *p_data,
-                                              uint16_t size,
-                                              uint32_t timeout)
+                                              UINT16_t des_addr,
+                                              UINT16_t mem_addr,
+                                              UINT16_t mem_size,
+                                              UINT8_t *p_data,
+                                              UINT16_t size,
+                                              UINT32_t timeout)
 {
     (void)i2c;
     platform_err_t st = TOUCH_HARDWARE_I2C_MEM_WRITE(
@@ -108,12 +109,12 @@ static cst816t_status_t cst816t_iic_mem_write(void    *i2c,
  * @return CST816T_OK on success, CST816T_ERROR on bus failure.
  */
 static cst816t_status_t cst816t_iic_mem_read(void    *i2c,
-                                             uint16_t des_addr,
-                                             uint16_t mem_addr,
-                                             uint16_t mem_size,
-                                             uint8_t *p_data,
-                                             uint16_t size,
-                                             uint32_t timeout)
+                                             UINT16_t des_addr,
+                                             UINT16_t mem_addr,
+                                             UINT16_t mem_size,
+                                             UINT8_t *p_data,
+                                             UINT16_t size,
+                                             UINT32_t timeout)
 {
     (void)i2c;
     platform_err_t st = TOUCH_HARDWARE_I2C_MEM_READ(
@@ -127,7 +128,7 @@ static cst816t_status_t cst816t_iic_mem_read(void    *i2c,
  *
  * @return Current ms tick.
  */
-static uint32_t cst816t_tb_get_tick(void)
+static UINT32_t cst816t_tb_get_tick(void)
 {
     return core_systick_get_ms();
 }
@@ -150,7 +151,7 @@ static void cst816t_delay_init(void)
  *
  * @param[in] ms : Milliseconds to wait.
  */
-static void cst816t_delay_ms(uint32_t const ms)
+static void cst816t_delay_ms(UINT32_t const ms)
 {
     osal_task_delay(ms);
 }
@@ -162,7 +163,7 @@ static void cst816t_delay_ms(uint32_t const ms)
  *
  * @param[in] us : Microseconds (ignored).
  */
-static void cst816t_delay_us(uint32_t const us)
+static void cst816t_delay_us(UINT32_t const us)
 {
     (void)us;
 }
@@ -174,7 +175,7 @@ static void cst816t_delay_us(uint32_t const us)
  *
  * @param[in] ms : Milliseconds to yield.
  */
-static void cst816t_os_yield(uint32_t const ms)
+static void cst816t_os_yield(UINT32_t const ms)
 {
     osal_task_delay(ms);
 }

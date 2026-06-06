@@ -19,6 +19,7 @@
 #define __BSP_MPUXXXX_HANLDER_H__
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_mpuxxxx_driver.h"
 #include "osal_common_types.h"
 
@@ -42,8 +43,8 @@ typedef struct
                            const *            p_input_args;
     bsp_mpuxxxx_driver_t         *                p_driver;
     void                         *  p_unpack_queue_handler;
-    uint32_t                               queue_item_size;
-    uint32_t                                  queue_length;
+    UINT32_t                               queue_item_size;
+    UINT32_t                                  queue_length;
 }bsp_mpuxxxx_hanlder_t;
 
 //******************************** Defines **********************************//

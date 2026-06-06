@@ -18,6 +18,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "osal_internal_task.h"
 #include "osal_error.h"
 
@@ -47,12 +48,12 @@ _Static_assert(sizeof(StaticTask_t) <= sizeof(OsalTaskTcbStorage),
  *
  * @return OSAL_SUCCESS on success, otherwise OSAL_ERROR.
  */
-int32_t osal_task_create_impl(osal_task_handle_t *p_task_handle,
+INT32_t osal_task_create_impl(osal_task_handle_t *p_task_handle,
 							  const char *p_task_name,
 							  void *p_arg,
 							  osal_task_entry_t task_entry,
-							  uint32_t stack_depth,
-							  uint32_t priority)
+							  UINT32_t stack_depth,
+							  UINT32_t priority)
 {
 	BaseType_t result;
 
@@ -84,13 +85,13 @@ int32_t osal_task_create_impl(osal_task_handle_t *p_task_handle,
  *
  * @return OSAL_SUCCESS on success, otherwise OSAL_ERROR.
  */
-int32_t osal_task_create_static_impl(osal_task_handle_t *p_task_handle,
+INT32_t osal_task_create_static_impl(osal_task_handle_t *p_task_handle,
 							  const char *p_task_name,
 							  void *p_arg,
 							  osal_task_entry_t task_entry,
-							  uint32_t stack_depth,
-							  uint32_t priority,
-							  uint32_t *p_stack,
+							  UINT32_t stack_depth,
+							  UINT32_t priority,
+							  UINT32_t *p_stack,
 							  void *p_tcb)
 {
 	TaskHandle_t result;

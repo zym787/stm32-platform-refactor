@@ -19,6 +19,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "dwt_port.h"
 #include "stm32f4xx.h"
 //******************************** Includes *********************************//
@@ -32,7 +33,7 @@ void core_dwt_init(void)
     DWT->CTRL        |= DWT_CTRL_CYCCNTENA_Msk;
 }
 
-void core_dwt_delay_us(uint32_t us)
+void core_dwt_delay_us(UINT32_t us)
 {
     if (0U == us)
     {
@@ -45,10 +46,10 @@ void core_dwt_delay_us(uint32_t us)
         core_dwt_init();
     }
 
-    uint32_t const start  = DWT->CYCCNT;
-    uint32_t const cycles = us * (SystemCoreClock / 1000000U);
+    UINT32_t const start  = DWT->CYCCNT;
+    UINT32_t const cycles = us * (SystemCoreClock / 1000000U);
 
-    while ((uint32_t)(DWT->CYCCNT - start) < cycles)
+    while ((UINT32_t)(DWT->CYCCNT - start) < cycles)
     {
         /* spin */
     }

@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "gpio_port.h"
 
 /* HAL types/pin defines live here, not in the public port header, so that
@@ -51,7 +52,7 @@ typedef enum
 typedef struct
 {
     GPIO_TypeDef      *port;
-    uint16_t           pin;
+    UINT16_t           pin;
     mcu_gpio_mode_t   mode;
     char const        *owner;   /**< Owning subsystem / peripheral */
 } mcu_gpio_port_t;

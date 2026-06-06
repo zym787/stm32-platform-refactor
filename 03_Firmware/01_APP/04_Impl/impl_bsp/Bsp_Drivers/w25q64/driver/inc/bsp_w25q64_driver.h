@@ -21,7 +21,7 @@
 #define __BSP_W25Q64_DRIVER_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "board_types.h"
 
 //******************************** Includes *********************************//
 
@@ -46,26 +46,26 @@ typedef struct
 {
     w25q64_status_t (*pf_spi_init             )(void);
     w25q64_status_t (*pf_spi_deinit           )(void);
-    w25q64_status_t (*pf_spi_transmit         )( uint8_t const *p_data, 
-                                                uint32_t   data_length);
-    w25q64_status_t (*pf_spi_read             )( uint8_t     *p_buffer, 
-                                                uint32_t buffer_length);
-    w25q64_status_t (*pf_spi_transmit_dma     )( uint8_t const *p_data, 
-                                                uint32_t   data_length);
-    w25q64_status_t (*pf_spi_wait_dma_complete)(uint32_t    timeout_ms);
-    w25q64_status_t (*pf_spi_write_cs_pin     )(uint8_t         state);
-    w25q64_status_t (*pf_spi_write_dc_pin     )( uint8_t         state);
+    w25q64_status_t (*pf_spi_transmit         )( UINT8_t const *p_data, 
+                                                UINT32_t   data_length);
+    w25q64_status_t (*pf_spi_read             )( UINT8_t     *p_buffer, 
+                                                UINT32_t buffer_length);
+    w25q64_status_t (*pf_spi_transmit_dma     )( UINT8_t const *p_data, 
+                                                UINT32_t   data_length);
+    w25q64_status_t (*pf_spi_wait_dma_complete)(UINT32_t    timeout_ms);
+    w25q64_status_t (*pf_spi_write_cs_pin     )(UINT8_t         state);
+    w25q64_status_t (*pf_spi_write_dc_pin     )( UINT8_t         state);
 } w25q64_spi_interface_t;
 
 typedef struct 
 {
-    uint32_t (*pf_get_tick_ms)(void);
-    void     (*pf_delay_ms   )(uint32_t ms);
+    UINT32_t (*pf_get_tick_ms)(void);
+    void     (*pf_delay_ms   )(UINT32_t ms);
 } w25q64_timebase_interface_t;
 
 typedef struct
 {
-    void (*pf_os_delay_ms)(uint32_t ms);
+    void (*pf_os_delay_ms)(UINT32_t ms);
 } w25q64_os_delay_t;
 
 typedef struct bsp_w25q64_driver bsp_w25q64_driver_t;
@@ -83,28 +83,28 @@ struct bsp_w25q64_driver
                                    bsp_w25q64_driver_t *const driver_instance);
     w25q64_status_t (*pf_w25q64_read_id)(
                                    bsp_w25q64_driver_t *const driver_instance,
-                                   uint8_t             *          p_id_buffer,
-                                   uint32_t                     buffer_length);
+                                   UINT8_t             *          p_id_buffer,
+                                   UINT32_t                     buffer_length);
     w25q64_status_t (*pf_w25q64_read_data)(
                                    bsp_w25q64_driver_t *const driver_instance, 
-                                   uint32_t                           address,
-                                   uint8_t             *        p_data_buffer, 
-                                   uint32_t                     buffer_length);
+                                   UINT32_t                           address,
+                                   UINT8_t             *        p_data_buffer, 
+                                   UINT32_t                     buffer_length);
     w25q64_status_t (*pf_w25q64_write_data_noerase)(
                                    bsp_w25q64_driver_t *const driver_instance, 
-                                   uint32_t                           address,
-                                   uint8_t              const*  p_data_buffer, 
-                                   uint32_t                       data_length);
+                                   UINT32_t                           address,
+                                   UINT8_t              const*  p_data_buffer, 
+                                   UINT32_t                       data_length);
     w25q64_status_t (*pf_w25q64_write_data_erase)(
                                    bsp_w25q64_driver_t *const driver_instance, 
-                                   uint32_t                           address,
-                                   uint8_t              const*  p_data_buffer, 
-                                   uint32_t                       data_length);
+                                   UINT32_t                           address,
+                                   UINT8_t              const*  p_data_buffer, 
+                                   UINT32_t                       data_length);
     w25q64_status_t (*pf_w25q64_erase_chip)(
                                    bsp_w25q64_driver_t *const driver_instance);
     w25q64_status_t (*pf_w25q64_erase_sector)(
                                    bsp_w25q64_driver_t *const driver_instance,
-                                   uint32_t                           address);
+                                   UINT32_t                           address);
     w25q64_status_t (*pf_w25q64_sleep)(
                                    bsp_w25q64_driver_t *const driver_instance);
     w25q64_status_t (*pf_w25q64_wakeup)(

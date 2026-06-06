@@ -19,6 +19,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_mpuxxxx_driver.h"
 
 //******************************** Includes *********************************//
@@ -30,7 +31,7 @@
 #define IIC_MEM_SIZE_8BIT                       0x00000001U
 #define MPU6050_DATA_PACKET_SIZE                         14
 
-static bool g_mpuxxx_is_inited     =     MPUXXXX_NOT_INITED;
+static BOOL g_mpuxxx_is_inited     =     MPUXXXX_NOT_INITED;
 
 /*
 // #define MPUXXXX_WRITE_REG(p_mpu_dirver, reg, p_data, len) \
@@ -70,9 +71,9 @@ static bool g_mpuxxx_is_inited     =     MPUXXXX_NOT_INITED;
  */
 static inline mpuxxxx_status_t mpuxxxx_write_reg(
     struct bsp_mpuxxxx_driver const *p_mpu_driver,
-    uint16_t reg,
-    uint8_t *p_data,
-    uint16_t len)
+    UINT16_t reg,
+    UINT8_t *p_data,
+    UINT16_t len)
 {
     return p_mpu_driver->p_iic_driver_instance->pf_iic_mem_write(
         p_mpu_driver->p_iic_driver_instance->hi2c,
@@ -94,9 +95,9 @@ static inline mpuxxxx_status_t mpuxxxx_write_reg(
  */
 static inline mpuxxxx_status_t mpuxxxx_read_reg(
     struct bsp_mpuxxxx_driver const *p_mpu_driver,
-    uint16_t reg,
-    uint8_t *p_data,
-    uint16_t len)
+    UINT16_t reg,
+    UINT8_t *p_data,
+    UINT16_t len)
 {
     return p_mpu_driver->p_iic_driver_instance->pf_iic_mem_read(
         p_mpu_driver->p_iic_driver_instance->hi2c,
@@ -118,7 +119,7 @@ static inline mpuxxxx_status_t mpuxxxx_read_reg(
  *
  * @return     : None.
  * */
-static double gs_gyro_scale        =                131.0f;
+static DOUBLE gs_gyro_scale        =                131.0f;
 
 /**
  * @brief      Accelerometer scale factor (LSB to g) based on FSR.
@@ -129,7 +130,7 @@ static double gs_gyro_scale        =                131.0f;
  *
  * @return     : None.
  * */
-static double gs_accel_scale       =              16384.0f;
+static DOUBLE gs_accel_scale       =              16384.0f;
 
 //****************************** Defines *****************************//
 
@@ -198,7 +199,7 @@ static mpuxxxx_status_t (mpuxxxx_sleep           )
         return ret;
     }
 
-    uint8_t data = 0;
+    UINT8_t data = 0;
     data = SLEEP_BIT(1);
 
     ret = mpuxxxx_write_reg(this, MPU_PWR_MGMT1_REG, &data, 1);
@@ -239,7 +240,7 @@ static mpuxxxx_status_t (mpuxxxx_wakeup          )
         return ret;
     }
 
-    uint8_t data = 0;
+    UINT8_t data = 0;
     data = SLEEP_BIT(0);
 
     ret = mpuxxxx_write_reg(this, MPU_PWR_MGMT1_REG, &data, 1);
@@ -265,7 +266,7 @@ static mpuxxxx_status_t (mpuxxxx_wakeup          )
  * */
 static mpuxxxx_status_t (mpuxxxx_set_gyro_fsr    )
                                       (bsp_mpuxxxx_driver_t const * const this,
-                                                                   uint8_t fsr)
+                                                                   UINT8_t fsr)
 {
     mpuxxxx_status_t ret = MPUXXXX_OK;
     // 1. check input parameter
@@ -326,7 +327,7 @@ static mpuxxxx_status_t (mpuxxxx_set_gyro_fsr    )
  * */
 static mpuxxxx_status_t (mpuxxxx_set_accel_fsr   )
                                       (bsp_mpuxxxx_driver_t const * const this, 
-                                                                   uint8_t fsr)
+                                                                   UINT8_t fsr)
 {
     mpuxxxx_status_t ret = MPUXXXX_OK;
     // 1. check input parameter
@@ -386,7 +387,7 @@ static mpuxxxx_status_t (mpuxxxx_set_accel_fsr   )
  * */
 static mpuxxxx_status_t (mpuxxxx_set_lpf         )
                                       (bsp_mpuxxxx_driver_t const * const this, 
-                                                                   uint8_t lpf)
+                                                                   UINT8_t lpf)
 {
     mpuxxxx_status_t ret = MPUXXXX_OK;
     // 1. check input parameter
@@ -427,7 +428,7 @@ static mpuxxxx_status_t (mpuxxxx_set_lpf         )
  * */
 static mpuxxxx_status_t (mpuxxxx_set_rate        )
                                       (bsp_mpuxxxx_driver_t const * const this, 
-                                                                  uint8_t rate)
+                                                                  UINT8_t rate)
 {
     mpuxxxx_status_t ret = MPUXXXX_OK;
     // 1. check input parameter
@@ -468,7 +469,7 @@ static mpuxxxx_status_t (mpuxxxx_set_rate        )
  * */
 static mpuxxxx_status_t (mpuxxxx_set_interrupt_enable    )
                                       (bsp_mpuxxxx_driver_t const * const this, 
-                                                                uint8_t enable)
+                                                                UINT8_t enable)
 {
     mpuxxxx_status_t ret = MPUXXXX_OK;
     // 1. check input parameter
@@ -511,7 +512,7 @@ static mpuxxxx_status_t (mpuxxxx_set_interrupt_enable    )
  * */
 static mpuxxxx_status_t (mpuxxxx_set_motion_threshold    )
                                       (bsp_mpuxxxx_driver_t const * const this, 
-                                                             uint8_t threshold)
+                                                             UINT8_t threshold)
 {
     mpuxxxx_status_t ret = MPUXXXX_OK;
     // 1. check input parameter
@@ -552,7 +553,7 @@ static mpuxxxx_status_t (mpuxxxx_set_motion_threshold    )
  * */
 static mpuxxxx_status_t (mpuxxxx_set_int_level   )
                                       (bsp_mpuxxxx_driver_t const * const this, 
-                                                                 uint8_t level)
+                                                                 UINT8_t level)
 {
     mpuxxxx_status_t ret = MPUXXXX_OK;
     // 1. check input parameter
@@ -594,7 +595,7 @@ static mpuxxxx_status_t (mpuxxxx_set_int_level   )
  * */
 static mpuxxxx_status_t (mpuxxxx_set_user_ctrl   )
                                       (bsp_mpuxxxx_driver_t const * const this, 
-                                                                  uint8_t data)
+                                                                  UINT8_t data)
 {
     mpuxxxx_status_t ret = MPUXXXX_OK;
     // 1. check input parameter
@@ -636,7 +637,7 @@ static mpuxxxx_status_t (mpuxxxx_set_user_ctrl   )
  * */
 static mpuxxxx_status_t (mpuxxxx_set_pwr_mgmt1_reg       )
                                       (bsp_mpuxxxx_driver_t const * const this, 
-                                                                  uint8_t data)
+                                                                  UINT8_t data)
 {
     mpuxxxx_status_t ret = MPUXXXX_OK;
     // 1. check input parameter
@@ -677,7 +678,7 @@ static mpuxxxx_status_t (mpuxxxx_set_pwr_mgmt1_reg       )
  * */
 static mpuxxxx_status_t (mpuxxxx_set_pwr_mgmt2_reg       )
                                       (bsp_mpuxxxx_driver_t const * const this, 
-                                                                  uint8_t data)
+                                                                  UINT8_t data)
 {
     mpuxxxx_status_t ret = MPUXXXX_OK;
     // 1. check input parameter
@@ -718,7 +719,7 @@ static mpuxxxx_status_t (mpuxxxx_set_pwr_mgmt2_reg       )
  * */
 static mpuxxxx_status_t (mpuxxxx_set_fifo_en_reg         )
                                       (bsp_mpuxxxx_driver_t const * const this, 
-                                                                  uint8_t data)
+                                                                  UINT8_t data)
 {
     mpuxxxx_status_t ret = MPUXXXX_OK;
     // 1. check input parameter
@@ -777,7 +778,7 @@ static mpuxxxx_status_t (mpuxxxx_get_temperature         )
         return ret;
     }
 
-    uint8_t temp_buf[2] = {0};
+    UINT8_t temp_buf[2] = {0};
     ret = mpuxxxx_read_reg(this, MPU_TEMP_OUTH_REG, temp_buf, 2);
     if (MPUXXXX_OK != ret)
     {
@@ -786,8 +787,8 @@ static mpuxxxx_status_t (mpuxxxx_get_temperature         )
         return ret;
     }
 
-    int16_t temp_raw      = (int16_t)((*(temp_buf)) << 8 | (*(temp_buf + 1)));
-    p_data->temperature_c = ((float)temp_raw / 340.0f + 36.53f);
+    INT16_t temp_raw      = (INT16_t)((*(temp_buf)) << 8 | (*(temp_buf + 1)));
+    p_data->temperature_c = ((FLOAT)temp_raw / 340.0f + 36.53f);
 
     return ret;
 }
@@ -822,7 +823,7 @@ static mpuxxxx_status_t (mpuxxxx_get_accel       )
         return ret;
     }
 
-    uint8_t accel_buf[6] = {0};
+    UINT8_t accel_buf[6] = {0};
     ret = mpuxxxx_read_reg(this, MPU_ACCEL_XOUTH_REG, accel_buf, 6);
     if (MPUXXXX_OK != ret)
     {
@@ -831,16 +832,16 @@ static mpuxxxx_status_t (mpuxxxx_get_accel       )
         return ret;
     }
 
-    p_data->accel_x_raw = (int16_t)((*(accel_buf    )) << (8) | 
+    p_data->accel_x_raw = (INT16_t)((*(accel_buf    )) << (8) | 
                                     (*(accel_buf + 1)));
-    p_data->accel_y_raw = (int16_t)((*(accel_buf + 2)) << (8) |
+    p_data->accel_y_raw = (INT16_t)((*(accel_buf + 2)) << (8) |
                                     (*(accel_buf + 3)));
-    p_data->accel_z_raw = (int16_t)((*(accel_buf + 4)) << (8) | 
+    p_data->accel_z_raw = (INT16_t)((*(accel_buf + 4)) << (8) | 
                                     (*(accel_buf + 5)));
 
-    p_data->accel_x_g = ((double)p_data->accel_x_raw / gs_accel_scale);
-    p_data->accel_y_g = ((double)p_data->accel_y_raw / gs_accel_scale);
-    p_data->accel_z_g = ((double)p_data->accel_z_raw / gs_accel_scale);
+    p_data->accel_x_g = ((DOUBLE)p_data->accel_x_raw / gs_accel_scale);
+    p_data->accel_y_g = ((DOUBLE)p_data->accel_y_raw / gs_accel_scale);
+    p_data->accel_z_g = ((DOUBLE)p_data->accel_z_raw / gs_accel_scale);
 
     return ret;
 }
@@ -875,7 +876,7 @@ static mpuxxxx_status_t (mpuxxxx_get_gyro        )
         return ret;
     }
 
-    uint8_t gyro_buf[6] = {0};
+    UINT8_t gyro_buf[6] = {0};
     ret = mpuxxxx_read_reg(this, MPU_GYRO_XOUTH_REG, gyro_buf, 6);
     if (MPUXXXX_OK != ret)
     {
@@ -884,16 +885,16 @@ static mpuxxxx_status_t (mpuxxxx_get_gyro        )
         return ret;
     }
 
-    p_data->gyro_x_raw = (int16_t)((*(gyro_buf    )) << (8) | 
+    p_data->gyro_x_raw = (INT16_t)((*(gyro_buf    )) << (8) | 
                                    (*(gyro_buf + 1)));
-    p_data->gyro_y_raw = (int16_t)((*(gyro_buf + 2)) << (8) | 
+    p_data->gyro_y_raw = (INT16_t)((*(gyro_buf + 2)) << (8) | 
                                    (*(gyro_buf + 3)));
-    p_data->gyro_z_raw = (int16_t)((*(gyro_buf + 4)) << (8) | 
+    p_data->gyro_z_raw = (INT16_t)((*(gyro_buf + 4)) << (8) | 
                                    (*(gyro_buf + 5)));
     
-    p_data->gyro_x_dps = ((double)p_data->gyro_x_raw / gs_gyro_scale);
-    p_data->gyro_y_dps = ((double)p_data->gyro_y_raw / gs_gyro_scale);
-    p_data->gyro_z_dps = ((double)p_data->gyro_z_raw / gs_gyro_scale);
+    p_data->gyro_x_dps = ((DOUBLE)p_data->gyro_x_raw / gs_gyro_scale);
+    p_data->gyro_y_dps = ((DOUBLE)p_data->gyro_y_raw / gs_gyro_scale);
+    p_data->gyro_z_dps = ((DOUBLE)p_data->gyro_z_raw / gs_gyro_scale);
 
     return ret;
 }
@@ -928,7 +929,7 @@ static mpuxxxx_status_t (mpuxxxx_get_all_data    )
         return ret;
     }
 
-    uint8_t data_buf[14] = {0};
+    UINT8_t data_buf[14] = {0};
     ret = mpuxxxx_read_reg(this, MPU_ACCEL_XOUTH_REG, data_buf, 14);
     if (MPUXXXX_OK != ret)
     {
@@ -936,28 +937,28 @@ static mpuxxxx_status_t (mpuxxxx_get_all_data    )
                   "mpuxxxx read MPU_ACCEL_XOUTH_REG register failed!");
         return ret;
     }
-    p_data->accel_x_raw   = (int16_t)((*(data_buf     )) << (8) | 
+    p_data->accel_x_raw   = (INT16_t)((*(data_buf     )) << (8) | 
                                       (*(data_buf +  1)));
-    p_data->accel_y_raw   = (int16_t)((*(data_buf +  2)) << (8) |
+    p_data->accel_y_raw   = (INT16_t)((*(data_buf +  2)) << (8) |
                                       (*(data_buf +  3)));
-    p_data->accel_z_raw   = (int16_t)((*(data_buf +  4)) << (8) | 
+    p_data->accel_z_raw   = (INT16_t)((*(data_buf +  4)) << (8) | 
                                       (*(data_buf +  5)));
-    p_data->accel_x_g     = ((double)p_data->accel_x_raw / gs_accel_scale);
-    p_data->accel_y_g     = ((double)p_data->accel_y_raw / gs_accel_scale);
-    p_data->accel_z_g     = ((double)p_data->accel_z_raw / gs_accel_scale);
+    p_data->accel_x_g     = ((DOUBLE)p_data->accel_x_raw / gs_accel_scale);
+    p_data->accel_y_g     = ((DOUBLE)p_data->accel_y_raw / gs_accel_scale);
+    p_data->accel_z_g     = ((DOUBLE)p_data->accel_z_raw / gs_accel_scale);
 
-    int16_t temp_raw      = (int16_t)((*(data_buf + 6)) << 8 | (*(data_buf + 7)));
-    p_data->temperature_c = ((float)temp_raw / 340.0f + 36.53f);
+    INT16_t temp_raw      = (INT16_t)((*(data_buf + 6)) << 8 | (*(data_buf + 7)));
+    p_data->temperature_c = ((FLOAT)temp_raw / 340.0f + 36.53f);
 
-    p_data->gyro_x_raw    = (int16_t)((*(data_buf +  8)) << (8) | 
+    p_data->gyro_x_raw    = (INT16_t)((*(data_buf +  8)) << (8) | 
                                       (*(data_buf +  9)));
-    p_data->gyro_y_raw    = (int16_t)((*(data_buf + 10)) << (8) | 
+    p_data->gyro_y_raw    = (INT16_t)((*(data_buf + 10)) << (8) | 
                                       (*(data_buf + 11)));
-    p_data->gyro_z_raw    = (int16_t)((*(data_buf + 12)) << (8) | 
+    p_data->gyro_z_raw    = (INT16_t)((*(data_buf + 12)) << (8) | 
                                       (*(data_buf + 13)));
-    p_data->gyro_x_dps    = ((double)p_data->gyro_x_raw / gs_gyro_scale);
-    p_data->gyro_y_dps    = ((double)p_data->gyro_y_raw / gs_gyro_scale);
-    p_data->gyro_z_dps    = ((double)p_data->gyro_z_raw / gs_gyro_scale);
+    p_data->gyro_x_dps    = ((DOUBLE)p_data->gyro_x_raw / gs_gyro_scale);
+    p_data->gyro_y_dps    = ((DOUBLE)p_data->gyro_y_raw / gs_gyro_scale);
+    p_data->gyro_z_dps    = ((DOUBLE)p_data->gyro_z_raw / gs_gyro_scale);
 
     return ret;
 }
@@ -973,7 +974,7 @@ static mpuxxxx_status_t (mpuxxxx_get_all_data    )
  * */
 static mpuxxxx_status_t (mpuxxxx_get_interrupt_status_reg)
                                     (bsp_mpuxxxx_driver_t const * const   this,
-                                                    uint8_t     * const p_data)
+                                                    UINT8_t     * const p_data)
 {
     mpuxxxx_status_t ret = MPUXXXX_OK;
     // 1. check input parameter
@@ -1033,15 +1034,15 @@ static mpuxxxx_status_t (mpuxxxx_read_fifo_packet)
         DEBUG_OUT(e, MPUXXXX_ERR_LOG_TAG, "mpuxxxx not initialized!");
         return ret;
     }
-    uint8_t fifo_buffer[12] = {0};
+    UINT8_t fifo_buffer[12] = {0};
     mpuxxxx_read_reg(this, MPU_FIFO_CNTH_REG, fifo_buffer, 2);
-    uint16_t fifo_len = ((*(fifo_buffer)) << (8) | (*(fifo_buffer + 1)));
+    UINT16_t fifo_len = ((*(fifo_buffer)) << (8) | (*(fifo_buffer + 1)));
 
-    uint16_t fifo_count = 0;
+    UINT16_t fifo_count = 0;
     if (fifo_len >= 12)
     {
         fifo_count = fifo_len / 12;
-        for (uint16_t i = 0; i < fifo_count; i++)
+        for (UINT16_t i = 0; i < fifo_count; i++)
         {
             memset(fifo_buffer, 0, sizeof(fifo_buffer));
             ret = mpuxxxx_read_reg(this, MPU_FIFO_RW_REG, fifo_buffer, 12);
@@ -1053,29 +1054,29 @@ static mpuxxxx_status_t (mpuxxxx_read_fifo_packet)
             }
 
             // Process FIFO data here
-            (p_data + i)->accel_x_raw = (int16_t)((*(fifo_buffer     ))<<(8) | 
+            (p_data + i)->accel_x_raw = (INT16_t)((*(fifo_buffer     ))<<(8) | 
                                                   (*(fifo_buffer +  1)));
-            (p_data + i)->accel_y_raw = (int16_t)((*(fifo_buffer +  2))<<(8) | 
+            (p_data + i)->accel_y_raw = (INT16_t)((*(fifo_buffer +  2))<<(8) | 
                                                   (*(fifo_buffer +  3)));
-            (p_data + i)->accel_z_raw = (int16_t)((*(fifo_buffer +  4))<<(8) | 
+            (p_data + i)->accel_z_raw = (INT16_t)((*(fifo_buffer +  4))<<(8) | 
                                                   (*(fifo_buffer +  5)));
-            (p_data + i)->gyro_x_raw  = (int16_t)((*(fifo_buffer +  6))<<(8) | 
+            (p_data + i)->gyro_x_raw  = (INT16_t)((*(fifo_buffer +  6))<<(8) | 
                                                   (*(fifo_buffer +  7)));
-            (p_data + i)->gyro_y_raw  = (int16_t)((*(fifo_buffer +  8))<<(8) | 
+            (p_data + i)->gyro_y_raw  = (INT16_t)((*(fifo_buffer +  8))<<(8) | 
                                                   (*(fifo_buffer +  9)));
-            (p_data + i)->gyro_z_raw  = (int16_t)((*(fifo_buffer + 10))<<(8) | 
+            (p_data + i)->gyro_z_raw  = (INT16_t)((*(fifo_buffer + 10))<<(8) | 
                                                   (*(fifo_buffer + 11)));
-            (p_data + i)->accel_x_g   = ((double)(p_data + i)->accel_x_raw  /\
+            (p_data + i)->accel_x_g   = ((DOUBLE)(p_data + i)->accel_x_raw  /\
                                                               gs_accel_scale);
-            (p_data + i)->accel_y_g   = ((double)(p_data + i)->accel_y_raw  /\
+            (p_data + i)->accel_y_g   = ((DOUBLE)(p_data + i)->accel_y_raw  /\
                                                               gs_accel_scale);
-            (p_data + i)->accel_z_g   = ((double)(p_data + i)->accel_z_raw  /\
+            (p_data + i)->accel_z_g   = ((DOUBLE)(p_data + i)->accel_z_raw  /\
                                                               gs_accel_scale);
-            (p_data + i)->gyro_x_dps  = ((double)(p_data + i)->gyro_x_raw   /\
+            (p_data + i)->gyro_x_dps  = ((DOUBLE)(p_data + i)->gyro_x_raw   /\
                                                                gs_gyro_scale);
-            (p_data + i)->gyro_y_dps  = ((double)(p_data + i)->gyro_y_raw   /\
+            (p_data + i)->gyro_y_dps  = ((DOUBLE)(p_data + i)->gyro_y_raw   /\
                                                                gs_gyro_scale);
-            (p_data + i)->gyro_z_dps  = ((double)(p_data + i)->gyro_z_raw   /\
+            (p_data + i)->gyro_z_dps  = ((DOUBLE)(p_data + i)->gyro_z_raw   /\
                                                                gs_gyro_scale); 
 #if MPUXXXX_DEBUG
             DEBUG_OUT(i, "mpuxxxx fifo packet %d:"  
@@ -1242,7 +1243,7 @@ static mpuxxxx_status_t (mpuxxxx_init            )
     // }
 
     // 8. verify device ID
-    uint8_t device_id = 0;
+    UINT8_t device_id = 0;
     ret = mpuxxxx_read_reg(this, MPU_DEVICE_ID_REG, &device_id, 1);
     if (MPUXXXX_OK != ret)
     {

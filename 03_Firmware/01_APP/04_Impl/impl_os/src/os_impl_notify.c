@@ -18,6 +18,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "osal_internal_notify.h"
 #include "osal_error.h"
 
@@ -56,8 +57,8 @@ static TickType_t osal_notify_timeout_to_ticks(osal_tick_type_t timeout)
  *
  * @return OSAL_SUCCESS on success, OSAL_ERROR when not in ISR context.
  */
-int32_t osal_notify_send_from_isr_impl(osal_task_handle_t    task_handle,
-                                        uint32_t              value,
+INT32_t osal_notify_send_from_isr_impl(osal_task_handle_t    task_handle,
+                                        UINT32_t              value,
                                         osal_notify_action_t  action,
                                         osal_base_type_t     *p_higher_priority_task_woken)
 {
@@ -67,7 +68,7 @@ int32_t osal_notify_send_from_isr_impl(osal_task_handle_t    task_handle,
 	}
 
 	xTaskNotifyFromISR((TaskHandle_t)task_handle,
-	                   (uint32_t)value,
+	                   (UINT32_t)value,
 	                   (eNotifyAction)action,
 	                   (BaseType_t *)p_higher_priority_task_woken);
 
@@ -85,9 +86,9 @@ int32_t osal_notify_send_from_isr_impl(osal_task_handle_t    task_handle,
  * @return OSAL_SUCCESS on success, OSAL_ERR_IN_ISR in ISR context,
  *         or OSAL_ERROR_TIMEOUT on timeout.
  */
-int32_t osal_notify_wait_impl(uint32_t          bits_to_clear_on_entry,
-                               uint32_t          bits_to_clear_on_exit,
-                               uint32_t         *p_notification_value,
+INT32_t osal_notify_wait_impl(UINT32_t          bits_to_clear_on_entry,
+                               UINT32_t          bits_to_clear_on_exit,
+                               UINT32_t         *p_notification_value,
                                osal_tick_type_t  timeout)
 {
 	BaseType_t result;
@@ -99,7 +100,7 @@ int32_t osal_notify_wait_impl(uint32_t          bits_to_clear_on_entry,
 
 	result = xTaskNotifyWait(bits_to_clear_on_entry,
 	                         bits_to_clear_on_exit,
-	                         (uint32_t *)p_notification_value,
+	                         (UINT32_t *)p_notification_value,
 	                         osal_notify_timeout_to_ticks(timeout));
 
 	if (result == pdTRUE)

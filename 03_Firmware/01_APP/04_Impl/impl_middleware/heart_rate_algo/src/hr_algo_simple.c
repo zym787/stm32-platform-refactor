@@ -20,6 +20,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "hr_algo.h"
 
 #include <string.h>
@@ -53,11 +54,11 @@
 /* Forward declarations for biquad functions (defined in hr_algo_biquad.c).
  * When biquad.c is NOT linked, these are unresolved -- the BIQUAD dispatch
  * path will fail at link time, which is the intended behaviour. */
-int32_t hr_algo_biquad_init_inner(hr_algo_state_t          *p_state,
+INT32_t hr_algo_biquad_init_inner(hr_algo_state_t          *p_state,
                                   hr_algo_biquad_cfg_t const *p_cfg);
-int32_t hr_algo_biquad_process_inner(hr_algo_state_t    *p_state,
-                                     uint32_t            sample,
-                                     uint32_t            timestamp_ms,
+INT32_t hr_algo_biquad_process_inner(hr_algo_state_t    *p_state,
+                                     UINT32_t            sample,
+                                     UINT32_t            timestamp_ms,
                                      hr_algo_result_t   *p_result);
 void    hr_algo_biquad_reset_inner(hr_algo_state_t *p_state);
 
@@ -66,7 +67,7 @@ void    hr_algo_biquad_reset_inner(hr_algo_state_t *p_state);
 //******************************* Functions *********************************//
 
 /**
- * @brief      Compute the median of a uint32_t array via insertion sort.
+ * @brief      Compute the median of a UINT32_t array via insertion sort.
  *
  * @param[in]  buf : Array of values.
  *
@@ -74,15 +75,15 @@ void    hr_algo_biquad_reset_inner(hr_algo_state_t *p_state);
  *
  * @return     Median value.
  */
-static uint32_t median_uint32(const uint32_t *buf, uint8_t len)
+static UINT32_t median_uint32(const UINT32_t *buf, UINT8_t len)
 {
-    uint32_t tmp[HR_ALGO_IBI_WINDOW_MAX];
-    memcpy(tmp, buf, (size_t)len * sizeof(uint32_t));
+    UINT32_t tmp[HR_ALGO_IBI_WINDOW_MAX];
+    memcpy(tmp, buf, (SIZE_t)len * sizeof(UINT32_t));
 
-    for (uint8_t i = 1U; i < len; i++)
+    for (UINT8_t i = 1U; i < len; i++)
     {
-        uint32_t key = tmp[i];
-        uint8_t  j   = i;
+        UINT32_t key = tmp[i];
+        UINT8_t  j   = i;
         while ((j > 0U) && (tmp[j - 1U] > key))
         {
             tmp[j] = tmp[j - 1U];
@@ -97,23 +98,23 @@ static uint32_t median_uint32(const uint32_t *buf, uint8_t len)
 /**
  * @brief      Check whether an IBI is an outlier relative to the window.
  */
-static bool ibi_is_outlier(const hr_algo_state_t *p_state, uint32_t ibi_ms)
+static BOOL ibi_is_outlier(const hr_algo_state_t *p_state, UINT32_t ibi_ms)
 {
     if (p_state->ibi_count < SIMPLE_MIN_IBI_FOR_BPM)
     {
         return false;
     }
 
-    uint32_t med = median_uint32(p_state->ibi_buf, p_state->ibi_count);
-    float    dev = fabsf((float)(int32_t)ibi_ms - (float)(int32_t)med);
+    UINT32_t med = median_uint32(p_state->ibi_buf, p_state->ibi_count);
+    FLOAT    dev = fabsf((FLOAT)(INT32_t)ibi_ms - (FLOAT)(INT32_t)med);
 
-    return (dev > SIMPLE_OUTLIER_FRAC * (float)med);
+    return (dev > SIMPLE_OUTLIER_FRAC * (FLOAT)med);
 }
 
 /**
  * @brief      Validate the simple algorithm configuration.
  */
-static bool simple_cfg_is_valid(hr_algo_simple_cfg_t const *p_cfg)
+static BOOL simple_cfg_is_valid(hr_algo_simple_cfg_t const *p_cfg)
 {
     if (p_cfg == NULL)
     {
@@ -167,13 +168,13 @@ static void simple_clear_beat_history(hr_algo_state_t *p_state)
 /**
  * @brief      Append one accepted IBI into the sliding window.
  */
-static void simple_push_ibi(hr_algo_state_t *p_state, uint32_t interval_ms)
+static void simple_push_ibi(hr_algo_state_t *p_state, UINT32_t interval_ms)
 {
     hr_algo_simple_cfg_t const *cfg = &p_state->inner.simple.cfg;
-    uint8_t idx = p_state->ibi_idx;
+    UINT8_t idx = p_state->ibi_idx;
 
     p_state->ibi_buf[idx] = interval_ms;
-    p_state->ibi_idx = (uint8_t)((idx + 1U) % cfg->ibi_window_size);
+    p_state->ibi_idx = (UINT8_t)((idx + 1U) % cfg->ibi_window_size);
     if (p_state->ibi_count < cfg->ibi_window_size)
     {
         p_state->ibi_count++;
@@ -187,7 +188,7 @@ static void simple_push_ibi(hr_algo_state_t *p_state, uint32_t interval_ms)
 /**
  * @brief      Initialize the simple algorithm.
  */
-static int32_t hr_algo_simple_init(hr_algo_state_t            *p_state,
+static INT32_t hr_algo_simple_init(hr_algo_state_t            *p_state,
                                    hr_algo_simple_cfg_t const *p_cfg)
 {
     if ((p_state == NULL) || (!simple_cfg_is_valid(p_cfg)))
@@ -206,9 +207,9 @@ static int32_t hr_algo_simple_init(hr_algo_state_t            *p_state,
 /**
  * @brief      Process one PPG sample through the simple algorithm.
  */
-static int32_t hr_algo_simple_process(hr_algo_state_t    *p_state,
-                                      uint32_t            sample,
-                                      uint32_t            timestamp_ms,
+static INT32_t hr_algo_simple_process(hr_algo_state_t    *p_state,
+                                      UINT32_t            sample,
+                                      UINT32_t            timestamp_ms,
                                       hr_algo_result_t   *p_result)
 {
     if ((p_state == NULL) || (p_result == NULL))
@@ -223,7 +224,7 @@ static int32_t hr_algo_simple_process(hr_algo_state_t    *p_state,
     p_result->beat_detected = false;
 
     hr_algo_simple_cfg_t *cfg = &p_state->inner.simple.cfg;
-    float raw = (float)sample;
+    FLOAT raw = (FLOAT)sample;
 
     if ((!p_state->first_peak) &&
         ((timestamp_ms - p_state->last_peak_ts_ms) > SIMPLE_SIGNAL_LOSS_MS))
@@ -234,7 +235,7 @@ static int32_t hr_algo_simple_process(hr_algo_state_t    *p_state,
     /* 1. DC removal (high-pass EMA). */
     p_state->inner.simple.dc = cfg->alpha_dc * raw
         + (1.0f - cfg->alpha_dc) * p_state->inner.simple.dc;
-    float signal = raw - p_state->inner.simple.dc;
+    FLOAT signal = raw - p_state->inner.simple.dc;
 
     /* 2. Smoothing (low-pass EMA). */
     p_state->inner.simple.smooth = cfg->alpha_sm * signal
@@ -250,7 +251,7 @@ static int32_t hr_algo_simple_process(hr_algo_state_t    *p_state,
         p_state->inner.simple.recent_max *= SIMPLE_MAX_DECAY_FACTOR;
     }
 
-    float smooth = p_state->inner.simple.smooth;
+    FLOAT smooth = p_state->inner.simple.smooth;
 
     /* 4. Peak detection state machine. */
     if (smooth > p_state->prev_signal)
@@ -267,7 +268,7 @@ static int32_t hr_algo_simple_process(hr_algo_state_t    *p_state,
         p_state->rising = false;
         p_state->total_peaks++;
 
-        float threshold = p_state->inner.simple.recent_max
+        FLOAT threshold = p_state->inner.simple.recent_max
                         * cfg->peak_threshold_frac;
         if (threshold < SIMPLE_MIN_PEAK_THRESHOLD)
         {
@@ -284,7 +285,7 @@ static int32_t hr_algo_simple_process(hr_algo_state_t    *p_state,
             }
             else
             {
-                uint32_t interval = timestamp_ms - p_state->last_peak_ts_ms;
+                UINT32_t interval = timestamp_ms - p_state->last_peak_ts_ms;
 
                 if (interval >= cfg->min_peak_interval_ms)
                 {
@@ -323,17 +324,17 @@ static int32_t hr_algo_simple_process(hr_algo_state_t    *p_state,
     /* 5. BPM from IBI window median. */
     if (p_state->ibi_count >= SIMPLE_MIN_IBI_FOR_BPM)
     {
-        uint32_t med = median_uint32(p_state->ibi_buf, p_state->ibi_count);
+        UINT32_t med = median_uint32(p_state->ibi_buf, p_state->ibi_count);
         if (med > 0U)
         {
-            p_result->bpm = (uint16_t)(60000.0f / (float)med + 0.5f);
+            p_result->bpm = (UINT16_t)(60000.0f / (FLOAT)med + 0.5f);
         }
     }
 
     /* 6. Confidence. */
     if (p_state->total_peaks > 0U)
     {
-        p_result->confidence = (uint8_t)((p_state->valid_peaks * 100U)
+        p_result->confidence = (UINT8_t)((p_state->valid_peaks * 100U)
                                         / p_state->total_peaks);
     }
 
@@ -362,7 +363,7 @@ static void hr_algo_simple_reset(hr_algo_state_t *p_state)
 /**
  * @brief      Return default configuration for the given algorithm type.
  */
-int32_t hr_algo_get_default_config(hr_algo_type_t    type,
+INT32_t hr_algo_get_default_config(hr_algo_type_t    type,
                                    hr_algo_config_t *p_cfg)
 {
     if (p_cfg == NULL)
@@ -403,7 +404,7 @@ int32_t hr_algo_get_default_config(hr_algo_type_t    type,
 /**
  * @brief      Unified init -- routes to the correct variant.
  */
-int32_t hr_algo_init(hr_algo_state_t        *p_state,
+INT32_t hr_algo_init(hr_algo_state_t        *p_state,
                      hr_algo_config_t const *p_cfg)
 {
     if ((p_state == NULL) || (p_cfg == NULL))
@@ -427,9 +428,9 @@ int32_t hr_algo_init(hr_algo_state_t        *p_state,
 /**
  * @brief      Unified process -- routes to the correct variant.
  */
-int32_t hr_algo_process(hr_algo_state_t    *p_state,
-                        uint32_t            sample,
-                        uint32_t            timestamp_ms,
+INT32_t hr_algo_process(hr_algo_state_t    *p_state,
+                        UINT32_t            sample,
+                        UINT32_t            timestamp_ms,
                         hr_algo_result_t   *p_result)
 {
     if ((p_state == NULL) || (p_result == NULL))
@@ -454,7 +455,7 @@ int32_t hr_algo_process(hr_algo_state_t    *p_state,
 /**
  * @brief      Unified reset -- routes to the correct variant.
  */
-int32_t hr_algo_reset(hr_algo_state_t *p_state)
+INT32_t hr_algo_reset(hr_algo_state_t *p_state)
 {
     if (p_state == NULL)
     {

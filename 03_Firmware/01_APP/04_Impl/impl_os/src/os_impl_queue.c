@@ -18,6 +18,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "osal_internal_queue.h"
 #include "osal_error.h"
 
@@ -56,9 +57,9 @@ static TickType_t osal_queue_timeout_to_ticks(osal_tick_type_t timeout)
  *
  * @return OSAL_SUCCESS on success, otherwise OSAL_ERROR.
  */
-int32_t osal_queue_create_impl(osal_queue_handle_t *p_queue_handle,
-							   size_t queue_depth,
-							   size_t item_size)
+INT32_t osal_queue_create_impl(osal_queue_handle_t *p_queue_handle,
+							   SIZE_t queue_depth,
+							   SIZE_t item_size)
 {
 	QueueHandle_t queue_handle;
 
@@ -99,7 +100,7 @@ void osal_queue_delete_impl(osal_queue_handle_t queue_handle)
  *         OSAL_QUEUE_FULL for non-blocking full queue,
  *         otherwise OSAL_QUEUE_TIMEOUT.
  */
-int32_t osal_queue_send_impl(osal_queue_handle_t queue_handle,
+INT32_t osal_queue_send_impl(osal_queue_handle_t queue_handle,
 							 const void *p_data,
 							 osal_tick_type_t timeout)
 {
@@ -137,7 +138,7 @@ int32_t osal_queue_send_impl(osal_queue_handle_t queue_handle,
  *         OSAL_QUEUE_EMPTY for non-blocking empty queue,
  *         otherwise OSAL_QUEUE_TIMEOUT.
  */
-int32_t osal_queue_receive_impl(osal_queue_handle_t queue_handle,
+INT32_t osal_queue_receive_impl(osal_queue_handle_t queue_handle,
 								void *p_data,
 								osal_tick_type_t timeout)
 {
@@ -173,7 +174,7 @@ int32_t osal_queue_receive_impl(osal_queue_handle_t queue_handle,
  *
  * @return OSAL_SUCCESS on success, otherwise OSAL_QUEUE_FULL.
  */
-int32_t osal_queue_send_from_isr_impl(osal_queue_handle_t queue_handle,
+INT32_t osal_queue_send_from_isr_impl(osal_queue_handle_t queue_handle,
 									  const void *p_data,
 									  osal_base_type_t *p_higher_priority_task_woken)
 {
@@ -199,7 +200,7 @@ int32_t osal_queue_send_from_isr_impl(osal_queue_handle_t queue_handle,
  * @return OSAL_SUCCESS on success, OSAL_ERR_IN_ISR in ISR context,
  *         otherwise OSAL_ERROR.
  */
-int32_t osal_mailbox_overwrite_impl(osal_queue_handle_t queue_handle,
+INT32_t osal_mailbox_overwrite_impl(osal_queue_handle_t queue_handle,
 									const void *p_data)
 {
 	BaseType_t result;
@@ -227,7 +228,7 @@ int32_t osal_mailbox_overwrite_impl(osal_queue_handle_t queue_handle,
  *         OSAL_QUEUE_EMPTY when no pending message,
  *         OSAL_INVALID_POINTER when handle is invalid.
  */
-int32_t osal_mailbox_peek_impl(osal_queue_handle_t *p_queue_handle)
+INT32_t osal_mailbox_peek_impl(osal_queue_handle_t *p_queue_handle)
 {
 	QueueHandle_t queue_handle;
 	UBaseType_t message_count;
@@ -264,15 +265,15 @@ int32_t osal_mailbox_peek_impl(osal_queue_handle_t *p_queue_handle)
  *
  * @return Number of items waiting in the queue.
  */
-uint32_t osal_queue_messages_waiting_impl(osal_queue_handle_t queue_handle)
+UINT32_t osal_queue_messages_waiting_impl(osal_queue_handle_t queue_handle)
 {
 	if (xPortIsInsideInterrupt() == pdTRUE)
 	{
-		return (uint32_t)uxQueueMessagesWaitingFromISR(
+		return (UINT32_t)uxQueueMessagesWaitingFromISR(
 		                     (QueueHandle_t)queue_handle);
 	}
 
-	return (uint32_t)uxQueueMessagesWaiting((QueueHandle_t)queue_handle);
+	return (UINT32_t)uxQueueMessagesWaiting((QueueHandle_t)queue_handle);
 }
 
 //******************************* Functions *********************************//

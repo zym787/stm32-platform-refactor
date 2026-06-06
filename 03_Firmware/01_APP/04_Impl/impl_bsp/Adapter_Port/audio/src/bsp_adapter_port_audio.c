@@ -24,6 +24,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_wt588_handler.h"
 #include "bsp_adapter_port_audio.h"
 
@@ -67,9 +68,9 @@ void (wt588_drv_deinit)(struct _drv_audio_t * const dev)
  * @return  PLATFORM_OK on success, PLATFORM_ERR_GENERAL on handler failure.
  */
 platform_err_t (wt588_drv_play  )(struct _drv_audio_t * const dev,
-                                                 uint8_t    priority,
-                                                 uint8_t      volume,
-                                                 uint8_t  voice_addr)
+                                                 UINT8_t    priority,
+                                                 UINT8_t      volume,
+                                                 UINT8_t  voice_addr)
 {
     (void)dev;
     wt_handler_status_t ret = WT_HANDLER_OK;
@@ -107,7 +108,7 @@ platform_err_t (wt588_drv_stop  )(struct _drv_audio_t * const dev)
  * @return  true  - Registration successful.
  *          false - Mount failed.
  */
-bool drv_adapter_audio_register(void)
+BOOL drv_adapter_audio_register(void)
 {
     drv_audio_t audio_drv = {
         .dev_id              =                0,

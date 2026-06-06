@@ -26,6 +26,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
+#include "board_types.h"
 #include "bsp_mpuxxxx_handler.h"
 
 //******************************** Includes *********************************//
@@ -37,7 +38,7 @@
 /* Mirrors the driver-private constants used for the MPU6050 DMA read. */
 #define MPU6050_IIC_MEM_SIZE_8BIT                          1U
 
-static bool g_mpuxxxx_hanler_is_inited         = HANLDER_NOT_INITED;
+static BOOL g_mpuxxxx_hanler_is_inited         = HANLDER_NOT_INITED;
 static bsp_mpuxxxx_hanlder_t g_mpuxxxx_handler_instance =       {0};
 
 extern void (*pf_pin_interrupt_callback)(void const * const, void * const);
@@ -258,13 +259,13 @@ void mpuxxxx_handler_thread(void *argument)
     iic_driver_interface_t const *p_iic = p_input_args->p_iic_driver;
     os_interface_t         const *p_os  = p_input_args->p_os_interface;
 
-    const uint16_t k_dev_addr = (uint16_t)((MPU_ADDR << 1) | 1);
-    const uint8_t  k_int_on   = (uint8_t )(DATA_RDY_EN_BIT(1)     | 
+    const UINT16_t k_dev_addr = (UINT16_t)((MPU_ADDR << 1) | 1);
+    const UINT8_t  k_int_on   = (UINT8_t )(DATA_RDY_EN_BIT(1)     | 
                                            FIFO_OVERFLOW_EN_BIT(1));
 
     for (;;)
     {
-        uint32_t notify_val = 0;
+        UINT32_t notify_val = 0;
 
         /* 1. Wait for data-ready EXTI notification from int_interrupt_callback. */
         ret = p_os->pf_os_semaphore_wait_notify(0, 
@@ -278,10 +279,10 @@ void mpuxxxx_handler_thread(void *argument)
 
         /* 2. Mask MPU-side interrupt so no new EXTI fires while the DMA
               transfer is in flight. I2C write; internal bus mutex. */
-        (void)driver.pf_set_interrupt_enable(&driver, (uint8_t)COLOSE_ALL);
+        (void)driver.pf_set_interrupt_enable(&driver, (UINT8_t)COLOSE_ALL);
 
         /* 3. Submit DMA read and wait for completion in I2C abstraction. */
-        uint8_t *p_wbuff = circular_buffer_get_instance()->pf_get_wbuffer_addr(
+        UINT8_t *p_wbuff = circular_buffer_get_instance()->pf_get_wbuffer_addr(
                                         circular_buffer_get_instance());
         ret = p_iic->pf_iic_mem_read_dma(p_iic->hi2c,
                                          k_dev_addr,
@@ -301,7 +302,7 @@ void mpuxxxx_handler_thread(void *argument)
         circular_buffer_get_instance()->pf_data_writed(
                                         circular_buffer_get_instance());
 
-        uint32_t token = 1U;
+        UINT32_t token = 1U;
         (void)p_os->pf_os_queue_send(
             g_mpuxxxx_handler_instance.p_unpack_queue_handler, &token, 0);
 

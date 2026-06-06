@@ -42,7 +42,7 @@
 //******************************** Includes *********************************//
 #include "lv_port_indev.h"
 
-#include <stddef.h>
+#include "board_types.h"
 
 #include "lvgl.h"
 #include "bsp_wrapper_touch.h"
@@ -60,12 +60,12 @@
 //******************************* Declaring *********************************//
 static lv_indev_drv_t         s_indev_drv;
 static lv_point_t             s_last_point        = {0, 0};
-static volatile bool          s_bypass_calibration = false;
-static bool                   s_prev_pressed       = false;
+static volatile BOOL          s_bypass_calibration = false;
+static BOOL                   s_prev_pressed       = false;
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
-void lv_port_indev_set_bypass(bool bypass)
+void lv_port_indev_set_bypass(BOOL bypass)
 {
     s_bypass_calibration = bypass;
 }
@@ -94,7 +94,7 @@ static void lv_port_indev_read_cb(lv_indev_drv_t *drv, lv_indev_data_t *data)
     data->state = LV_INDEV_STATE_RELEASED;
     data->point = s_last_point;
 
-    uint8_t finger_num = 0u;
+    UINT8_t finger_num = 0u;
     platform_err_t st = touch_get_finger_num(&finger_num);
     if (PLATFORM_OK != st)
     {
@@ -117,8 +117,8 @@ static void lv_port_indev_read_cb(lv_indev_drv_t *drv, lv_indev_data_t *data)
         return;
     }
 
-    uint16_t x_pos = 0u;
-    uint16_t y_pos = 0u;
+    UINT16_t x_pos = 0u;
+    UINT16_t y_pos = 0u;
     st = touch_get_xy(&x_pos, &y_pos);
     if (PLATFORM_OK != st)
     {
@@ -127,8 +127,8 @@ static void lv_port_indev_read_cb(lv_indev_drv_t *drv, lv_indev_data_t *data)
 
     /* Capture the raw value before calibration so the press-edge log can
      * report both raw and calibrated coordinates side by side. */
-    const uint16_t raw_x = x_pos;
-    const uint16_t raw_y = y_pos;
+    const UINT16_t raw_x = x_pos;
+    const UINT16_t raw_y = y_pos;
 
     /**
      * Apply the calibration affine transform unless we're inside the
@@ -138,8 +138,8 @@ static void lv_port_indev_read_cb(lv_indev_drv_t *drv, lv_indev_data_t *data)
      **/
     if (!s_bypass_calibration && touch_calibration_is_calibrated())
     {
-        uint16_t cal_x = 0u;
-        uint16_t cal_y = 0u;
+        UINT16_t cal_x = 0u;
+        UINT16_t cal_y = 0u;
         if (CALIBRATION_SUCCESS ==
                 touch_calibration_apply_matrix(touch_calibration_get_instance(),
                                                x_pos, y_pos,
@@ -157,11 +157,11 @@ static void lv_port_indev_read_cb(lv_indev_drv_t *drv, lv_indev_data_t *data)
      **/
     if (x_pos >= LV_PORT_INDEV_PANEL_WIDTH)
     {
-        x_pos = (uint16_t)(LV_PORT_INDEV_PANEL_WIDTH - 1u);
+        x_pos = (UINT16_t)(LV_PORT_INDEV_PANEL_WIDTH - 1u);
     }
     if (y_pos >= LV_PORT_INDEV_PANEL_HEIGHT)
     {
-        y_pos = (uint16_t)(LV_PORT_INDEV_PANEL_HEIGHT - 1u);
+        y_pos = (UINT16_t)(LV_PORT_INDEV_PANEL_HEIGHT - 1u);
     }
 
     s_last_point.x = (lv_coord_t)x_pos;
@@ -185,7 +185,7 @@ static void lv_port_indev_read_cb(lv_indev_drv_t *drv, lv_indev_data_t *data)
     }
 }
 
-bool lv_port_indev_init(void)
+BOOL lv_port_indev_init(void)
 {
     lv_indev_drv_init(&s_indev_drv);
     s_indev_drv.type    = LV_INDEV_TYPE_POINTER;
