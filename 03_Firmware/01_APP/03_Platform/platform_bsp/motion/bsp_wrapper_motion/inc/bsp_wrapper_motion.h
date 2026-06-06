@@ -42,8 +42,8 @@
  */
 typedef struct _motion_drv_t
 {
-    uint8_t                        idx;       /* Slot index in wrapper array */
-    uint32_t                    dev_id;       /* Hardware device identifier  */
+    UINT8_T                        idx;       /* Slot index in wrapper array */
+    UINT32_T                    dev_id;       /* Hardware device identifier  */
     void *                   user_data;       /* Adapter private context     */
 
     void              (*pf_motion_drv_init  )(struct _motion_drv_t *const dev);
@@ -51,7 +51,7 @@ typedef struct _motion_drv_t
 
     platform_err_t(*pf_motion_drv_get_req    )\
                                              (struct _motion_drv_t *const dev);
-    uint8_t *         (*pf_motion_get_data_addr  )\
+    UINT8_T *         (*pf_motion_get_data_addr  )\
                                              (struct _motion_drv_t *const dev);
     void              (*pf_motion_read_data_done )\
                                              (struct _motion_drv_t *const dev);
@@ -69,7 +69,7 @@ typedef struct _motion_drv_t
  * @return  true  - Mounted successfully.
  *          false - Invalid index or NULL drv.
  */
-bool drv_adapter_motion_mount(uint8_t idx, motion_drv_t *const drv);
+BOOL_T drv_adapter_motion_mount(UINT8_T idx, motion_drv_t *const drv);
 
 /**
  * @brief   Initialize the currently active motion sensor driver.
@@ -99,7 +99,7 @@ platform_err_t motion_drv_get_req   (void);
  *
  * @return  Pointer to the raw data byte array, or NULL on error.
  */
-uint8_t *          motion_get_data_addr (void);
+UINT8_T *          motion_get_data_addr (void);
 
 /**
  * @brief   Signal that the caller has finished reading the current packet.

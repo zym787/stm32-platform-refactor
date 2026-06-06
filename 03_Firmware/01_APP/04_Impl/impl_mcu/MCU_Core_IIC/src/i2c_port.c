@@ -30,6 +30,7 @@
 #include "i2c.h"
 #include "iic_hal.h"
 #include "osal_mutex.h"
+#include "osal_error.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
@@ -77,7 +78,7 @@ static platform_err_t mcu_hard_i2c_bus_lock(mcu_i2c_bus_t bus,
     }
 
     if (osal_mutex_take(i2c_port[bus].os_mutexid,
-                        (osal_tick_type_t)timeout_ms) != 0)
+                        (osal_tick_type_t)timeout_ms) != OSAL_SUCCESS)
     {
         DEBUG_OUT(e, HAL_IIC_ERR_LOG_TAG,
                   "BusLock mutex timeout bus=%d timeout=%u", (int)bus,
@@ -110,8 +111,10 @@ platform_err_t mcu_i2c_port_init(mcu_i2c_bus_t bus)
         return PLATFORM_OK;
     }
 
+    /* OSAL_SUCCESS == OSAL_FALSE == 0, so compare to OSAL_SUCCESS by name
+       rather than bare 0 (see [[osal-success-vs-false-collision]]). */
     INT32_t ret = osal_mutex_init(&i2c_port[bus].os_mutexid);
-    return (ret == 0) ? PLATFORM_OK : PLATFORM_ERR_GENERAL;
+    return (OSAL_SUCCESS == ret) ? PLATFORM_OK : PLATFORM_ERR_GENERAL;
 }
 
 platform_err_t mcu_hard_i2c_send_byte(mcu_i2c_bus_t bus, UINT16_t dev_addr,

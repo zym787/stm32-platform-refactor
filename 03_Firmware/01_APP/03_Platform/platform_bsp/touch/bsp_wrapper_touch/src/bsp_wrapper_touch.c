@@ -26,7 +26,7 @@
 
 //******************************* Declaring *********************************//
 static touch_drv_t s_touch_drv[MAX_TOUCH_DRV_NUM];
-static uint32_t    s_cur_touch_drv_idx = 0;
+static UINT32_T    s_cur_touch_drv_idx = 0;
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
@@ -39,24 +39,19 @@ static uint32_t    s_cur_touch_drv_idx = 0;
  *
  * @return true on success, false on bad arguments.
  */
-bool drv_adapter_touch_mount(uint32_t idx, touch_drv_t *const drv)
+BOOL_T drv_adapter_touch_mount(UINT32_T idx, touch_drv_t *const drv)
 {
     if (idx >= MAX_TOUCH_DRV_NUM || drv == NULL)
     {
         return false;
     }
 
-    s_touch_drv[idx].idx                     = idx;
-    s_touch_drv[idx].dev_id                  = drv->dev_id;
-    s_touch_drv[idx].user_data               = drv->user_data;
-    s_touch_drv[idx].pf_touch_drv_inst       = drv->pf_touch_drv_inst;
-    s_touch_drv[idx].pf_touch_drv_init       = drv->pf_touch_drv_init;
-    s_touch_drv[idx].pf_touch_drv_deinit     = drv->pf_touch_drv_deinit;
-    s_touch_drv[idx].pf_touch_isr_notify     = drv->pf_touch_isr_notify;
-    s_touch_drv[idx].pf_touch_get_finger_num = drv->pf_touch_get_finger_num;
-    s_touch_drv[idx].pf_touch_get_xy         = drv->pf_touch_get_xy;
-    s_touch_drv[idx].pf_touch_get_chip_id    = drv->pf_touch_get_chip_id;
-    s_touch_drv[idx].pf_touch_get_gesture    = drv->pf_touch_get_gesture;
+    /**
+    * touch_drv_t is a flat vtable, so a whole-struct copy captures every
+    * slot — replaces the per-field copy. idx is pinned to the slot.
+    **/
+    s_touch_drv[idx]     = *drv;
+    s_touch_drv[idx].idx = idx;
 
     s_cur_touch_drv_idx = idx;
 
@@ -120,7 +115,7 @@ void touch_drv_isr_notify(void)
 /**
  * @brief Forward finger-count read to the driver.
  */
-platform_err_t touch_get_finger_num(uint8_t *const p_finger)
+platform_err_t touch_get_finger_num(UINT8_T *const p_finger)
 {
     touch_drv_t *drv = &s_touch_drv[s_cur_touch_drv_idx];
     if (drv->pf_touch_get_finger_num)
@@ -133,7 +128,7 @@ platform_err_t touch_get_finger_num(uint8_t *const p_finger)
 /**
  * @brief Forward XY coordinate read to the driver.
  */
-platform_err_t touch_get_xy(uint16_t *const p_x, uint16_t *const p_y)
+platform_err_t touch_get_xy(UINT16_T *const p_x, UINT16_T *const p_y)
 {
     touch_drv_t *drv = &s_touch_drv[s_cur_touch_drv_idx];
     if (drv->pf_touch_get_xy)
@@ -146,7 +141,7 @@ platform_err_t touch_get_xy(uint16_t *const p_x, uint16_t *const p_y)
 /**
  * @brief Forward chip-id probe to the driver.
  */
-platform_err_t touch_get_chip_id(uint8_t *const p_chip_id)
+platform_err_t touch_get_chip_id(UINT8_T *const p_chip_id)
 {
     touch_drv_t *drv = &s_touch_drv[s_cur_touch_drv_idx];
     if (drv->pf_touch_get_chip_id)
@@ -159,7 +154,7 @@ platform_err_t touch_get_chip_id(uint8_t *const p_chip_id)
 /**
  * @brief Forward gesture id read to the driver.
  */
-platform_err_t touch_get_gesture(uint8_t *const p_gesture)
+platform_err_t touch_get_gesture(UINT8_T *const p_gesture)
 {
     touch_drv_t *drv = &s_touch_drv[s_cur_touch_drv_idx];
     if (drv->pf_touch_get_gesture)

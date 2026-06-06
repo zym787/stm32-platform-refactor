@@ -11,7 +11,7 @@
  * Exposes two read modes to the application layer:
  *
  *  _sync  — blocks the caller until fresh data is available.
- *           Returns platform_err_t; values via float * out-parameters.
+ *           Returns platform_err_t; values via FLOAT32_T * out-parameters.
  *
  *  _async — posts a read request and returns immediately.
  *           The supplied callback is invoked from the handler thread context
@@ -58,15 +58,15 @@
  * Both data pointers are always provided; for single-axis reads the unused
  * pointer carries 0.0f.
  */
-typedef void (*temp_humi_cb_async_t)(float *temp, float *humi);
+typedef void (*temp_humi_cb_async_t)(FLOAT32_T *temp, FLOAT32_T *humi);
 
 /**
  * @brief Driver vtable — populated at startup by drv_adapter_temp_humi_mount()
  */
 typedef struct _temp_humi_drv_t
 {
-    uint32_t                       idx;
-    uint32_t                    dev_id;
+    UINT32_T                       idx;
+    UINT32_T                    dev_id;
     void *                   user_data;
 
     void (*pf_temp_humi_drv_init  )(struct _temp_humi_drv_t *const dev);
@@ -75,31 +75,31 @@ typedef struct _temp_humi_drv_t
     /* Synchronous — block caller until data is ready */
     platform_err_t (*pf_temp_humi_read_temp_sync)(
                             struct _temp_humi_drv_t *const  dev,
-                                              float *const temp,
-                                            uint32_t life_time);
+                                              FLOAT32_T *const temp,
+                                            UINT32_T life_time);
     platform_err_t (*pf_temp_humi_read_humi_sync)(
                             struct _temp_humi_drv_t *const dev,
-                                              float *const humi,
-                                            uint32_t life_time);
+                                              FLOAT32_T *const humi,
+                                            UINT32_T life_time);
     platform_err_t (*pf_temp_humi_read_all_sync )(
                             struct _temp_humi_drv_t *const dev,
-                                              float *const temp,
-                                              float *const humi,
-                                             uint32_t life_time);
+                                              FLOAT32_T *const temp,
+                                              FLOAT32_T *const humi,
+                                             UINT32_T life_time);
 
     /* Asynchronous — return immediately, result delivered via callback */
     void (*pf_temp_humi_read_temp_async)(
                             struct _temp_humi_drv_t *const dev,
                                     temp_humi_cb_async_t    cb,
-                                            uint32_t life_time);
+                                            UINT32_T life_time);
     void (*pf_temp_humi_read_humi_async)(
                             struct _temp_humi_drv_t *const dev,
                                     temp_humi_cb_async_t    cb,
-                                            uint32_t life_time);
+                                            UINT32_T life_time);
     void (*pf_temp_humi_read_all_async )(
                             struct _temp_humi_drv_t *const dev,
                                     temp_humi_cb_async_t    cb,
-                                            uint32_t life_time);
+                                            UINT32_T life_time);
 } temp_humi_drv_t;
 
 //******************************* Declaring *********************************//
@@ -107,7 +107,7 @@ typedef struct _temp_humi_drv_t
 //******************************* Functions *********************************//
 
 /** Register a concrete driver into the wrapper vtable slot @p idx. */
-bool drv_adapter_temp_humi_mount(uint32_t idx, temp_humi_drv_t *const drv);
+BOOL_T drv_adapter_temp_humi_mount(UINT32_T idx, temp_humi_drv_t *const drv);
 
 void temp_humi_drv_init  (void);
 void temp_humi_drv_deinit(void);
@@ -117,24 +117,24 @@ void temp_humi_drv_deinit(void);
  * @return TEMP_HUMI_OK on success, TEMP_HUMI_ERRORTIMEOUT on timeout,
  *         TEMP_HUMI_ERRORRESOURCE if no driver is mounted.
  */
-platform_err_t temp_humi_read_temp_sync(float *const      temp, 
-                                                   uint32_t life_time);
-platform_err_t temp_humi_read_humi_sync(float *const      humi, 
-                                                   uint32_t life_time);
-platform_err_t temp_humi_read_all_sync (float *const      temp,
-                                               float *const      humi, 
-                                                   uint32_t life_time);
+platform_err_t temp_humi_read_temp_sync(FLOAT32_T *const      temp, 
+                                                   UINT32_T life_time);
+platform_err_t temp_humi_read_humi_sync(FLOAT32_T *const      humi, 
+                                                   UINT32_T life_time);
+platform_err_t temp_humi_read_all_sync (FLOAT32_T *const      temp,
+                                               FLOAT32_T *const      humi, 
+                                                   UINT32_T life_time);
 
 /**
  * @brief Asynchronous API — returns immediately.
  * @p callback fires in handler thread context once data is ready.
  */
 void temp_humi_read_temp_async(temp_humi_cb_async_t  callback, 
-                                           uint32_t life_time);
+                                           UINT32_T life_time);
 void temp_humi_read_humi_async(temp_humi_cb_async_t  callback, 
-                                           uint32_t life_time);
+                                           UINT32_T life_time);
 void temp_humi_read_all_async (temp_humi_cb_async_t  callback, 
-                                           uint32_t life_time);
+                                           UINT32_T life_time);
 
 //******************************* Functions *********************************//
 

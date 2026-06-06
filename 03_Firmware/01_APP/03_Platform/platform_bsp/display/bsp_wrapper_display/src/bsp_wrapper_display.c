@@ -32,7 +32,7 @@
 #define MAX_DISPLAY_DRV_NUM 1
 
 static drv_display_t s_display_driver[MAX_DISPLAY_DRV_NUM];
-static uint32_t    s_cur_display_drv_idx = 0;
+static UINT32_T    s_cur_display_drv_idx = 0;
 
 //******************************** Defines **********************************//
 
@@ -50,53 +50,25 @@ static uint32_t    s_cur_display_drv_idx = 0;
  * @return  true  - Mounted successfully.
  *          false - Invalid index or NULL drv.
  */
-bool drv_adapter_display_mount(uint32_t idx, drv_display_t *const drv)
+BOOL_T drv_adapter_display_mount(UINT32_T idx, drv_display_t *const drv)
 {
     if (idx >= MAX_DISPLAY_DRV_NUM || drv == NULL)
     {
         return false;
     }
 
-    s_display_driver[idx].idx = \
-                          idx;
-    s_display_driver[idx].dev_id = \
-                          drv->dev_id;
-    s_display_driver[idx].user_data = \
-                          drv;
-    s_display_driver[idx].pf_invert_colors = \
-                          drv->pf_invert_colors;
-    s_display_driver[idx].pf_display_drv_inst = \
-                          drv->pf_display_drv_inst;
-    s_display_driver[idx].pf_display_drv_init = \
-                          drv->pf_display_drv_init;
-    s_display_driver[idx].pf_display_draw_char = \
-                          drv->pf_display_draw_char;
-    s_display_driver[idx].pf_display_draw_line = \
-                          drv->pf_display_draw_line;
-    s_display_driver[idx].pf_display_draw_image = \
-                          drv->pf_display_draw_image;
-    s_display_driver[idx].pf_display_drv_deinit = \
-                          drv->pf_display_drv_deinit;
-    s_display_driver[idx].pf_display_fill_color = \
-                          drv->pf_display_fill_color;
-    s_display_driver[idx].pf_display_draw_pixel = \
-                          drv->pf_display_draw_pixel;
-    s_display_driver[idx].pf_display_draw_circle = \
-                          drv->pf_display_draw_circle;
-    s_display_driver[idx].pf_display_fill_region = \
-                          drv->pf_display_fill_region;
-    s_display_driver[idx].pf_display_draw_string = \
-                          drv->pf_display_draw_string;
-    s_display_driver[idx].pf_display_tear_effect = \
-                          drv->pf_display_tear_effect;
-    s_display_driver[idx].pf_display_draw_rectangle = \
-                          drv->pf_display_draw_rectangle;
-    s_display_driver[idx].pf_display_draw_filled_circle = \
-                          drv->pf_display_draw_filled_circle;
-    s_display_driver[idx].pf_display_draw_filled_triangle = \
-                          drv->pf_display_draw_filled_triangle;
-    s_display_driver[idx].pf_display_draw_filled_rectangle = \
-                          drv->pf_display_draw_filled_rectangle;
+    /**
+    * drv_display_t is a flat vtable, so a whole-struct copy captures every
+    * slot — replaces the per-field copy. idx is pinned to the slot.
+    *
+    * NOTE: user_data is deliberately set to drv itself (the driver pointer),
+    * NOT drv->user_data, preserving this wrapper's pre-refactor behaviour.
+    * (Other wrappers copy drv->user_data; this divergence is intentional
+    * here only to keep the refactor behaviour-neutral — worth revisiting.)
+    **/
+    s_display_driver[idx]           = *drv;
+    s_display_driver[idx].idx       = idx;
+    s_display_driver[idx].user_data = drv;
 
     s_cur_display_drv_idx = idx;
     return true;
@@ -149,8 +121,8 @@ void display_drv_deinit(void)
  *
  * @return  PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-platform_err_t display_draw_pixel    (uint16_t x,  uint16_t y,
-                                           uint16_t color)
+platform_err_t display_draw_pixel    (UINT16_T x,  UINT16_T y,
+                                           UINT16_T color)
 {
     platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
@@ -169,7 +141,7 @@ platform_err_t display_draw_pixel    (uint16_t x,  uint16_t y,
 /**
  * @brief   Forward fill-screen request to the display driver.
  */
-platform_err_t display_fill_color    (uint16_t color)
+platform_err_t display_fill_color    (UINT16_T color)
 {
     platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
@@ -187,9 +159,9 @@ platform_err_t display_fill_color    (uint16_t color)
 /**
  * @brief   Forward fill-region request to the display driver.
  */
-platform_err_t display_fill_region   (uint16_t x0, uint16_t y0,
-                                           uint16_t x1, uint16_t y1,
-                                           uint16_t color)
+platform_err_t display_fill_region   (UINT16_T x0, UINT16_T y0,
+                                           UINT16_T x1, UINT16_T y1,
+                                           UINT16_T color)
 {
     platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
@@ -207,9 +179,9 @@ platform_err_t display_fill_region   (uint16_t x0, uint16_t y0,
 /**
  * @brief   Forward draw-line request to the display driver.
  */
-platform_err_t display_draw_line     (uint16_t x0, uint16_t y0,
-                                           uint16_t x1, uint16_t y1,
-                                           uint16_t color)
+platform_err_t display_draw_line     (UINT16_T x0, UINT16_T y0,
+                                           UINT16_T x1, UINT16_T y1,
+                                           UINT16_T color)
 {
     platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
@@ -227,9 +199,9 @@ platform_err_t display_draw_line     (uint16_t x0, uint16_t y0,
 /**
  * @brief   Forward draw-rectangle request to the display driver.
  */
-platform_err_t display_draw_rectangle(uint16_t x0, uint16_t y0,
-                                           uint16_t x1, uint16_t y1,
-                                           uint16_t color)
+platform_err_t display_draw_rectangle(UINT16_T x0, UINT16_T y0,
+                                           UINT16_T x1, UINT16_T y1,
+                                           UINT16_T color)
 {
     platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
@@ -247,9 +219,9 @@ platform_err_t display_draw_rectangle(uint16_t x0, uint16_t y0,
 /**
  * @brief   Forward draw-circle request to the display driver.
  */
-platform_err_t display_draw_circle   (uint16_t x,  uint16_t y,
-                                           uint16_t radius,
-                                           uint16_t color)
+platform_err_t display_draw_circle   (UINT16_T x,  UINT16_T y,
+                                           UINT16_T radius,
+                                           UINT16_T color)
 {
     platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
@@ -267,9 +239,9 @@ platform_err_t display_draw_circle   (uint16_t x,  uint16_t y,
 /**
  * @brief   Forward draw-image request to the display driver.
  */
-platform_err_t display_draw_image    (uint16_t x0, uint16_t y0,
-                                           uint16_t  w, uint16_t  h,
-                                           uint16_t const* bitmap)
+platform_err_t display_draw_image    (UINT16_T x0, UINT16_T y0,
+                                           UINT16_T  w, UINT16_T  h,
+                                           UINT16_T const* bitmap)
 {
     platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
@@ -287,13 +259,13 @@ platform_err_t display_draw_image    (uint16_t x0, uint16_t y0,
 /**
  * @brief   Forward invert-colors request to the display driver.
  */
-platform_err_t display_invert_colors (bool invert)
+platform_err_t display_invert_colors (BOOL_T invert)
 {
     platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
     if (drv->pf_invert_colors)
     {
-        ret = drv->pf_invert_colors(drv, (uint8_t)invert);
+        ret = drv->pf_invert_colors(drv, (UINT8_T)invert);
     }
     else
     {
@@ -305,10 +277,10 @@ platform_err_t display_invert_colors (bool invert)
 /**
  * @brief   Forward draw-character request to the display driver.
  */
-platform_err_t display_draw_char            (uint16_t x, uint16_t y,
+platform_err_t display_draw_char            (UINT16_T x, UINT16_T y,
                                                       char c,
-                                                  uint16_t color,
-                                                  uint16_t bg_color)
+                                                  UINT16_T color,
+                                                  UINT16_T bg_color)
 {
     platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
@@ -326,10 +298,10 @@ platform_err_t display_draw_char            (uint16_t x, uint16_t y,
 /**
  * @brief   Forward draw-string request to the display driver.
  */
-platform_err_t display_draw_string          (uint16_t x, uint16_t y,
+platform_err_t display_draw_string          (UINT16_T x, UINT16_T y,
                                                 const char* str,
-                                                  uint16_t color,
-                                                  uint16_t bg_color)
+                                                  UINT16_T color,
+                                                  UINT16_T bg_color)
 {
     platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
@@ -347,9 +319,9 @@ platform_err_t display_draw_string          (uint16_t x, uint16_t y,
 /**
  * @brief   Forward draw-filled-rectangle request to the display driver.
  */
-platform_err_t display_draw_filled_rectangle(uint16_t x0, uint16_t y0,
-                                                  uint16_t x1, uint16_t y1,
-                                                  uint16_t color)
+platform_err_t display_draw_filled_rectangle(UINT16_T x0, UINT16_T y0,
+                                                  UINT16_T x1, UINT16_T y1,
+                                                  UINT16_T color)
 {
     platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
@@ -367,10 +339,10 @@ platform_err_t display_draw_filled_rectangle(uint16_t x0, uint16_t y0,
 /**
  * @brief   Forward draw-filled-triangle request to the display driver.
  */
-platform_err_t display_draw_filled_triangle (uint16_t x0, uint16_t y0,
-                                                  uint16_t x1, uint16_t y1,
-                                                  uint16_t x2, uint16_t y2,
-                                                  uint16_t color)
+platform_err_t display_draw_filled_triangle (UINT16_T x0, UINT16_T y0,
+                                                  UINT16_T x1, UINT16_T y1,
+                                                  UINT16_T x2, UINT16_T y2,
+                                                  UINT16_T color)
 {
     platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
@@ -388,9 +360,9 @@ platform_err_t display_draw_filled_triangle (uint16_t x0, uint16_t y0,
 /**
  * @brief   Forward draw-filled-circle request to the display driver.
  */
-platform_err_t display_draw_filled_circle   (uint16_t x,   uint16_t y,
-                                                  uint16_t radius,
-                                                  uint16_t color)
+platform_err_t display_draw_filled_circle   (UINT16_T x,   UINT16_T y,
+                                                  UINT16_T radius,
+                                                  UINT16_T color)
 {
     platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
@@ -408,13 +380,13 @@ platform_err_t display_draw_filled_circle   (uint16_t x,   uint16_t y,
 /**
  * @brief   Forward tear-effect request to the display driver.
  */
-platform_err_t display_tear_effect(bool enable)
+platform_err_t display_tear_effect(BOOL_T enable)
 {
     platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
     if (drv->pf_display_tear_effect)
     {
-        ret = drv->pf_display_tear_effect(drv, (uint8_t)enable);
+        ret = drv->pf_display_tear_effect(drv, (UINT8_T)enable);
     }
     else
     {

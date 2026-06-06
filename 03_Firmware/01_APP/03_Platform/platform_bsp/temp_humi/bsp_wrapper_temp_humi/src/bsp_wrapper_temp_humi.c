@@ -32,40 +32,26 @@
 
 //******************************* Declaring *********************************//
 static temp_humi_drv_t s_temp_humi_drv[MAX_TEMP_HUMI_DRV_NUM];
-static uint32_t        s_cur_temp_humi_drv_idx = 0;
+static UINT32_T        s_cur_temp_humi_drv_idx = 0;
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
 
-bool drv_adapter_temp_humi_mount(uint32_t idx, temp_humi_drv_t *const drv)
+BOOL_T drv_adapter_temp_humi_mount(UINT32_T idx, temp_humi_drv_t *const drv)
 {
     if (idx >= MAX_TEMP_HUMI_DRV_NUM || drv == NULL)
     {
         return false;
     }
 
-    s_temp_humi_drv[idx].idx =\
-                         idx;
-    s_temp_humi_drv[idx].dev_id =\
-                         drv->dev_id;
-    s_temp_humi_drv[idx].user_data =\
-                         drv->user_data;
-    s_temp_humi_drv[idx].pf_temp_humi_drv_init =\
-                         drv->pf_temp_humi_drv_init;
-    s_temp_humi_drv[idx].pf_temp_humi_drv_deinit =\
-                         drv->pf_temp_humi_drv_deinit;
-    s_temp_humi_drv[idx].pf_temp_humi_read_temp_sync =\
-                         drv->pf_temp_humi_read_temp_sync;
-    s_temp_humi_drv[idx].pf_temp_humi_read_humi_sync =\
-                         drv->pf_temp_humi_read_humi_sync;
-    s_temp_humi_drv[idx].pf_temp_humi_read_all_sync =\
-                         drv->pf_temp_humi_read_all_sync;
-    s_temp_humi_drv[idx].pf_temp_humi_read_temp_async =\
-                         drv->pf_temp_humi_read_temp_async;
-    s_temp_humi_drv[idx].pf_temp_humi_read_humi_async =\
-                         drv->pf_temp_humi_read_humi_async;
-    s_temp_humi_drv[idx].pf_temp_humi_read_all_async =\
-                         drv->pf_temp_humi_read_all_async;
+    /**
+    * temp_humi_drv_t is a flat vtable (ids + function-pointer slots), so a
+    * whole-struct copy captures every slot — replacing the per-field copy
+    * that had to be hand-edited each time a slot was added. idx is then
+    * pinned to the destination slot (callers may leave drv->idx unset).
+    **/
+    s_temp_humi_drv[idx]     = *drv;
+    s_temp_humi_drv[idx].idx = idx;
 
     s_cur_temp_humi_drv_idx = idx;
 
@@ -92,7 +78,7 @@ void temp_humi_drv_deinit(void)
 
 /* ---------------------------- Synchronous API ---------------------------- */
 
-platform_err_t temp_humi_read_temp_sync(float *const temp, uint32_t life_time)
+platform_err_t temp_humi_read_temp_sync(FLOAT32_T *const temp, UINT32_T life_time)
 {
     temp_humi_drv_t *drv = &s_temp_humi_drv[s_cur_temp_humi_drv_idx];
     if (drv->pf_temp_humi_read_temp_sync)
@@ -102,7 +88,7 @@ platform_err_t temp_humi_read_temp_sync(float *const temp, uint32_t life_time)
     return PLATFORM_ERR_NO_RESOURCE;
 }
 
-platform_err_t temp_humi_read_humi_sync(float *const humi, uint32_t life_time)
+platform_err_t temp_humi_read_humi_sync(FLOAT32_T *const humi, UINT32_T life_time)
 {
     temp_humi_drv_t *drv = &s_temp_humi_drv[s_cur_temp_humi_drv_idx];
     if (drv->pf_temp_humi_read_humi_sync)
@@ -112,8 +98,8 @@ platform_err_t temp_humi_read_humi_sync(float *const humi, uint32_t life_time)
     return PLATFORM_ERR_NO_RESOURCE;
 }
 
-platform_err_t temp_humi_read_all_sync(float *const temp,
-                                            float *const humi, uint32_t life_time)
+platform_err_t temp_humi_read_all_sync(FLOAT32_T *const temp,
+                                            FLOAT32_T *const humi, UINT32_T life_time)
 {
     temp_humi_drv_t *drv = &s_temp_humi_drv[s_cur_temp_humi_drv_idx];
     if (drv->pf_temp_humi_read_all_sync)
@@ -125,7 +111,7 @@ platform_err_t temp_humi_read_all_sync(float *const temp,
 
 /* ---------------------------- Asynchronous API --------------------------- */
 
-void temp_humi_read_temp_async(temp_humi_cb_async_t callback, uint32_t life_time)
+void temp_humi_read_temp_async(temp_humi_cb_async_t callback, UINT32_T life_time)
 {
     temp_humi_drv_t *drv = &s_temp_humi_drv[s_cur_temp_humi_drv_idx];
     if (drv->pf_temp_humi_read_temp_async)
@@ -134,7 +120,7 @@ void temp_humi_read_temp_async(temp_humi_cb_async_t callback, uint32_t life_time
     }
 }
 
-void temp_humi_read_humi_async(temp_humi_cb_async_t callback, uint32_t life_time)
+void temp_humi_read_humi_async(temp_humi_cb_async_t callback, UINT32_T life_time)
 {
     temp_humi_drv_t *drv = &s_temp_humi_drv[s_cur_temp_humi_drv_idx];
     if (drv->pf_temp_humi_read_humi_async)
@@ -143,7 +129,7 @@ void temp_humi_read_humi_async(temp_humi_cb_async_t callback, uint32_t life_time
     }
 }
 
-void temp_humi_read_all_async(temp_humi_cb_async_t callback, uint32_t life_time)
+void temp_humi_read_all_async(temp_humi_cb_async_t callback, UINT32_T life_time)
 {
     temp_humi_drv_t *drv = &s_temp_humi_drv[s_cur_temp_humi_drv_idx];
     if (drv->pf_temp_humi_read_all_async)

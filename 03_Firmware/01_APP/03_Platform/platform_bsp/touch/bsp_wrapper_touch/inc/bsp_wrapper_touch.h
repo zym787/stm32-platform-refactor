@@ -55,8 +55,8 @@
  */
 typedef struct _touch_drv_t
 {
-    uint32_t                       idx;        /* Slot index in wrapper      */
-    uint32_t                    dev_id;        /* Hardware device id         */
+    UINT32_T                       idx;        /* Slot index in wrapper      */
+    UINT32_T                    dev_id;        /* Hardware device id         */
     void *                   user_data;        /* Adapter private context    */
 
     platform_err_t (*pf_touch_drv_inst  )(struct _touch_drv_t *const dev);
@@ -66,17 +66,17 @@ typedef struct _touch_drv_t
 
     platform_err_t (*pf_touch_get_finger_num)(
                                   struct _touch_drv_t *const  dev,
-                                              uint8_t *const  p_finger);
+                                              UINT8_T *const  p_finger);
     platform_err_t (*pf_touch_get_xy        )(
                                   struct _touch_drv_t *const  dev,
-                                             uint16_t *const  p_x,
-                                             uint16_t *const  p_y);
+                                             UINT16_T *const  p_x,
+                                             UINT16_T *const  p_y);
     platform_err_t (*pf_touch_get_chip_id   )(
                                   struct _touch_drv_t *const  dev,
-                                              uint8_t *const  p_chip_id);
+                                              UINT8_T *const  p_chip_id);
     platform_err_t (*pf_touch_get_gesture   )(
                                   struct _touch_drv_t *const  dev,
-                                              uint8_t *const  p_gesture);
+                                              UINT8_T *const  p_gesture);
 } touch_drv_t;
 //******************************** Defines **********************************//
 
@@ -91,7 +91,7 @@ typedef struct _touch_drv_t
  * @return  true  - Mounted successfully.
  *          false - Invalid index or NULL drv.
  */
-bool drv_adapter_touch_mount(uint32_t idx, touch_drv_t *const drv);
+BOOL_T drv_adapter_touch_mount(UINT32_T idx, touch_drv_t *const drv);
 
 /**
  * @brief Instantiate the currently active touch driver.
@@ -144,7 +144,7 @@ void touch_drv_deinit(void);
  * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver
  *         is mounted, other values on driver error.
  */
-platform_err_t touch_get_finger_num(uint8_t  *const p_finger);
+platform_err_t touch_get_finger_num(UINT8_T  *const p_finger);
 
 /**
  * @brief Read the latest touch coordinate.  Coordinates are in panel
@@ -156,8 +156,8 @@ platform_err_t touch_get_finger_num(uint8_t  *const p_finger);
  * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver
  *         is mounted, other values on driver error.
  */
-platform_err_t touch_get_xy        (uint16_t *const p_x,
-                                       uint16_t *const p_y);
+platform_err_t touch_get_xy        (UINT16_T *const p_x,
+                                       UINT16_T *const p_y);
 
 /**
  * @brief Read the touch controller chip id.  Useful for boot-time probe.
@@ -166,7 +166,7 @@ platform_err_t touch_get_xy        (uint16_t *const p_x,
  *
  * @return PLATFORM_OK on success.
  */
-platform_err_t touch_get_chip_id   (uint8_t  *const p_chip_id);
+platform_err_t touch_get_chip_id   (UINT8_T  *const p_chip_id);
 
 /**
  * @brief Read the latest gesture id (driver-defined encoding — caller
@@ -176,7 +176,7 @@ platform_err_t touch_get_chip_id   (uint8_t  *const p_chip_id);
  *
  * @return PLATFORM_OK on success.
  */
-platform_err_t touch_get_gesture   (uint8_t  *const p_gesture);
+platform_err_t touch_get_gesture   (UINT8_T  *const p_gesture);
 //******************************* Functions *********************************//
 
 #endif /* __BSP_WRAPPER_TOUCH_H__ */

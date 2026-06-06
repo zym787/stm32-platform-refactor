@@ -54,8 +54,8 @@ ARM CMSIS / 硬件        ← 寄存器级
 ### 类型与错误码约定（platform_common）
 
 - **错误码**：可失败函数返回 `platform_err_t`，调用方用 `PLATFORM_IS_OK/ERR` 判定——不要返回裸 `0/-1` 或新造状态码。例外：service 对外的 `ota_transport_status_t`/`ota_storage_status_t`/`ext_flash_status_t` 三个边界枚举保留，adapter 内 `translate()` 与 `platform_err_t` 互转（值映射，禁止强转）。
-- **定宽类型**：`01_App` / `02_Service` 用 `platform_type.h` 的全大写 `_T` 词汇（`UINT8_T`/`INT32_T`/`BOOL_T`/`SIZE_T`/`FLOAT32_T`…），不直接 `#include <stdint.h>`；纯文本仍用 `char`。
-- **分层现状**：`_T` 词汇目前只在 `01_App`/`02_Service` 落地；`03_Platform` impl / `04_Impl` / `00_Config` 仍用 raw stdint（分层迁移未回填）。改下层时沿用该层现状，勿混用。
+- **定宽类型**：`01_App` / `02_Service` 及 `03_Platform/platform_bsp` 的 `bsp_wrapper_*`（vtable 接口层）用 `platform_type.h` 的全大写 `_T` 词汇（`UINT8_T`/`INT32_T`/`BOOL_T`/`SIZE_T`/`FLOAT32_T`…），不直接 `#include <stdint.h>`；纯文本仍用 `char`。
+- **分层现状**：`_T` 已落地于 `01_App`/`02_Service` + `03_Platform/platform_bsp` wrapper；`04_Impl`（BSP driver/handler/adapter/integration）、MCU port（`03_Platform`/`04_Impl`）、`00_Config` 仍用 raw stdint（分层迁移未回填）。改下层时沿用该层现状，勿混用。
 
 ### BSP 适配器模式（`03_Platform/platform_bsp/` + `04_Impl/impl_bsp/`）
 

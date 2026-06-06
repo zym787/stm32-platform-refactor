@@ -31,7 +31,7 @@
 
 //******************************* Declaring *********************************//
 static motion_drv_t s_motion_drv[MOTION_DRV_MAX_NUM]  = {0};
-static uint32_t     s_cur_motion_drv_idx              =  0;
+static UINT32_T     s_cur_motion_drv_idx              =  0;
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
@@ -45,29 +45,19 @@ static uint32_t     s_cur_motion_drv_idx              =  0;
  * @return  true  - Mounted successfully.
  *          false - Invalid index or NULL drv.
  */
-bool drv_adapter_motion_mount(uint8_t idx, motion_drv_t *const drv)
+BOOL_T drv_adapter_motion_mount(UINT8_T idx, motion_drv_t *const drv)
 {
     if (idx >= MOTION_DRV_MAX_NUM || drv == NULL)
     {
         return false;
     }
 
-    s_motion_drv[idx].idx = \
-                      idx;
-    s_motion_drv[idx].dev_id = \
-                      drv->dev_id;
-    s_motion_drv[idx].user_data = \
-                      drv->user_data;
-    s_motion_drv[idx].pf_motion_drv_init = \
-                      drv->pf_motion_drv_init;
-    s_motion_drv[idx].pf_motion_drv_deinit = \
-                      drv->pf_motion_drv_deinit;
-    s_motion_drv[idx].pf_motion_drv_get_req = \
-                      drv->pf_motion_drv_get_req;
-    s_motion_drv[idx].pf_motion_get_data_addr = \
-                      drv->pf_motion_get_data_addr;
-    s_motion_drv[idx].pf_motion_read_data_done = \
-                      drv->pf_motion_read_data_done;
+    /**
+    * motion_drv_t is a flat vtable, so a whole-struct copy captures every
+    * slot — replaces the per-field copy. idx is pinned to the slot.
+    **/
+    s_motion_drv[idx]     = *drv;
+    s_motion_drv[idx].idx = idx;
 
     s_cur_motion_drv_idx = idx;
 
@@ -119,7 +109,7 @@ platform_err_t motion_drv_get_req(void)
  *
  * @return  Pointer to the data buffer, or NULL on error.
  */
-uint8_t * motion_get_data_addr(void)
+UINT8_T * motion_get_data_addr(void)
 {
     motion_drv_t *p_drv = &s_motion_drv[s_cur_motion_drv_idx];
     if (p_drv->pf_motion_get_data_addr)

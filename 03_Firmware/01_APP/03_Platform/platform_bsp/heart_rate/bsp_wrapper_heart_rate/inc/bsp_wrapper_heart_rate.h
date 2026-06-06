@@ -99,11 +99,11 @@ typedef enum
  */
 typedef struct
 {
-    uint32_t timestamp_ms;                          /* tick at read         */
-    uint16_t hrs1_pixel[WP_HEART_RATE_PIXEL_NUM];   /* HRS1 raw pixels      */
-    uint16_t hrs2_pixel[WP_HEART_RATE_PIXEL_NUM];   /* HRS2 raw pixels      */
-    uint32_t hrs1_sum;                              /* sum of HRS1 pixels   */
-    uint32_t hrs2_sum;                              /* sum of HRS2 pixels   */
+    UINT32_T timestamp_ms;                          /* tick at read         */
+    UINT16_T hrs1_pixel[WP_HEART_RATE_PIXEL_NUM];   /* HRS1 raw pixels      */
+    UINT16_T hrs2_pixel[WP_HEART_RATE_PIXEL_NUM];   /* HRS2 raw pixels      */
+    UINT32_T hrs1_sum;                              /* sum of HRS1 pixels   */
+    UINT32_T hrs2_sum;                              /* sum of HRS2 pixels   */
 } wp_ppg_frame_t;
 
 /**
@@ -115,23 +115,23 @@ typedef struct
 typedef struct
 {
     /* Channel enables. */
-    bool             enable_hrs1;
-    bool             enable_hrs2;
+    BOOL_T             enable_hrs1;
+    BOOL_T             enable_hrs2;
 
     /* HRS1 channel parameters. */
-    bool             hrs1_gain_high;            /* false=x1  true=x5         */
-    bool             hrs1_range_high;           /* false=x1  true=x8         */
+    BOOL_T             hrs1_gain_high;            /* false=x1  true=x5         */
+    BOOL_T             hrs1_range_high;           /* false=x1  true=x8         */
     wp_hrs1_freq_t   hrs1_freq;
     wp_hrs_res_t     hrs1_res;
 
     /* HRS2 channel parameters. */
     wp_hrs2_mode_t   hrs2_mode;
     wp_hrs2_wait_t   hrs2_wait;
-    bool             hrs2_gain_high;            /* false=x1  true=x10        */
-    uint8_t          hrs2_pos_mask;             /* 7-bit pixel mask          */
+    BOOL_T             hrs2_gain_high;            /* false=x1  true=x10        */
+    UINT8_T          hrs2_pos_mask;             /* 7-bit pixel mask          */
 
     /* Common LED current (chip-specific scaling). */
-    uint8_t          led_current;
+    UINT8_T          led_current;
 } wp_heart_rate_config_t;
 
 /**
@@ -140,8 +140,8 @@ typedef struct
  */
 typedef struct _heart_rate_drv_t
 {
-    uint8_t                       idx;          /* Slot index in the table  */
-    uint32_t                   dev_id;          /* Hardware device id       */
+    UINT8_T                       idx;          /* Slot index in the table  */
+    UINT32_T                   dev_id;          /* Hardware device id       */
     void *                  user_data;          /* Adapter private context  */
 
     void (*pf_heart_rate_drv_init  )(struct _heart_rate_drv_t *const dev);
@@ -159,7 +159,7 @@ typedef struct _heart_rate_drv_t
     /* Streaming consumer side. */
     platform_err_t (*pf_heart_rate_drv_get_req)(
                               struct _heart_rate_drv_t *const dev,
-                              uint32_t                 timeout_ms);
+                              UINT32_T                 timeout_ms);
     wp_ppg_frame_t       * (*pf_heart_rate_get_frame_addr)(
                               struct _heart_rate_drv_t *const dev);
     void                   (*pf_heart_rate_read_data_done)(
@@ -178,7 +178,7 @@ typedef struct _heart_rate_drv_t
  * @return  true  - Mounted successfully.
  *          false - Invalid index or NULL drv.
  */
-bool drv_adapter_heart_rate_mount(uint8_t idx, heart_rate_drv_t *const drv);
+BOOL_T drv_adapter_heart_rate_mount(UINT8_T idx, heart_rate_drv_t *const drv);
 
 /**
  * @brief   Initialize the currently active heart-rate sensor driver.
@@ -224,7 +224,7 @@ platform_err_t heart_rate_drv_reconfigure(
  *          PLATFORM_ERR_TIMEOUT - No frame within timeout.
  *          PLATFORM_ERR_NO_RESOURCE - Driver not mounted.
  */
-platform_err_t heart_rate_drv_get_req(uint32_t timeout_ms);
+platform_err_t heart_rate_drv_get_req(UINT32_T timeout_ms);
 
 /**
  * @brief   Address of the most recently delivered frame. Must be called

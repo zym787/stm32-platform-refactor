@@ -48,8 +48,8 @@
  */
 typedef struct _drv_display_t
 {
-    uint32_t                       idx;       /* Slot index in wrapper array    */
-    uint32_t                    dev_id;       /* Hardware device identifier     */
+    UINT32_T                       idx;       /* Slot index in wrapper array    */
+    UINT32_T                    dev_id;       /* Hardware device identifier     */
     void *                   user_data;       /* Adapter private context        */
 
     platform_err_t (*pf_display_drv_inst  )(
@@ -59,89 +59,89 @@ typedef struct _drv_display_t
 
     platform_err_t (*pf_display_fill_color     )(
                                  struct _drv_display_t *const driver_instance, 
-                                              uint16_t                  color);
+                                              UINT16_T                  color);
     platform_err_t (*pf_display_draw_pixel     )(
                                  struct _drv_display_t *const driver_instance, 
-                                              uint16_t                      x,
-                                              uint16_t                      y,
-                                              uint16_t                  color);
+                                              UINT16_T                      x,
+                                              UINT16_T                      y,
+                                              UINT16_T                  color);
     platform_err_t (*pf_display_fill_region    )(
                                  struct _drv_display_t *const driver_instance, 
-                                              uint16_t                x_start,
-                                              uint16_t                y_start,
-                                              uint16_t                  x_end,
-                                              uint16_t                  y_end,
-                                              uint16_t                  color);
+                                              UINT16_T                x_start,
+                                              UINT16_T                y_start,
+                                              UINT16_T                  x_end,
+                                              UINT16_T                  y_end,
+                                              UINT16_T                  color);
     platform_err_t (*pf_display_draw_line      )(
                                  struct _drv_display_t *const driver_instance,
-                                              uint16_t                     x0,
-                                              uint16_t                     y0,
-                                              uint16_t                     x1,
-                                              uint16_t                     y1,
-                                              uint16_t                  color);
+                                              UINT16_T                     x0,
+                                              UINT16_T                     y0,
+                                              UINT16_T                     x1,
+                                              UINT16_T                     y1,
+                                              UINT16_T                  color);
     platform_err_t (*pf_display_draw_rectangle )(
                                  struct _drv_display_t *const driver_instance,
-                                              uint16_t                     x0,
-                                              uint16_t                     y0,
-                                              uint16_t                     x1,
-                                              uint16_t                     y1,
-                                              uint16_t                  color);
+                                              UINT16_T                     x0,
+                                              UINT16_T                     y0,
+                                              UINT16_T                     x1,
+                                              UINT16_T                     y1,
+                                              UINT16_T                  color);
     platform_err_t (*pf_display_draw_circle    )(
                                  struct _drv_display_t *const driver_instance,
-                                              uint16_t               x_center,
-                                              uint16_t               y_center,
-                                              uint16_t                 radius,
-                                              uint16_t                  color);
+                                              UINT16_T               x_center,
+                                              UINT16_T               y_center,
+                                              UINT16_T                 radius,
+                                              UINT16_T                  color);
     platform_err_t (*pf_display_draw_image     )(
                                  struct _drv_display_t *const driver_instance,
-                                              uint16_t                x_start,
-                                              uint16_t                y_start,
-                                              uint16_t                      w,
-                                              uint16_t                      h,
-                                              uint16_t  const*         bitmap);
+                                              UINT16_T                x_start,
+                                              UINT16_T                y_start,
+                                              UINT16_T                      w,
+                                              UINT16_T                      h,
+                                              UINT16_T  const*         bitmap);
     platform_err_t (*pf_invert_colors         )(
                                  struct _drv_display_t *const driver_instance,
-                                               uint8_t                 invert);
+                                               UINT8_T                 invert);
     platform_err_t (*pf_display_draw_char      )(
                                  struct _drv_display_t *const driver_instance,
-                                              uint16_t                      x,
-                                              uint16_t                      y,
+                                              UINT16_T                      x,
+                                              UINT16_T                      y,
                                                   char                     ch,
-                                              uint16_t                  color, 
-                                              uint16_t               bg_color);
+                                              UINT16_T                  color, 
+                                              UINT16_T               bg_color);
     platform_err_t (*pf_display_draw_string    )(
                                  struct _drv_display_t *const driver_instance,
-                                              uint16_t                      x,
-                                              uint16_t                      y,
+                                              UINT16_T                      x,
+                                              UINT16_T                      y,
                                                   char  const*            str, 
-                                              uint16_t                  color, 
-                                              uint16_t               bg_color);
+                                              UINT16_T                  color, 
+                                              UINT16_T               bg_color);
     platform_err_t (*pf_display_draw_filled_rectangle)(
                                  struct _drv_display_t *const driver_instance,
-                                              uint16_t                     x0,
-                                              uint16_t                     y0,
-                                              uint16_t                     x1,
-                                              uint16_t                     y1, 
-                                              uint16_t                  color);
+                                              UINT16_T                     x0,
+                                              UINT16_T                     y0,
+                                              UINT16_T                     x1,
+                                              UINT16_T                     y1, 
+                                              UINT16_T                  color);
     platform_err_t (*pf_display_draw_filled_triangle )(
                                  struct _drv_display_t *const driver_instance,
-                                              uint16_t                     x0,
-                                              uint16_t                     y0,
-                                              uint16_t                     x1,
-                                              uint16_t                     y1, 
-                                              uint16_t                     x2, 
-                                              uint16_t                     y2, 
-                                              uint16_t                  color);
+                                              UINT16_T                     x0,
+                                              UINT16_T                     y0,
+                                              UINT16_T                     x1,
+                                              UINT16_T                     y1, 
+                                              UINT16_T                     x2, 
+                                              UINT16_T                     y2, 
+                                              UINT16_T                  color);
     platform_err_t (*pf_display_draw_filled_circle   )(
                                  struct _drv_display_t *const driver_instance,
-                                              uint16_t               x_center,
-                                              uint16_t               y_center,
-                                              uint16_t                 radius,
-                                              uint16_t                  color);
+                                              UINT16_T               x_center,
+                                              UINT16_T               y_center,
+                                              UINT16_T                 radius,
+                                              UINT16_T                  color);
 
     platform_err_t (*pf_display_tear_effect          )(
                                  struct _drv_display_t *const driver_instance,
-                                               uint8_t                 enable);
+                                               UINT8_T                 enable);
 } drv_display_t;
 
 //******************************** Defines **********************************//
@@ -161,7 +161,7 @@ typedef struct _drv_display_t
  * @return  true  - Mounted successfully.
  *          false - Invalid index or NULL drv.
  */
-bool drv_adapter_display_mount(uint32_t idx, drv_display_t *const drv);
+BOOL_T drv_adapter_display_mount(UINT32_T idx, drv_display_t *const drv);
 
 /**
  * @brief Instantiate the currently active display driver.
@@ -199,8 +199,8 @@ void display_drv_deinit(void);
  *
  * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-platform_err_t display_draw_pixel    (uint16_t x,  uint16_t y,
-                                           uint16_t color);
+platform_err_t display_draw_pixel    (UINT16_T x,  UINT16_T y,
+                                           UINT16_T color);
 
 /**
  * @brief Fill the entire screen with a single colour.
@@ -209,7 +209,7 @@ platform_err_t display_draw_pixel    (uint16_t x,  uint16_t y,
  *
  * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-platform_err_t display_fill_color    (uint16_t color);
+platform_err_t display_fill_color    (UINT16_T color);
 
 /**
  * @brief Fill a rectangular region with a single colour.
@@ -220,27 +220,27 @@ platform_err_t display_fill_color    (uint16_t color);
  *
  * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-platform_err_t display_fill_region   (uint16_t x0, uint16_t y0,
-                                           uint16_t x1, uint16_t y1,
-                                           uint16_t color);
+platform_err_t display_fill_region   (UINT16_T x0, UINT16_T y0,
+                                           UINT16_T x1, UINT16_T y1,
+                                           UINT16_T color);
 
 /**
  * @brief Draw a line between two points.
  *
  * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-platform_err_t display_draw_line     (uint16_t x0, uint16_t y0,
-                                           uint16_t x1, uint16_t y1,
-                                           uint16_t color);
+platform_err_t display_draw_line     (UINT16_T x0, UINT16_T y0,
+                                           UINT16_T x1, UINT16_T y1,
+                                           UINT16_T color);
 
 /**
  * @brief Draw a rectangle outline.
  *
  * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-platform_err_t display_draw_rectangle(uint16_t x0, uint16_t y0,
-                                           uint16_t x1, uint16_t y1,
-                                           uint16_t color);
+platform_err_t display_draw_rectangle(UINT16_T x0, UINT16_T y0,
+                                           UINT16_T x1, UINT16_T y1,
+                                           UINT16_T color);
 
 /**
  * @brief Draw a circle outline.
@@ -251,9 +251,9 @@ platform_err_t display_draw_rectangle(uint16_t x0, uint16_t y0,
  *
  * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-platform_err_t display_draw_circle   (uint16_t x,  uint16_t y,
-                                           uint16_t radius,
-                                           uint16_t color);
+platform_err_t display_draw_circle   (UINT16_T x,  UINT16_T y,
+                                           UINT16_T radius,
+                                           UINT16_T color);
 
 /**
  * @brief Draw a bitmap image at the specified position.
@@ -264,9 +264,9 @@ platform_err_t display_draw_circle   (uint16_t x,  uint16_t y,
  *
  * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-platform_err_t display_draw_image    (uint16_t x0, uint16_t y0,
-                                           uint16_t  w, uint16_t  h,
-                                           uint16_t const* bitmap);
+platform_err_t display_draw_image    (UINT16_T x0, UINT16_T y0,
+                                           UINT16_T  w, UINT16_T  h,
+                                           UINT16_T const* bitmap);
 
 /**
  * @brief Invert or restore display colours.
@@ -275,7 +275,7 @@ platform_err_t display_draw_image    (uint16_t x0, uint16_t y0,
  *
  * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-platform_err_t display_invert_colors (bool invert);
+platform_err_t display_invert_colors (BOOL_T invert);
 
 /**
  * @brief Draw a single character using the built-in font.
@@ -287,48 +287,48 @@ platform_err_t display_invert_colors (bool invert);
  *
  * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-platform_err_t display_draw_char            (uint16_t x, uint16_t y,
+platform_err_t display_draw_char            (UINT16_T x, UINT16_T y,
                                                       char c,
-                                                  uint16_t color,
-                                                  uint16_t bg_color);
+                                                  UINT16_T color,
+                                                  UINT16_T bg_color);
 
 /**
  * @brief Draw a null-terminated string using the built-in font.
  *
  * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-platform_err_t display_draw_string          (uint16_t x, uint16_t y,
+platform_err_t display_draw_string          (UINT16_T x, UINT16_T y,
                                                 const char* str,
-                                                  uint16_t color,
-                                                  uint16_t bg_color);
+                                                  UINT16_T color,
+                                                  UINT16_T bg_color);
 
 /**
  * @brief Draw a filled rectangle.
  *
  * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-platform_err_t display_draw_filled_rectangle(uint16_t x0, uint16_t y0,
-                                                  uint16_t x1, uint16_t y1,
-                                                  uint16_t color);
+platform_err_t display_draw_filled_rectangle(UINT16_T x0, UINT16_T y0,
+                                                  UINT16_T x1, UINT16_T y1,
+                                                  UINT16_T color);
 
 /**
  * @brief Draw a filled triangle.
  *
  * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-platform_err_t display_draw_filled_triangle (uint16_t x0, uint16_t y0,
-                                                  uint16_t x1, uint16_t y1,
-                                                  uint16_t x2, uint16_t y2,
-                                                  uint16_t color);
+platform_err_t display_draw_filled_triangle (UINT16_T x0, UINT16_T y0,
+                                                  UINT16_T x1, UINT16_T y1,
+                                                  UINT16_T x2, UINT16_T y2,
+                                                  UINT16_T color);
 
 /**
  * @brief Draw a filled circle.
  *
  * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-platform_err_t display_draw_filled_circle   (uint16_t x,   uint16_t y,
-                                                  uint16_t radius,
-                                                  uint16_t color);
+platform_err_t display_draw_filled_circle   (UINT16_T x,   UINT16_T y,
+                                                  UINT16_T radius,
+                                                  UINT16_T color);
 
 /**
  * @brief Enable or disable the display tear-effect (TE) output.
@@ -337,7 +337,7 @@ platform_err_t display_draw_filled_circle   (uint16_t x,   uint16_t y,
  *
  * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-platform_err_t display_tear_effect(bool enable);
+platform_err_t display_tear_effect(BOOL_T enable);
 
 //******************************* Functions *********************************//
 

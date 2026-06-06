@@ -44,9 +44,9 @@
  */
 typedef struct
 {
-    uint32_t                       addr;
-    uint32_t                       size;
-    uint8_t              *         data;
+    UINT32_T                       addr;
+    UINT32_T                       size;
+    UINT8_T              *         data;
     platform_err_t      status;
     void                 *   p_user_ctx;
 } wp_externflash_result_t;
@@ -65,8 +65,8 @@ typedef void (*wp_externflash_callback_t)(wp_externflash_result_t *result);
  */
 typedef struct _externflash_drv_t
 {
-    uint8_t                                   idx;       /* Slot index        */
-    uint32_t                               dev_id;       /* Device id         */
+    UINT8_T                                   idx;       /* Slot index        */
+    UINT32_T                               dev_id;       /* Device id         */
     void                       *        user_data;       /* Adapter context   */
 
     void                    (*pf_externflash_drv_init  )\
@@ -76,25 +76,25 @@ typedef struct _externflash_drv_t
 
     platform_err_t (*pf_externflash_read       )\
                                   (struct _externflash_drv_t *const       dev,
-                                                  uint32_t                addr,
-                                                  uint8_t  *              data,
-                                                  uint32_t                size,
+                                                  UINT32_T                addr,
+                                                  UINT8_T  *              data,
+                                                  UINT32_T                size,
                                                   wp_externflash_callback_t cb,
                                                   void     *       p_user_ctx);
 
     platform_err_t (*pf_externflash_write      )\
                                   (struct _externflash_drv_t *const       dev,
-                                                  uint32_t                addr,
-                                                  uint8_t  *              data,
-                                                  uint32_t                size,
+                                                  UINT32_T                addr,
+                                                  UINT8_T  *              data,
+                                                  UINT32_T                size,
                                                   wp_externflash_callback_t cb,
                                                   void     *       p_user_ctx);
 
     platform_err_t (*pf_externflash_write_noerase)\
                                   (struct _externflash_drv_t *const       dev,
-                                                  uint32_t                addr,
-                                                  uint8_t  *              data,
-                                                  uint32_t                size,
+                                                  UINT32_T                addr,
+                                                  UINT8_T  *              data,
+                                                  UINT32_T                size,
                                                   wp_externflash_callback_t cb,
                                                   void     *       p_user_ctx);
 
@@ -105,7 +105,7 @@ typedef struct _externflash_drv_t
 
     platform_err_t (*pf_externflash_erase_sector)\
                                   (struct _externflash_drv_t *const       dev,
-                                                  uint32_t                addr,
+                                                  UINT32_T                addr,
                                                   wp_externflash_callback_t cb,
                                                   void     *       p_user_ctx);
 
@@ -132,7 +132,7 @@ typedef struct _externflash_drv_t
  * @return  true  - Mounted successfully.
  *          false - Invalid index or NULL drv.
  */
-bool drv_adapter_externflash_mount(uint8_t                  idx,
+BOOL_T drv_adapter_externflash_mount(UINT8_T                  idx,
                                    externflash_drv_t *const drv);
 
 /**
@@ -158,9 +158,9 @@ void                    externflash_drv_deinit      (void);
  *
  * @return  PLATFORM_OK if the request was queued, error code otherwise.
  */
-platform_err_t externflash_drv_read         (uint32_t                addr,
-                                                      uint8_t  *              data,
-                                                      uint32_t                size,
+platform_err_t externflash_drv_read         (UINT32_T                addr,
+                                                      UINT8_T  *              data,
+                                                      UINT32_T                size,
                                                       wp_externflash_callback_t cb,
                                                       void     *       p_user_ctx);
 
@@ -168,9 +168,9 @@ platform_err_t externflash_drv_read         (uint32_t                addr,
  * @brief   Submit an asynchronous write that erases the affected sectors first.
  *          Same ownership and threading rules as externflash_drv_read().
  */
-platform_err_t externflash_drv_write        (uint32_t                addr,
-                                                      uint8_t  *              data,
-                                                      uint32_t                size,
+platform_err_t externflash_drv_write        (UINT32_T                addr,
+                                                      UINT8_T  *              data,
+                                                      UINT32_T                size,
                                                       wp_externflash_callback_t cb,
                                                       void     *       p_user_ctx);
 
@@ -178,9 +178,9 @@ platform_err_t externflash_drv_write        (uint32_t                addr,
  * @brief   Submit an asynchronous write WITHOUT a preceding erase.  The
  *          caller must guarantee the target region is already erased.
  */
-platform_err_t externflash_drv_write_noerase(uint32_t                addr,
-                                                      uint8_t  *              data,
-                                                      uint32_t                size,
+platform_err_t externflash_drv_write_noerase(UINT32_T                addr,
+                                                      UINT8_T  *              data,
+                                                      UINT32_T                size,
                                                       wp_externflash_callback_t cb,
                                                       void     *       p_user_ctx);
 
@@ -193,7 +193,7 @@ platform_err_t externflash_drv_erase_chip   (wp_externflash_callback_t cb,
 /**
  * @brief   Submit an asynchronous sector-erase at @p addr.
  */
-platform_err_t externflash_drv_erase_sector (uint32_t                addr,
+platform_err_t externflash_drv_erase_sector (UINT32_T                addr,
                                                       wp_externflash_callback_t cb,
                                                       void     *       p_user_ctx);
 

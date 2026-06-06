@@ -48,17 +48,17 @@
  */
 typedef struct _drv_audio_t
 {
-    uint32_t                       idx;       /* Slot index in wrapper array    */
-    uint32_t                    dev_id;       /* Hardware device identifier     */
+    UINT32_T                       idx;       /* Slot index in wrapper array    */
+    UINT32_T                    dev_id;       /* Hardware device identifier     */
     void            *        user_data;       /* Adapter private context        */
 
     void              (*pf_audio_drv_init   )(struct _drv_audio_t * const dev);
     void              (*pf_audio_drv_deinit )(struct _drv_audio_t * const dev);
 
     platform_err_t (*pf_audio_drv_play   )(struct _drv_audio_t * const dev,
-                                                          uint8_t    priority,
-                                                          uint8_t      volume,
-                                                          uint8_t  voice_addr);
+                                                          UINT8_T    priority,
+                                                          UINT8_T      volume,
+                                                          UINT8_T  voice_addr);
     platform_err_t (*pf_audio_drv_stop   )(struct _drv_audio_t * const dev);
 
 } drv_audio_t;
@@ -76,7 +76,7 @@ typedef struct _drv_audio_t
  * @return  true  - Mounted successfully.
  *          false - Invalid index or NULL drv.
  */
-bool audio_drv_mount (uint8_t idx, drv_audio_t * const drv);
+BOOL_T audio_drv_mount (UINT8_T idx, drv_audio_t * const drv);
 
 /**
  * @brief   Initialise the currently active audio driver.
@@ -100,9 +100,9 @@ void              audio_drv_deinit(void);
  *          PLATFORM_ERR_PARAM - Volume out of range.
  *          PLATFORM_ERR_GENERAL        - Driver error.
  */
-platform_err_t audio_drv_play  (uint8_t    priority,
-                                   uint8_t      volume,
-                                   uint8_t  voice_addr);
+platform_err_t audio_drv_play  (UINT8_T    priority,
+                                   UINT8_T      volume,
+                                   UINT8_T  voice_addr);
 
 /**
  * @brief   Stop the currently playing voice clip.

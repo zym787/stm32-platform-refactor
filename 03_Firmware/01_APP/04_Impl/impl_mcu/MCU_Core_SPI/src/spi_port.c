@@ -29,6 +29,7 @@
 #include "spi.h"
 #include "spi_hal.h"
 #include "osal_mutex.h"
+#include "osal_error.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
@@ -99,8 +100,10 @@ platform_err_t mcu_spi_port_init(mcu_spi_bus_t bus)
     }
 
 #ifdef HAL_SPI_MODULE_ENABLED
+    /* OSAL_SUCCESS == OSAL_FALSE == 0, so compare to OSAL_SUCCESS by name
+       rather than bare 0 (see [[osal-success-vs-false-collision]]). */
     INT32_t ret = osal_mutex_init(&spi_port[bus].os_mutexid);
-    return (ret == 0) ? PLATFORM_OK : PLATFORM_ERR_GENERAL;
+    return (OSAL_SUCCESS == ret) ? PLATFORM_OK : PLATFORM_ERR_GENERAL;
 #else
     return PLATFORM_ERR_GENERAL;
 #endif
@@ -148,7 +151,7 @@ platform_err_t mcu_hard_spi_transmit(mcu_spi_bus_t bus,
     }
 
     if (osal_mutex_take(spi_port[bus].os_mutexid,
-                        (osal_tick_type_t)timeout) != 0)
+                        (osal_tick_type_t)timeout) != OSAL_SUCCESS)
     {
         return PLATFORM_ERR_TIMEOUT;
     }
@@ -172,7 +175,7 @@ platform_err_t mcu_hard_spi_receive(mcu_spi_bus_t bus,
     }
 
     if (osal_mutex_take(spi_port[bus].os_mutexid,
-                        (osal_tick_type_t)timeout) != 0)
+                        (osal_tick_type_t)timeout) != OSAL_SUCCESS)
     {
         return PLATFORM_ERR_TIMEOUT;
     }
@@ -197,7 +200,7 @@ platform_err_t mcu_hard_spi_transmit_receive(mcu_spi_bus_t bus,
     }
 
     if (osal_mutex_take(spi_port[bus].os_mutexid,
-                        (osal_tick_type_t)timeout) != 0)
+                        (osal_tick_type_t)timeout) != OSAL_SUCCESS)
     {
         return PLATFORM_ERR_TIMEOUT;
     }
@@ -221,7 +224,8 @@ platform_err_t mcu_hard_spi_transmit_dma(mcu_spi_bus_t bus,
 
     /* DMA transfer is non-blocking; take mutex here, caller releases via
        mcu_hard_spi_dma_complete() or the DMA-complete callback. */
-    if (osal_mutex_take(spi_port[bus].os_mutexid, OSAL_MAX_DELAY) != 0)
+    if (osal_mutex_take(spi_port[bus].os_mutexid, OSAL_MAX_DELAY) !=
+        OSAL_SUCCESS)
     {
         return PLATFORM_ERR_TIMEOUT;
     }
@@ -247,7 +251,8 @@ platform_err_t mcu_hard_spi_receive_dma(mcu_spi_bus_t bus,
         return PLATFORM_ERR_PARAM;
     }
 
-    if (osal_mutex_take(spi_port[bus].os_mutexid, OSAL_MAX_DELAY) != 0)
+    if (osal_mutex_take(spi_port[bus].os_mutexid, OSAL_MAX_DELAY) !=
+        OSAL_SUCCESS)
     {
         return PLATFORM_ERR_TIMEOUT;
     }

@@ -29,7 +29,7 @@
 
 //******************************* Declaring *********************************//
 static heart_rate_drv_t s_heart_rate_drv[HEART_RATE_DRV_MAX_NUM];
-static uint8_t          s_cur_heart_rate_drv_idx = 0U;
+static UINT8_T          s_cur_heart_rate_drv_idx = 0U;
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
@@ -43,7 +43,7 @@ static uint8_t          s_cur_heart_rate_drv_idx = 0U;
  *
  * @return   true on success; false on invalid idx or NULL drv.
  * */
-bool drv_adapter_heart_rate_mount(uint8_t idx, heart_rate_drv_t *const drv)
+BOOL_T drv_adapter_heart_rate_mount(UINT8_T idx, heart_rate_drv_t *const drv)
 {
     /* Out-of-range idx or NULL drv would corrupt the table; reject. */
     if (idx >= HEART_RATE_DRV_MAX_NUM || NULL == drv)
@@ -51,28 +51,12 @@ bool drv_adapter_heart_rate_mount(uint8_t idx, heart_rate_drv_t *const drv)
         return false;
     }
 
-    s_heart_rate_drv[idx].idx                            =\
-                                                       idx;
-    s_heart_rate_drv[idx].dev_id                         =\
-                                               drv->dev_id;
-    s_heart_rate_drv[idx].user_data                      =\
-                                            drv->user_data;
-    s_heart_rate_drv[idx].pf_heart_rate_drv_init         =\
-                                 drv->pf_heart_rate_drv_init;
-    s_heart_rate_drv[idx].pf_heart_rate_drv_deinit       =\
-                               drv->pf_heart_rate_drv_deinit;
-    s_heart_rate_drv[idx].pf_heart_rate_drv_start        =\
-                                drv->pf_heart_rate_drv_start;
-    s_heart_rate_drv[idx].pf_heart_rate_drv_stop         =\
-                                 drv->pf_heart_rate_drv_stop;
-    s_heart_rate_drv[idx].pf_heart_rate_drv_reconfigure  =\
-                          drv->pf_heart_rate_drv_reconfigure;
-    s_heart_rate_drv[idx].pf_heart_rate_drv_get_req      =\
-                              drv->pf_heart_rate_drv_get_req;
-    s_heart_rate_drv[idx].pf_heart_rate_get_frame_addr   =\
-                           drv->pf_heart_rate_get_frame_addr;
-    s_heart_rate_drv[idx].pf_heart_rate_read_data_done   =\
-                           drv->pf_heart_rate_read_data_done;
+    /**
+    * heart_rate_drv_t is a flat vtable, so a whole-struct copy captures
+    * every slot — replaces the per-field copy. idx is pinned to the slot.
+    **/
+    s_heart_rate_drv[idx]     = *drv;
+    s_heart_rate_drv[idx].idx = idx;
 
     /* Last successful mount becomes the active driver -- single-driver
      * deployments do not need to call any extra "select" API.        */
@@ -178,7 +162,7 @@ platform_err_t heart_rate_drv_reconfigure(
  *
  * @return   PLATFORM_OK / PLATFORM_ERR_TIMEOUT / RESOURCE.
  * */
-platform_err_t heart_rate_drv_get_req(uint32_t timeout_ms)
+platform_err_t heart_rate_drv_get_req(UINT32_T timeout_ms)
 {
     heart_rate_drv_t *drv = &s_heart_rate_drv[s_cur_heart_rate_drv_idx];
     if (NULL != drv->pf_heart_rate_drv_get_req)

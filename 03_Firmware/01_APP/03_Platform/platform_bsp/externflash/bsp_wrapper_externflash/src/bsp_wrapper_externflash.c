@@ -32,12 +32,12 @@
 
 //******************************* Variables *********************************//
 static externflash_drv_t s_externflash_drv[EXTERNFLASH_DRV_MAX_NUM] = {0};
-static uint32_t          s_cur_externflash_drv_idx                  =  0;
+static UINT32_T          s_cur_externflash_drv_idx                  =  0;
 //******************************* Variables *********************************//
 
 //******************************* Functions *********************************//
 
-bool drv_adapter_externflash_mount(uint8_t                  idx,
+BOOL_T drv_adapter_externflash_mount(UINT8_T                  idx,
                                    externflash_drv_t *const drv)
 {
     if (idx >= EXTERNFLASH_DRV_MAX_NUM || drv == NULL)
@@ -45,31 +45,12 @@ bool drv_adapter_externflash_mount(uint8_t                  idx,
         return false;
     }
 
-    s_externflash_drv[idx].idx = \
-                          idx;
-    s_externflash_drv[idx].dev_id = \
-                          drv->dev_id;
-    s_externflash_drv[idx].user_data = \
-                          drv->user_data;
-
-    s_externflash_drv[idx].pf_externflash_drv_init = \
-                          drv->pf_externflash_drv_init;
-    s_externflash_drv[idx].pf_externflash_drv_deinit = \
-                          drv->pf_externflash_drv_deinit;
-    s_externflash_drv[idx].pf_externflash_read = \
-                          drv->pf_externflash_read;
-    s_externflash_drv[idx].pf_externflash_write = \
-                          drv->pf_externflash_write;
-    s_externflash_drv[idx].pf_externflash_write_noerase = \
-                          drv->pf_externflash_write_noerase;
-    s_externflash_drv[idx].pf_externflash_erase_chip = \
-                          drv->pf_externflash_erase_chip;
-    s_externflash_drv[idx].pf_externflash_erase_sector = \
-                          drv->pf_externflash_erase_sector;
-    s_externflash_drv[idx].pf_externflash_sleep = \
-                          drv->pf_externflash_sleep;
-    s_externflash_drv[idx].pf_externflash_wakeup = \
-                          drv->pf_externflash_wakeup;
+    /**
+    * externflash_drv_t is a flat vtable, so a whole-struct copy captures
+    * every slot — replaces the per-field copy. idx is pinned to the slot.
+    **/
+    s_externflash_drv[idx]     = *drv;
+    s_externflash_drv[idx].idx = idx;
 
     s_cur_externflash_drv_idx = idx;
     return true;
@@ -93,9 +74,9 @@ void externflash_drv_deinit(void)
     }
 }
 
-platform_err_t externflash_drv_read(uint32_t                  addr,
-                                             uint8_t  *                data,
-                                             uint32_t                  size,
+platform_err_t externflash_drv_read(UINT32_T                  addr,
+                                             UINT8_T  *                data,
+                                             UINT32_T                  size,
                                              wp_externflash_callback_t   cb,
                                              void     *         p_user_ctx)
 {
@@ -108,9 +89,9 @@ platform_err_t externflash_drv_read(uint32_t                  addr,
     return PLATFORM_ERR_NO_RESOURCE;
 }
 
-platform_err_t externflash_drv_write(uint32_t                  addr,
-                                              uint8_t  *                data,
-                                              uint32_t                  size,
+platform_err_t externflash_drv_write(UINT32_T                  addr,
+                                              UINT8_T  *                data,
+                                              UINT32_T                  size,
                                               wp_externflash_callback_t   cb,
                                               void     *         p_user_ctx)
 {
@@ -123,9 +104,9 @@ platform_err_t externflash_drv_write(uint32_t                  addr,
     return PLATFORM_ERR_NO_RESOURCE;
 }
 
-platform_err_t externflash_drv_write_noerase(uint32_t                  addr,
-                                                      uint8_t  *                data,
-                                                      uint32_t                  size,
+platform_err_t externflash_drv_write_noerase(UINT32_T                  addr,
+                                                      UINT8_T  *                data,
+                                                      UINT32_T                  size,
                                                       wp_externflash_callback_t   cb,
                                                       void     *         p_user_ctx)
 {
@@ -149,7 +130,7 @@ platform_err_t externflash_drv_erase_chip(wp_externflash_callback_t   cb,
     return PLATFORM_ERR_NO_RESOURCE;
 }
 
-platform_err_t externflash_drv_erase_sector(uint32_t                  addr,
+platform_err_t externflash_drv_erase_sector(UINT32_T                  addr,
                                                      wp_externflash_callback_t   cb,
                                                      void     *         p_user_ctx)
 {
