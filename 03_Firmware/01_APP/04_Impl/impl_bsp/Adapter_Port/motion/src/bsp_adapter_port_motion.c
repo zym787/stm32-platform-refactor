@@ -65,10 +65,10 @@ static void mpuxxxx_drv_deinit(motion_drv_t *const dev)
  *
  * @param[in] dev : Pointer to the motion driver vtable (unused).
  *
- * @return  WP_MOTION_OK           - A new packet notification was received.
- *          WP_MOTION_ERRORRESOURCE - Handler not ready (NULL interface ptr).
+ * @return  PLATFORM_OK           - A new packet notification was received.
+ *          PLATFORM_ERR_NO_RESOURCE - Handler not ready (NULL interface ptr).
  */
-static wp_motion_status_t mpuxxxx_drv_get_req(motion_drv_t *const dev)
+static platform_err_t mpuxxxx_drv_get_req(motion_drv_t *const dev)
 {
     (void)dev;
     bsp_mpuxxxx_hanlder_t const *p_handler = mpuxxxx_handler_get_instance();
@@ -87,7 +87,7 @@ static wp_motion_status_t mpuxxxx_drv_get_req(motion_drv_t *const dev)
         NULL == p_handler->p_input_args->p_yield_interface                   ||
         NULL == p_handler->p_input_args->p_yield_interface->pf_rtos_yield)
     {
-        return WP_MOTION_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     }
 
     /* Blocking receive — releases only when the handler sends a notification.
@@ -104,7 +104,7 @@ static wp_motion_status_t mpuxxxx_drv_get_req(motion_drv_t *const dev)
                     "mpuxxxx unpack task receive queue failed!");
     }
 
-    return WP_MOTION_OK;
+    return PLATFORM_OK;
 }
 
 /**

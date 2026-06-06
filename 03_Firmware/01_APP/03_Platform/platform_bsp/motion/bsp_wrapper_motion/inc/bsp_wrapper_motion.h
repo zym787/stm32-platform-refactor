@@ -31,21 +31,10 @@
 
 //******************************** Includes *********************************//
 #include "platform_type.h"
+#include "platform_error.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
-typedef enum
-{
-    WP_MOTION_OK                 = 0,          /* Operation successful       */
-    WP_MOTION_ERROR              = 1,          /* General error              */
-    WP_MOTION_ERRORTIMEOUT       = 2,          /* Timeout error              */
-    WP_MOTION_ERRORRESOURCE      = 3,          /* Resource unavailable       */
-    WP_MOTION_ERRORPARAMETER     = 4,          /* Invalid parameter          */
-    WP_MOTION_ERRORNOMEMORY      = 5,          /* Out of memory              */
-    WP_MOTION_ERRORUNSUPPORTED   = 6,          /* Unsupported feature        */
-    WP_MOTION_ERRORISR           = 7,          /* ISR context error          */
-    WP_MOTION_RESERVED           = 0xFF,       /* Reserved                   */
-} wp_motion_status_t;
 
 /**
  * @brief Driver vtable for a motion sensor.
@@ -60,7 +49,7 @@ typedef struct _motion_drv_t
     void              (*pf_motion_drv_init  )(struct _motion_drv_t *const dev);
     void              (*pf_motion_drv_deinit)(struct _motion_drv_t *const dev);
 
-    wp_motion_status_t(*pf_motion_drv_get_req    )\
+    platform_err_t(*pf_motion_drv_get_req    )\
                                              (struct _motion_drv_t *const dev);
     uint8_t *         (*pf_motion_get_data_addr  )\
                                              (struct _motion_drv_t *const dev);
@@ -98,15 +87,15 @@ void               motion_drv_deinit    (void);
  * @brief   Block until a new motion data packet is available.
  *          Internally waits on the driver's OS queue or equivalent mechanism.
  *
- * @return  WP_MOTION_OK           - A new data packet is ready.
- *          WP_MOTION_ERRORRESOURCE - Driver not registered or not initialized.
+ * @return  PLATFORM_OK           - A new data packet is ready.
+ *          PLATFORM_ERR_NO_RESOURCE - Driver not registered or not initialized.
  *          Other                   - Driver-specific error.
  */
-wp_motion_status_t motion_drv_get_req   (void);
+platform_err_t motion_drv_get_req   (void);
 
 /**
  * @brief   Get the address of the current raw data packet in the ring buffer.
- *          Must be called after motion_drv_get_req() returns WP_MOTION_OK.
+ *          Must be called after motion_drv_get_req() returns PLATFORM_OK.
  *
  * @return  Pointer to the raw data byte array, or NULL on error.
  */

@@ -80,14 +80,14 @@ void unpack_task_thread(void *argument)
 
     DEBUG_OUT(i, UNPACK_LOG_TAG, "unpack_task is running...");
 
-    wp_motion_status_t ret         = WP_MOTION_OK;
+    platform_err_t ret         = PLATFORM_OK;
     mpuxxxx_unpack_data_t     motion_data = {0};
 
     for (;;)
     {
         /* Block until the handler task sends a DMA-complete notification. */
         ret = motion_drv_get_req();
-        if (WP_MOTION_OK != ret)
+        if (PLATFORM_OK != ret)
         {
             DEBUG_OUT(e, UNPACK_ERR_LOG_TAG,
                       "motion_drv_get_req failed, ret=%d", (int)ret);

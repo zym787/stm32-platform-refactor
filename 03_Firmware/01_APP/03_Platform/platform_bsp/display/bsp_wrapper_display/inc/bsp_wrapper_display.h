@@ -36,22 +36,11 @@
 
 //******************************** Includes *********************************//
 #include "platform_type.h"
+#include "platform_error.h"
 
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
-typedef enum
-{
-    WP_DISPLAY_OK               = 0,           /* Operation successful       */
-    WP_DISPLAY_ERROR            = 1,           /* General error              */
-    WP_DISPLAY_ERRORTIMEOUT     = 2,           /* Timeout error              */
-    WP_DISPLAY_ERRORRESOURCE    = 3,           /* Resource unavailable       */
-    WP_DISPLAY_ERRORPARAMETER   = 4,           /* Invalid parameter          */
-    WP_DISPLAY_ERRORNOMEMORY    = 5,           /* Out of memory              */
-    WP_DISPLAY_ERRORUNSUPPORTED = 6,           /* Unsupported feature        */
-    WP_DISPLAY_ERRORISR         = 7,           /* ISR context error          */
-    WP_DISPLAY_RESERVED         = 0xFF,        /* Reserved                   */
-} wp_display_status_t;
 
 /**
  * @brief Driver vtable for a display controller.
@@ -63,78 +52,78 @@ typedef struct _drv_display_t
     uint32_t                    dev_id;       /* Hardware device identifier     */
     void *                   user_data;       /* Adapter private context        */
 
-    wp_display_status_t (*pf_display_drv_inst  )(
+    platform_err_t (*pf_display_drv_inst  )(
                                   struct _drv_display_t *const dev);
     void (*pf_display_drv_init  )(struct _drv_display_t *const dev);
     void (*pf_display_drv_deinit)(struct _drv_display_t *const dev);
 
-    wp_display_status_t (*pf_display_fill_color     )(
+    platform_err_t (*pf_display_fill_color     )(
                                  struct _drv_display_t *const driver_instance, 
                                               uint16_t                  color);
-    wp_display_status_t (*pf_display_draw_pixel     )(
+    platform_err_t (*pf_display_draw_pixel     )(
                                  struct _drv_display_t *const driver_instance, 
                                               uint16_t                      x,
                                               uint16_t                      y,
                                               uint16_t                  color);
-    wp_display_status_t (*pf_display_fill_region    )(
+    platform_err_t (*pf_display_fill_region    )(
                                  struct _drv_display_t *const driver_instance, 
                                               uint16_t                x_start,
                                               uint16_t                y_start,
                                               uint16_t                  x_end,
                                               uint16_t                  y_end,
                                               uint16_t                  color);
-    wp_display_status_t (*pf_display_draw_line      )(
+    platform_err_t (*pf_display_draw_line      )(
                                  struct _drv_display_t *const driver_instance,
                                               uint16_t                     x0,
                                               uint16_t                     y0,
                                               uint16_t                     x1,
                                               uint16_t                     y1,
                                               uint16_t                  color);
-    wp_display_status_t (*pf_display_draw_rectangle )(
+    platform_err_t (*pf_display_draw_rectangle )(
                                  struct _drv_display_t *const driver_instance,
                                               uint16_t                     x0,
                                               uint16_t                     y0,
                                               uint16_t                     x1,
                                               uint16_t                     y1,
                                               uint16_t                  color);
-    wp_display_status_t (*pf_display_draw_circle    )(
+    platform_err_t (*pf_display_draw_circle    )(
                                  struct _drv_display_t *const driver_instance,
                                               uint16_t               x_center,
                                               uint16_t               y_center,
                                               uint16_t                 radius,
                                               uint16_t                  color);
-    wp_display_status_t (*pf_display_draw_image     )(
+    platform_err_t (*pf_display_draw_image     )(
                                  struct _drv_display_t *const driver_instance,
                                               uint16_t                x_start,
                                               uint16_t                y_start,
                                               uint16_t                      w,
                                               uint16_t                      h,
                                               uint16_t  const*         bitmap);
-    wp_display_status_t (*pf_invert_colors         )(
+    platform_err_t (*pf_invert_colors         )(
                                  struct _drv_display_t *const driver_instance,
                                                uint8_t                 invert);
-    wp_display_status_t (*pf_display_draw_char      )(
+    platform_err_t (*pf_display_draw_char      )(
                                  struct _drv_display_t *const driver_instance,
                                               uint16_t                      x,
                                               uint16_t                      y,
                                                   char                     ch,
                                               uint16_t                  color, 
                                               uint16_t               bg_color);
-    wp_display_status_t (*pf_display_draw_string    )(
+    platform_err_t (*pf_display_draw_string    )(
                                  struct _drv_display_t *const driver_instance,
                                               uint16_t                      x,
                                               uint16_t                      y,
                                                   char  const*            str, 
                                               uint16_t                  color, 
                                               uint16_t               bg_color);
-    wp_display_status_t (*pf_display_draw_filled_rectangle)(
+    platform_err_t (*pf_display_draw_filled_rectangle)(
                                  struct _drv_display_t *const driver_instance,
                                               uint16_t                     x0,
                                               uint16_t                     y0,
                                               uint16_t                     x1,
                                               uint16_t                     y1, 
                                               uint16_t                  color);
-    wp_display_status_t (*pf_display_draw_filled_triangle )(
+    platform_err_t (*pf_display_draw_filled_triangle )(
                                  struct _drv_display_t *const driver_instance,
                                               uint16_t                     x0,
                                               uint16_t                     y0,
@@ -143,14 +132,14 @@ typedef struct _drv_display_t
                                               uint16_t                     x2, 
                                               uint16_t                     y2, 
                                               uint16_t                  color);
-    wp_display_status_t (*pf_display_draw_filled_circle   )(
+    platform_err_t (*pf_display_draw_filled_circle   )(
                                  struct _drv_display_t *const driver_instance,
                                               uint16_t               x_center,
                                               uint16_t               y_center,
                                               uint16_t                 radius,
                                               uint16_t                  color);
 
-    wp_display_status_t (*pf_display_tear_effect          )(
+    platform_err_t (*pf_display_tear_effect          )(
                                  struct _drv_display_t *const driver_instance,
                                                uint8_t                 enable);
 } drv_display_t;
@@ -183,11 +172,11 @@ bool drv_adapter_display_mount(uint32_t idx, drv_display_t *const drv);
  * osKernelStart().  Idempotent — implementations should ignore repeated
  * calls after a successful instantiation.
  *
- * @return WP_DISPLAY_OK on success, WP_DISPLAY_ERRORRESOURCE if no driver
+ * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver
  *         is mounted or the slot has no inst hook, other values on driver
  *         failure (logged by the adapter).
  */
-wp_display_status_t display_drv_inst(void);
+platform_err_t display_drv_inst(void);
 
 /**
  * @brief Initialize the currently active display driver.
@@ -208,9 +197,9 @@ void display_drv_deinit(void);
  * @param[in] y     : Y pixel coordinate.
  * @param[in] color : 16-bit RGB565 colour value.
  *
- * @return WP_DISPLAY_OK on success, WP_DISPLAY_ERRORRESOURCE if no driver mounted.
+ * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-wp_display_status_t display_draw_pixel    (uint16_t x,  uint16_t y,
+platform_err_t display_draw_pixel    (uint16_t x,  uint16_t y,
                                            uint16_t color);
 
 /**
@@ -218,9 +207,9 @@ wp_display_status_t display_draw_pixel    (uint16_t x,  uint16_t y,
  *
  * @param[in] color : 16-bit RGB565 fill colour.
  *
- * @return WP_DISPLAY_OK on success, WP_DISPLAY_ERRORRESOURCE if no driver mounted.
+ * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-wp_display_status_t display_fill_color    (uint16_t color);
+platform_err_t display_fill_color    (uint16_t color);
 
 /**
  * @brief Fill a rectangular region with a single colour.
@@ -229,27 +218,27 @@ wp_display_status_t display_fill_color    (uint16_t color);
  * @param[in] x1,y1 : Bottom-right corner.
  * @param[in] color : 16-bit RGB565 fill colour.
  *
- * @return WP_DISPLAY_OK on success, WP_DISPLAY_ERRORRESOURCE if no driver mounted.
+ * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-wp_display_status_t display_fill_region   (uint16_t x0, uint16_t y0,
+platform_err_t display_fill_region   (uint16_t x0, uint16_t y0,
                                            uint16_t x1, uint16_t y1,
                                            uint16_t color);
 
 /**
  * @brief Draw a line between two points.
  *
- * @return WP_DISPLAY_OK on success, WP_DISPLAY_ERRORRESOURCE if no driver mounted.
+ * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-wp_display_status_t display_draw_line     (uint16_t x0, uint16_t y0,
+platform_err_t display_draw_line     (uint16_t x0, uint16_t y0,
                                            uint16_t x1, uint16_t y1,
                                            uint16_t color);
 
 /**
  * @brief Draw a rectangle outline.
  *
- * @return WP_DISPLAY_OK on success, WP_DISPLAY_ERRORRESOURCE if no driver mounted.
+ * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-wp_display_status_t display_draw_rectangle(uint16_t x0, uint16_t y0,
+platform_err_t display_draw_rectangle(uint16_t x0, uint16_t y0,
                                            uint16_t x1, uint16_t y1,
                                            uint16_t color);
 
@@ -260,9 +249,9 @@ wp_display_status_t display_draw_rectangle(uint16_t x0, uint16_t y0,
  * @param[in] radius    : Circle radius in pixels.
  * @param[in] color     : 16-bit RGB565 colour.
  *
- * @return WP_DISPLAY_OK on success, WP_DISPLAY_ERRORRESOURCE if no driver mounted.
+ * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-wp_display_status_t display_draw_circle   (uint16_t x,  uint16_t y,
+platform_err_t display_draw_circle   (uint16_t x,  uint16_t y,
                                            uint16_t radius,
                                            uint16_t color);
 
@@ -273,9 +262,9 @@ wp_display_status_t display_draw_circle   (uint16_t x,  uint16_t y,
  * @param[in] w,h   : Image width and height in pixels.
  * @param[in] bitmap: Pointer to 16-bit RGB565 pixel data.
  *
- * @return WP_DISPLAY_OK on success, WP_DISPLAY_ERRORRESOURCE if no driver mounted.
+ * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-wp_display_status_t display_draw_image    (uint16_t x0, uint16_t y0,
+platform_err_t display_draw_image    (uint16_t x0, uint16_t y0,
                                            uint16_t  w, uint16_t  h,
                                            uint16_t const* bitmap);
 
@@ -284,9 +273,9 @@ wp_display_status_t display_draw_image    (uint16_t x0, uint16_t y0,
  *
  * @param[in] invert : true to invert, false to restore.
  *
- * @return WP_DISPLAY_OK on success, WP_DISPLAY_ERRORRESOURCE if no driver mounted.
+ * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-wp_display_status_t display_invert_colors (bool invert);
+platform_err_t display_invert_colors (bool invert);
 
 /**
  * @brief Draw a single character using the built-in font.
@@ -296,9 +285,9 @@ wp_display_status_t display_invert_colors (bool invert);
  * @param[in] color     : Foreground colour (RGB565).
  * @param[in] bg_color  : Background colour (RGB565).
  *
- * @return WP_DISPLAY_OK on success, WP_DISPLAY_ERRORRESOURCE if no driver mounted.
+ * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-wp_display_status_t display_draw_char            (uint16_t x, uint16_t y,
+platform_err_t display_draw_char            (uint16_t x, uint16_t y,
                                                       char c,
                                                   uint16_t color,
                                                   uint16_t bg_color);
@@ -306,9 +295,9 @@ wp_display_status_t display_draw_char            (uint16_t x, uint16_t y,
 /**
  * @brief Draw a null-terminated string using the built-in font.
  *
- * @return WP_DISPLAY_OK on success, WP_DISPLAY_ERRORRESOURCE if no driver mounted.
+ * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-wp_display_status_t display_draw_string          (uint16_t x, uint16_t y,
+platform_err_t display_draw_string          (uint16_t x, uint16_t y,
                                                 const char* str,
                                                   uint16_t color,
                                                   uint16_t bg_color);
@@ -316,18 +305,18 @@ wp_display_status_t display_draw_string          (uint16_t x, uint16_t y,
 /**
  * @brief Draw a filled rectangle.
  *
- * @return WP_DISPLAY_OK on success, WP_DISPLAY_ERRORRESOURCE if no driver mounted.
+ * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-wp_display_status_t display_draw_filled_rectangle(uint16_t x0, uint16_t y0,
+platform_err_t display_draw_filled_rectangle(uint16_t x0, uint16_t y0,
                                                   uint16_t x1, uint16_t y1,
                                                   uint16_t color);
 
 /**
  * @brief Draw a filled triangle.
  *
- * @return WP_DISPLAY_OK on success, WP_DISPLAY_ERRORRESOURCE if no driver mounted.
+ * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-wp_display_status_t display_draw_filled_triangle (uint16_t x0, uint16_t y0,
+platform_err_t display_draw_filled_triangle (uint16_t x0, uint16_t y0,
                                                   uint16_t x1, uint16_t y1,
                                                   uint16_t x2, uint16_t y2,
                                                   uint16_t color);
@@ -335,9 +324,9 @@ wp_display_status_t display_draw_filled_triangle (uint16_t x0, uint16_t y0,
 /**
  * @brief Draw a filled circle.
  *
- * @return WP_DISPLAY_OK on success, WP_DISPLAY_ERRORRESOURCE if no driver mounted.
+ * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-wp_display_status_t display_draw_filled_circle   (uint16_t x,   uint16_t y,
+platform_err_t display_draw_filled_circle   (uint16_t x,   uint16_t y,
                                                   uint16_t radius,
                                                   uint16_t color);
 
@@ -346,9 +335,9 @@ wp_display_status_t display_draw_filled_circle   (uint16_t x,   uint16_t y,
  *
  * @param[in] enable : true to enable, false to disable.
  *
- * @return WP_DISPLAY_OK on success, WP_DISPLAY_ERRORRESOURCE if no driver mounted.
+ * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-wp_display_status_t display_tear_effect(bool enable);
+platform_err_t display_tear_effect(bool enable);
 
 //******************************* Functions *********************************//
 

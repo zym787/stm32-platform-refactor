@@ -114,33 +114,33 @@ void heart_rate_drv_deinit(void)
 /**
  * @brief    Forward "begin sampling" to the active driver.
  *
- * @return   WP_HEART_RATE_ERRORRESOURCE if no driver is mounted, else
+ * @return   PLATFORM_ERR_NO_RESOURCE if no driver is mounted, else
  *           the chip-specific status returned by the adapter.
  * */
-wp_heart_rate_status_t heart_rate_drv_start(void)
+platform_err_t heart_rate_drv_start(void)
 {
     heart_rate_drv_t *drv = &s_heart_rate_drv[s_cur_heart_rate_drv_idx];
     if (NULL != drv->pf_heart_rate_drv_start)
     {
         return drv->pf_heart_rate_drv_start(drv);
     }
-    return WP_HEART_RATE_ERRORRESOURCE;
+    return PLATFORM_ERR_NO_RESOURCE;
 }
 
 /**
  * @brief    Forward "halt sampling" to the active driver.
  *
- * @return   WP_HEART_RATE_ERRORRESOURCE if no driver is mounted, else
+ * @return   PLATFORM_ERR_NO_RESOURCE if no driver is mounted, else
  *           the chip-specific status.
  * */
-wp_heart_rate_status_t heart_rate_drv_stop(void)
+platform_err_t heart_rate_drv_stop(void)
 {
     heart_rate_drv_t *drv = &s_heart_rate_drv[s_cur_heart_rate_drv_idx];
     if (NULL != drv->pf_heart_rate_drv_stop)
     {
         return drv->pf_heart_rate_drv_stop(drv);
     }
-    return WP_HEART_RATE_ERRORRESOURCE;
+    return PLATFORM_ERR_NO_RESOURCE;
 }
 
 /**
@@ -149,18 +149,18 @@ wp_heart_rate_status_t heart_rate_drv_stop(void)
  * @param[in] p_cfg : Configuration to apply; NULL is rejected here so the
  *                    adapter can assume a non-NULL pointer.
  *
- * @return   WP_HEART_RATE_ERRORPARAMETER on NULL p_cfg;
- *           WP_HEART_RATE_ERRORRESOURCE  on missing slot;
+ * @return   PLATFORM_ERR_PARAM on NULL p_cfg;
+ *           PLATFORM_ERR_NO_RESOURCE  on missing slot;
  *           otherwise the adapter-level status.
  * */
-wp_heart_rate_status_t heart_rate_drv_reconfigure(
+platform_err_t heart_rate_drv_reconfigure(
                                   wp_heart_rate_config_t const *const p_cfg)
 {
     /* Cheaper to reject up front than to push a NULL down the vtable;
      * the adapter would have to repeat this guard anyway.            */
     if (NULL == p_cfg)
     {
-        return WP_HEART_RATE_ERRORPARAMETER;
+        return PLATFORM_ERR_PARAM;
     }
 
     heart_rate_drv_t *drv = &s_heart_rate_drv[s_cur_heart_rate_drv_idx];
@@ -168,7 +168,7 @@ wp_heart_rate_status_t heart_rate_drv_reconfigure(
     {
         return drv->pf_heart_rate_drv_reconfigure(drv, p_cfg);
     }
-    return WP_HEART_RATE_ERRORRESOURCE;
+    return PLATFORM_ERR_NO_RESOURCE;
 }
 
 /**
@@ -176,16 +176,16 @@ wp_heart_rate_status_t heart_rate_drv_reconfigure(
  *
  * @param[in] timeout_ms : Maximum wait in milliseconds.
  *
- * @return   WP_HEART_RATE_OK / WP_HEART_RATE_ERRORTIMEOUT / RESOURCE.
+ * @return   PLATFORM_OK / PLATFORM_ERR_TIMEOUT / RESOURCE.
  * */
-wp_heart_rate_status_t heart_rate_drv_get_req(uint32_t timeout_ms)
+platform_err_t heart_rate_drv_get_req(uint32_t timeout_ms)
 {
     heart_rate_drv_t *drv = &s_heart_rate_drv[s_cur_heart_rate_drv_idx];
     if (NULL != drv->pf_heart_rate_drv_get_req)
     {
         return drv->pf_heart_rate_drv_get_req(drv, timeout_ms);
     }
-    return WP_HEART_RATE_ERRORRESOURCE;
+    return PLATFORM_ERR_NO_RESOURCE;
 }
 
 /**

@@ -30,6 +30,7 @@
 
 //******************************** Includes *********************************//
 #include "platform_type.h"
+#include "platform_error.h"
 
 //******************************** Includes *********************************//
 
@@ -39,18 +40,6 @@
 //******************************** Defines **********************************//
 
 //******************************* Declaring *********************************//
-typedef enum
-{
-    WP_AUDIO_OK               = 0,         /* Operation successful       */
-    WP_AUDIO_ERROR            = 1,         /* General error              */
-    WP_AUDIO_ERRORTIMEOUT     = 2,         /* Timeout error              */
-    WP_AUDIO_ERRORRESOURCE    = 3,         /* Resource unavailable       */
-    WP_AUDIO_ERRORPARAMETER   = 4,         /* Invalid parameter          */
-    WP_AUDIO_ERRORNOMEMORY    = 5,         /* Out of memory              */
-    WP_AUDIO_ERRORUNSUPPORTED = 6,         /* Unsupported feature        */
-    WP_AUDIO_ERRORISR         = 7,         /* ISR context error          */
-    WP_AUDIO_RESERVED         = 0xFF,      /* Reserved                   */
-} wp_audio_status_t;
 
 
 /**
@@ -66,11 +55,11 @@ typedef struct _drv_audio_t
     void              (*pf_audio_drv_init   )(struct _drv_audio_t * const dev);
     void              (*pf_audio_drv_deinit )(struct _drv_audio_t * const dev);
 
-    wp_audio_status_t (*pf_audio_drv_play   )(struct _drv_audio_t * const dev,
+    platform_err_t (*pf_audio_drv_play   )(struct _drv_audio_t * const dev,
                                                           uint8_t    priority,
                                                           uint8_t      volume,
                                                           uint8_t  voice_addr);
-    wp_audio_status_t (*pf_audio_drv_stop   )(struct _drv_audio_t * const dev);
+    platform_err_t (*pf_audio_drv_stop   )(struct _drv_audio_t * const dev);
 
 } drv_audio_t;
 
@@ -107,20 +96,20 @@ void              audio_drv_deinit(void);
  * @param[in] volume    : Volume level 1..16 (mapped to hardware code internally).
  * @param[in] voice_addr: Address/index of the voice clip in the audio device.
  *
- * @return  WP_AUDIO_OK           - Play command accepted.
- *          WP_AUDIO_ERRORPARAMETER - Volume out of range.
- *          WP_AUDIO_ERROR        - Driver error.
+ * @return  PLATFORM_OK           - Play command accepted.
+ *          PLATFORM_ERR_PARAM - Volume out of range.
+ *          PLATFORM_ERR_GENERAL        - Driver error.
  */
-wp_audio_status_t audio_drv_play  (uint8_t    priority,
+platform_err_t audio_drv_play  (uint8_t    priority,
                                    uint8_t      volume,
                                    uint8_t  voice_addr);
 
 /**
  * @brief   Stop the currently playing voice clip.
  *
- * @return  WP_AUDIO_OK on success, WP_AUDIO_ERROR on driver error.
+ * @return  PLATFORM_OK on success, PLATFORM_ERR_GENERAL on driver error.
  */
-wp_audio_status_t audio_drv_stop  (void);
+platform_err_t audio_drv_stop  (void);
 
 //******************************* Functions *********************************//
 

@@ -35,6 +35,7 @@
 
 //******************************** Includes *********************************//
 #include "platform_type.h"
+#include "platform_error.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
@@ -46,19 +47,6 @@
 /**
  * @brief Return codes for all heart-rate abstraction-layer APIs.
  */
-typedef enum
-{
-    WP_HEART_RATE_OK               = 0,        /* Operation successful       */
-    WP_HEART_RATE_ERROR            = 1,        /* General error              */
-    WP_HEART_RATE_ERRORTIMEOUT     = 2,        /* Timeout error              */
-    WP_HEART_RATE_ERRORRESOURCE    = 3,        /* Resource unavailable       */
-    WP_HEART_RATE_ERRORPARAMETER   = 4,        /* Invalid parameter          */
-    WP_HEART_RATE_ERRORNOMEMORY    = 5,        /* Out of memory              */
-    WP_HEART_RATE_ERRORUNSUPPORTED = 6,        /* Unsupported feature        */
-    WP_HEART_RATE_ERRORISR         = 7,        /* ISR context error          */
-    WP_HEART_RATE_ERRORNOTINIT     = 8,        /* API used before mount/init */
-    WP_HEART_RATE_RESERVED         = 0xFF,     /* Reserved                   */
-} wp_heart_rate_status_t;
 
 /* HRS2 work mode -- selects whether HRS2 samples continuously or in
  * pulse mode at WP_HRS2_WAIT_*. Values are kept identical to the
@@ -160,16 +148,16 @@ typedef struct _heart_rate_drv_t
     void (*pf_heart_rate_drv_deinit)(struct _heart_rate_drv_t *const dev);
 
     /* Lifecycle control. */
-    wp_heart_rate_status_t (*pf_heart_rate_drv_start      )(
+    platform_err_t (*pf_heart_rate_drv_start      )(
                               struct _heart_rate_drv_t *const dev);
-    wp_heart_rate_status_t (*pf_heart_rate_drv_stop       )(
+    platform_err_t (*pf_heart_rate_drv_stop       )(
                               struct _heart_rate_drv_t *const dev);
-    wp_heart_rate_status_t (*pf_heart_rate_drv_reconfigure)(
+    platform_err_t (*pf_heart_rate_drv_reconfigure)(
                               struct _heart_rate_drv_t *const          dev,
                               wp_heart_rate_config_t   const *const  p_cfg);
 
     /* Streaming consumer side. */
-    wp_heart_rate_status_t (*pf_heart_rate_drv_get_req)(
+    platform_err_t (*pf_heart_rate_drv_get_req)(
                               struct _heart_rate_drv_t *const dev,
                               uint32_t                 timeout_ms);
     wp_ppg_frame_t       * (*pf_heart_rate_get_frame_addr)(
@@ -206,15 +194,15 @@ void heart_rate_drv_deinit(void);
 /**
  * @brief   Begin periodic PPG sampling on the underlying handler.
  *
- * @return  WP_HEART_RATE_OK on success; WP_HEART_RATE_ERRORRESOURCE if no
+ * @return  PLATFORM_OK on success; PLATFORM_ERR_NO_RESOURCE if no
  *          driver is mounted; otherwise the chip-specific error code.
  */
-wp_heart_rate_status_t heart_rate_drv_start(void);
+platform_err_t heart_rate_drv_start(void);
 
 /**
  * @brief   Halt periodic PPG sampling. Cached configuration is preserved.
  */
-wp_heart_rate_status_t heart_rate_drv_stop(void);
+platform_err_t heart_rate_drv_stop(void);
 
 /**
  * @brief   Apply a new sensor configuration. Safe to call before or after
@@ -223,7 +211,7 @@ wp_heart_rate_status_t heart_rate_drv_stop(void);
  *
  * @param[in] p_cfg : Configuration to apply (deep-copied internally).
  */
-wp_heart_rate_status_t heart_rate_drv_reconfigure(
+platform_err_t heart_rate_drv_reconfigure(
                                   wp_heart_rate_config_t const *const p_cfg);
 
 /**
@@ -231,16 +219,16 @@ wp_heart_rate_status_t heart_rate_drv_reconfigure(
  *
  * @param[in] timeout_ms : Maximum wait in milliseconds.
  *
- * @return  WP_HEART_RATE_OK         - A new frame is ready;
+ * @return  PLATFORM_OK         - A new frame is ready;
  *                                     read it via heart_rate_get_frame_addr.
- *          WP_HEART_RATE_ERRORTIMEOUT - No frame within timeout.
- *          WP_HEART_RATE_ERRORRESOURCE - Driver not mounted.
+ *          PLATFORM_ERR_TIMEOUT - No frame within timeout.
+ *          PLATFORM_ERR_NO_RESOURCE - Driver not mounted.
  */
-wp_heart_rate_status_t heart_rate_drv_get_req(uint32_t timeout_ms);
+platform_err_t heart_rate_drv_get_req(uint32_t timeout_ms);
 
 /**
  * @brief   Address of the most recently delivered frame. Must be called
- *          after heart_rate_drv_get_req() returned WP_HEART_RATE_OK.
+ *          after heart_rate_drv_get_req() returned PLATFORM_OK.
  *
  * @return  Pointer to the latest wp_ppg_frame_t, or NULL if no driver is
  *          mounted.

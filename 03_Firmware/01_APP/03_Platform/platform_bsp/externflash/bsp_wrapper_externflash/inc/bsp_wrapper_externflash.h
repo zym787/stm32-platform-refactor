@@ -31,21 +31,10 @@
 
 //******************************** Includes *********************************//
 #include "platform_type.h"
+#include "platform_error.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
-typedef enum
-{
-    WP_EXTERNFLASH_OK               = 0,    /* Operation successful           */
-    WP_EXTERNFLASH_ERROR            = 1,    /* General error                  */
-    WP_EXTERNFLASH_ERRORTIMEOUT     = 2,    /* Timeout error                  */
-    WP_EXTERNFLASH_ERRORRESOURCE    = 3,    /* Resource unavailable           */
-    WP_EXTERNFLASH_ERRORPARAMETER   = 4,    /* Invalid parameter              */
-    WP_EXTERNFLASH_ERRORNOMEMORY    = 5,    /* Out of memory                  */
-    WP_EXTERNFLASH_ERRORUNSUPPORTED = 6,    /* Unsupported feature            */
-    WP_EXTERNFLASH_ERRORISR         = 7,    /* ISR context error              */
-    WP_EXTERNFLASH_RESERVED         = 0xFF, /* Reserved                       */
-} wp_externflash_status_t;
 
 /**
  * @brief Completion record handed to the user callback.
@@ -58,7 +47,7 @@ typedef struct
     uint32_t                       addr;
     uint32_t                       size;
     uint8_t              *         data;
-    wp_externflash_status_t      status;
+    platform_err_t      status;
     void                 *   p_user_ctx;
 } wp_externflash_result_t;
 
@@ -85,7 +74,7 @@ typedef struct _externflash_drv_t
     void                    (*pf_externflash_drv_deinit)\
                                   (struct _externflash_drv_t *const dev);
 
-    wp_externflash_status_t (*pf_externflash_read       )\
+    platform_err_t (*pf_externflash_read       )\
                                   (struct _externflash_drv_t *const       dev,
                                                   uint32_t                addr,
                                                   uint8_t  *              data,
@@ -93,7 +82,7 @@ typedef struct _externflash_drv_t
                                                   wp_externflash_callback_t cb,
                                                   void     *       p_user_ctx);
 
-    wp_externflash_status_t (*pf_externflash_write      )\
+    platform_err_t (*pf_externflash_write      )\
                                   (struct _externflash_drv_t *const       dev,
                                                   uint32_t                addr,
                                                   uint8_t  *              data,
@@ -101,7 +90,7 @@ typedef struct _externflash_drv_t
                                                   wp_externflash_callback_t cb,
                                                   void     *       p_user_ctx);
 
-    wp_externflash_status_t (*pf_externflash_write_noerase)\
+    platform_err_t (*pf_externflash_write_noerase)\
                                   (struct _externflash_drv_t *const       dev,
                                                   uint32_t                addr,
                                                   uint8_t  *              data,
@@ -109,23 +98,23 @@ typedef struct _externflash_drv_t
                                                   wp_externflash_callback_t cb,
                                                   void     *       p_user_ctx);
 
-    wp_externflash_status_t (*pf_externflash_erase_chip )\
+    platform_err_t (*pf_externflash_erase_chip )\
                                   (struct _externflash_drv_t *const       dev,
                                                   wp_externflash_callback_t cb,
                                                   void     *       p_user_ctx);
 
-    wp_externflash_status_t (*pf_externflash_erase_sector)\
+    platform_err_t (*pf_externflash_erase_sector)\
                                   (struct _externflash_drv_t *const       dev,
                                                   uint32_t                addr,
                                                   wp_externflash_callback_t cb,
                                                   void     *       p_user_ctx);
 
-    wp_externflash_status_t (*pf_externflash_sleep      )\
+    platform_err_t (*pf_externflash_sleep      )\
                                   (struct _externflash_drv_t *const       dev,
                                                   wp_externflash_callback_t cb,
                                                   void     *       p_user_ctx);
 
-    wp_externflash_status_t (*pf_externflash_wakeup     )\
+    platform_err_t (*pf_externflash_wakeup     )\
                                   (struct _externflash_drv_t *const       dev,
                                                   wp_externflash_callback_t cb,
                                                   void     *       p_user_ctx);
@@ -167,9 +156,9 @@ void                    externflash_drv_deinit      (void);
  * @param[in]  cb         : Optional completion callback (may be NULL).
  * @param[in]  p_user_ctx : Opaque context pointer forwarded to @p cb.
  *
- * @return  WP_EXTERNFLASH_OK if the request was queued, error code otherwise.
+ * @return  PLATFORM_OK if the request was queued, error code otherwise.
  */
-wp_externflash_status_t externflash_drv_read         (uint32_t                addr,
+platform_err_t externflash_drv_read         (uint32_t                addr,
                                                       uint8_t  *              data,
                                                       uint32_t                size,
                                                       wp_externflash_callback_t cb,
@@ -179,7 +168,7 @@ wp_externflash_status_t externflash_drv_read         (uint32_t                ad
  * @brief   Submit an asynchronous write that erases the affected sectors first.
  *          Same ownership and threading rules as externflash_drv_read().
  */
-wp_externflash_status_t externflash_drv_write        (uint32_t                addr,
+platform_err_t externflash_drv_write        (uint32_t                addr,
                                                       uint8_t  *              data,
                                                       uint32_t                size,
                                                       wp_externflash_callback_t cb,
@@ -189,7 +178,7 @@ wp_externflash_status_t externflash_drv_write        (uint32_t                ad
  * @brief   Submit an asynchronous write WITHOUT a preceding erase.  The
  *          caller must guarantee the target region is already erased.
  */
-wp_externflash_status_t externflash_drv_write_noerase(uint32_t                addr,
+platform_err_t externflash_drv_write_noerase(uint32_t                addr,
                                                       uint8_t  *              data,
                                                       uint32_t                size,
                                                       wp_externflash_callback_t cb,
@@ -198,26 +187,26 @@ wp_externflash_status_t externflash_drv_write_noerase(uint32_t                ad
 /**
  * @brief   Submit an asynchronous chip-erase.
  */
-wp_externflash_status_t externflash_drv_erase_chip   (wp_externflash_callback_t cb,
+platform_err_t externflash_drv_erase_chip   (wp_externflash_callback_t cb,
                                                       void     *       p_user_ctx);
 
 /**
  * @brief   Submit an asynchronous sector-erase at @p addr.
  */
-wp_externflash_status_t externflash_drv_erase_sector (uint32_t                addr,
+platform_err_t externflash_drv_erase_sector (uint32_t                addr,
                                                       wp_externflash_callback_t cb,
                                                       void     *       p_user_ctx);
 
 /**
  * @brief   Put the device into deep power-down.
  */
-wp_externflash_status_t externflash_drv_sleep        (wp_externflash_callback_t cb,
+platform_err_t externflash_drv_sleep        (wp_externflash_callback_t cb,
                                                       void     *       p_user_ctx);
 
 /**
  * @brief   Bring the device out of deep power-down.
  */
-wp_externflash_status_t externflash_drv_wakeup       (wp_externflash_callback_t cb,
+platform_err_t externflash_drv_wakeup       (wp_externflash_callback_t cb,
                                                       void     *       p_user_ctx);
 //******************************* Declaring *********************************//
 

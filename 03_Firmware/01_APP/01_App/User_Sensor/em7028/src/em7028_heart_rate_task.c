@@ -123,12 +123,12 @@ static void em7028_hr_park(void)
 /**
  * @brief      Apply config, request start.  Mirrors em7028_scope_arm().
  */
-static wp_heart_rate_status_t em7028_hr_arm(void)
+static platform_err_t em7028_hr_arm(void)
 {
     heart_rate_drv_init();
 
-    wp_heart_rate_status_t ret = heart_rate_drv_reconfigure(&s_hr_cfg);
-    if (WP_HEART_RATE_OK != ret)
+    platform_err_t ret = heart_rate_drv_reconfigure(&s_hr_cfg);
+    if (PLATFORM_OK != ret)
     {
         DEBUG_OUT(e, EM7028_ERR_LOG_TAG,
                   "hr_task reconfigure failed = %d", (int)ret);
@@ -136,7 +136,7 @@ static wp_heart_rate_status_t em7028_hr_arm(void)
     }
 
     ret = heart_rate_drv_start();
-    if (WP_HEART_RATE_OK != ret)
+    if (PLATFORM_OK != ret)
     {
         DEBUG_OUT(e, EM7028_ERR_LOG_TAG,
                   "hr_task start failed = %d", (int)ret);
@@ -144,7 +144,7 @@ static wp_heart_rate_status_t em7028_hr_arm(void)
     }
 
     DEBUG_OUT(i, EM7028_LOG_TAG, "hr_task armed: HRS1 @ 40 Hz");
-    return WP_HEART_RATE_OK;
+    return PLATFORM_OK;
 }
 
 /**
@@ -189,7 +189,7 @@ void em7028_heart_rate_task(void *argument)
     }
 
     /* Arm the PPG stream. */
-    if (WP_HEART_RATE_OK != em7028_hr_arm())
+    if (PLATFORM_OK != em7028_hr_arm())
     {
         em7028_hr_park();
     }
@@ -200,9 +200,9 @@ void em7028_heart_rate_task(void *argument)
 
     for (;;)
     {
-        wp_heart_rate_status_t ret =
+        platform_err_t ret =
             heart_rate_drv_get_req(EM7028_HR_FRAME_TIMEOUT_MS);
-        if (WP_HEART_RATE_OK != ret)
+        if (PLATFORM_OK != ret)
         {
             g_hr_drop_cnt++;
             continue;

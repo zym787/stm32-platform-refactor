@@ -62,13 +62,13 @@
 static void em7028_drv_init  (heart_rate_drv_t *const dev);
 static void em7028_drv_deinit(heart_rate_drv_t *const dev);
 
-static wp_heart_rate_status_t em7028_drv_start(heart_rate_drv_t *const dev);
-static wp_heart_rate_status_t em7028_drv_stop (heart_rate_drv_t *const dev);
-static wp_heart_rate_status_t em7028_drv_reconfigure(
+static platform_err_t em7028_drv_start(heart_rate_drv_t *const dev);
+static platform_err_t em7028_drv_stop (heart_rate_drv_t *const dev);
+static platform_err_t em7028_drv_reconfigure(
                                 heart_rate_drv_t *const                dev,
                                 wp_heart_rate_config_t const *const  p_cfg);
 
-static wp_heart_rate_status_t em7028_drv_get_req(
+static platform_err_t em7028_drv_get_req(
                                 heart_rate_drv_t *const dev,
                                 uint32_t         timeout_ms);
 static wp_ppg_frame_t        *em7028_get_frame_addr(
@@ -76,7 +76,7 @@ static wp_ppg_frame_t        *em7028_get_frame_addr(
 static void                   em7028_read_data_done(
                                 heart_rate_drv_t *const dev);
 
-static wp_heart_rate_status_t em7028_status_to_wp(
+static platform_err_t em7028_status_to_wp(
                                 em7028_handler_status_t status);
 static void                   em7028_cfg_translate(
                                 wp_heart_rate_config_t const *const p_src,
@@ -94,39 +94,39 @@ static wp_ppg_frame_t s_latest_frame;
 
 /**
  * @brief    Map an em7028_handler_status_t into the wrapper-level
- *           wp_heart_rate_status_t. Both enums share the same first
+ *           platform_err_t. Both enums share the same first
  *           eight ordinals by construction, so the translation is a
  *           plain cast in the common case; the explicit switch keeps a
  *           sane default in case a chip-specific code is added later.
  *
  * @param[in] status : Status returned by the EM7028 handler API.
  *
- * @return   The matching wp_heart_rate_status_t.
+ * @return   The matching platform_err_t.
  * */
-static wp_heart_rate_status_t em7028_status_to_wp(em7028_handler_status_t status)
+static platform_err_t em7028_status_to_wp(em7028_handler_status_t status)
 {
     switch (status)
     {
     case EM7028_HANDLER_OK:
-        return WP_HEART_RATE_OK;
+        return PLATFORM_OK;
     case EM7028_HANDLER_ERROR:
-        return WP_HEART_RATE_ERROR;
+        return PLATFORM_ERR_GENERAL;
     case EM7028_HANDLER_ERRORTIMEOUT:
-        return WP_HEART_RATE_ERRORTIMEOUT;
+        return PLATFORM_ERR_TIMEOUT;
     case EM7028_HANDLER_ERRORRESOURCE:
-        return WP_HEART_RATE_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     case EM7028_HANDLER_ERRORPARAMETER:
-        return WP_HEART_RATE_ERRORPARAMETER;
+        return PLATFORM_ERR_PARAM;
     case EM7028_HANDLER_ERRORNOMEMORY:
-        return WP_HEART_RATE_ERRORNOMEMORY;
+        return PLATFORM_ERR_NO_MEMORY;
     case EM7028_HANDLER_ERRORUNSUPPORTED:
-        return WP_HEART_RATE_ERRORUNSUPPORTED;
+        return PLATFORM_ERR_NOT_SUPPORTED;
     case EM7028_HANDLER_ERRORISR:
-        return WP_HEART_RATE_ERRORISR;
+        return PLATFORM_ERR_IN_ISR;
     case EM7028_HANDLER_ERRORNOTINIT:
-        return WP_HEART_RATE_ERRORNOTINIT;
+        return PLATFORM_ERR_NOT_INITIALIZED;
     default:
-        return WP_HEART_RATE_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 }
 
@@ -193,9 +193,9 @@ static void em7028_drv_deinit(heart_rate_drv_t *const dev)
  *
  * @param[in] dev : Vtable slot (unused).
  *
- * @return   wp_heart_rate_status_t mirroring the handler outcome.
+ * @return   platform_err_t mirroring the handler outcome.
  * */
-static wp_heart_rate_status_t em7028_drv_start(heart_rate_drv_t *const dev)
+static platform_err_t em7028_drv_start(heart_rate_drv_t *const dev)
 {
     (void)dev;
     em7028_handler_status_t ret = bsp_em7028_handler_start();
@@ -212,9 +212,9 @@ static wp_heart_rate_status_t em7028_drv_start(heart_rate_drv_t *const dev)
  *
  * @param[in] dev : Vtable slot (unused).
  *
- * @return   wp_heart_rate_status_t mirroring the handler outcome.
+ * @return   platform_err_t mirroring the handler outcome.
  * */
-static wp_heart_rate_status_t em7028_drv_stop(heart_rate_drv_t *const dev)
+static platform_err_t em7028_drv_stop(heart_rate_drv_t *const dev)
 {
     (void)dev;
     em7028_handler_status_t ret = bsp_em7028_handler_stop();
@@ -234,9 +234,9 @@ static wp_heart_rate_status_t em7028_drv_stop(heart_rate_drv_t *const dev)
  * @param[in] dev   : Vtable slot (unused).
  * @param[in] p_cfg : Wrapper-level cfg (already null-checked by wrapper).
  *
- * @return   wp_heart_rate_status_t mirroring the handler outcome.
+ * @return   platform_err_t mirroring the handler outcome.
  * */
-static wp_heart_rate_status_t em7028_drv_reconfigure(
+static platform_err_t em7028_drv_reconfigure(
                                 heart_rate_drv_t *const                dev,
                                 wp_heart_rate_config_t const *const  p_cfg)
 {
@@ -268,9 +268,9 @@ static wp_heart_rate_status_t em7028_drv_reconfigure(
  * @param[in] dev        : Vtable slot (unused).
  * @param[in] timeout_ms : Maximum wait in milliseconds.
  *
- * @return   wp_heart_rate_status_t mirroring the handler outcome.
+ * @return   platform_err_t mirroring the handler outcome.
  * */
-static wp_heart_rate_status_t em7028_drv_get_req(
+static platform_err_t em7028_drv_get_req(
                                   heart_rate_drv_t *const dev,
                                   uint32_t         timeout_ms)
 {
@@ -301,12 +301,12 @@ static wp_heart_rate_status_t em7028_drv_get_req(
     s_latest_frame.hrs1_sum = chip_frame.hrs1_sum;
     s_latest_frame.hrs2_sum = chip_frame.hrs2_sum;
 
-    return WP_HEART_RATE_OK;
+    return PLATFORM_OK;
 }
 
 /**
  * @brief    Return the projection-buffer address. The caller must have
- *           seen WP_HEART_RATE_OK from heart_rate_drv_get_req() before
+ *           seen PLATFORM_OK from heart_rate_drv_get_req() before
  *           dereferencing; otherwise the buffer holds the previous
  *           successful frame (or zero if no frame has arrived yet).
  *

@@ -305,9 +305,9 @@ static void em7028_scope_park(void)
  * @brief      Apply the capture cfg through the heart_rate wrapper and
  *             request the underlying driver to begin sampling.
  *
- * @return     WP_HEART_RATE_OK on success, otherwise the failing status.
+ * @return     PLATFORM_OK on success, otherwise the failing status.
  * */
-static wp_heart_rate_status_t em7028_scope_arm(void)
+static platform_err_t em7028_scope_arm(void)
 {
     /* heart_rate_drv_init is idempotent and only zeroes the projection
      * buffer in the EM7028 adapter; safe to call here even if the
@@ -319,8 +319,8 @@ static wp_heart_rate_status_t em7028_scope_arm(void)
      * just caches and returns), so START still has to be issued
      * explicitly after.
      **/
-    wp_heart_rate_status_t ret = heart_rate_drv_reconfigure(&g_em7028_scope_cfg);
-    if (WP_HEART_RATE_OK != ret)
+    platform_err_t ret = heart_rate_drv_reconfigure(&g_em7028_scope_cfg);
+    if (PLATFORM_OK != ret)
     {
         DEBUG_OUT(e, EM7028_ERR_LOG_TAG,
                   "scope reconfigure failed = %d", (int)ret);
@@ -328,7 +328,7 @@ static wp_heart_rate_status_t em7028_scope_arm(void)
     }
 
     ret = heart_rate_drv_start();
-    if (WP_HEART_RATE_OK != ret)
+    if (PLATFORM_OK != ret)
     {
         DEBUG_OUT(e, EM7028_ERR_LOG_TAG,
                   "scope start failed = %d", (int)ret);
@@ -338,7 +338,7 @@ static wp_heart_rate_status_t em7028_scope_arm(void)
     DEBUG_OUT(d, EM7028_LOG_TAG,
               "scope armed: HRS1 @ 40 Hz pulse, ring=%u",
               (unsigned)EM7028_SCOPE_RING_DEPTH);
-    return WP_HEART_RATE_OK;
+    return PLATFORM_OK;
 }
 
 /**
@@ -363,7 +363,7 @@ void em7028_jscope_capture_task(void *argument)
     /* Wait for the handler thread to mount the singleton. */
     osal_task_delay(EM7028_SCOPE_BOOT_WAIT_MS);
 
-    if (WP_HEART_RATE_OK != em7028_scope_arm())
+    if (PLATFORM_OK != em7028_scope_arm())
     {
         em7028_scope_park();
     }
@@ -385,9 +385,9 @@ void em7028_jscope_capture_task(void *argument)
      **/
     for (;;)
     {
-        wp_heart_rate_status_t ret =
+        platform_err_t ret =
             heart_rate_drv_get_req(EM7028_SCOPE_FRAME_TIMEOUT_MS);
-        if (WP_HEART_RATE_OK != ret)
+        if (PLATFORM_OK != ret)
         {
             /**
              * Frame queue starvation -- count and continue. Do NOT

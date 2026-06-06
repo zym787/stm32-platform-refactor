@@ -101,16 +101,16 @@ void motion_drv_deinit(void)
 /**
  * @brief   Block until a new motion data packet is available.
  *
- * @return  WP_MOTION_OK on success, error code if no driver or comms failure.
+ * @return  PLATFORM_OK on success, error code if no driver or comms failure.
  */
-wp_motion_status_t motion_drv_get_req(void)
+platform_err_t motion_drv_get_req(void)
 {
     motion_drv_t *p_drv = &s_motion_drv[s_cur_motion_drv_idx];
     if (p_drv->pf_motion_drv_get_req)
     {
         return p_drv->pf_motion_drv_get_req(p_drv);
     }
-    return WP_MOTION_ERRORRESOURCE;
+    return PLATFORM_ERR_NO_RESOURCE;
 }
 
 /**

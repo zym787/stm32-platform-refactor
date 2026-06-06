@@ -90,13 +90,13 @@ static bool s_inst_ok = false;
  * context (post-kernel) — cst816t_input_arg.p_os_interface and the I2C
  * bus mutex are only valid after osKernelStart().  Idempotent.
  */
-static wp_touch_status_t touch_drv_inst_adapter(
+static platform_err_t touch_drv_inst_adapter(
     struct _touch_drv_t *const dev)
 {
     (void)dev;
     if (s_inst_ok)
     {
-        return WP_TOUCH_OK;
+        return PLATFORM_OK;
     }
 
     cst816t_status_t st = bsp_cst816t_inst(&s_cst816t_drv,
@@ -111,11 +111,11 @@ static wp_touch_status_t touch_drv_inst_adapter(
                   "touch_drv_inst_adapter: cst816t inst failed = %d",
                   (int)st);
         s_inst_ok = false;
-        return WP_TOUCH_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
     s_inst_ok = true;
-    return WP_TOUCH_OK;
+    return PLATFORM_OK;
 }
 
 /**
@@ -165,39 +165,70 @@ static void touch_drv_deinit_adapter(struct _touch_drv_t *const dev)
 }
 
 /**
+ * @brief  Map a cst816t_status_t onto platform_err_t.
+ *
+ * Explicit one-to-one mapping — the two vocabularies no longer share numeric
+ * values, so a cast would mis-translate (e.g. ERRORTIMEOUT=2 vs TIMEOUT=4).
+ */
+static platform_err_t cst816t_status_to_platform(cst816t_status_t st)
+{
+    switch (st)
+    {
+    case CST816T_OK:
+        return PLATFORM_OK;
+    case CST816T_ERROR:
+        return PLATFORM_ERR_GENERAL;
+    case CST816T_ERRORTIMEOUT:
+        return PLATFORM_ERR_TIMEOUT;
+    case CST816T_ERRORRESOURCE:
+        return PLATFORM_ERR_NO_RESOURCE;
+    case CST816T_ERRORPARAMETER:
+        return PLATFORM_ERR_PARAM;
+    case CST816T_ERRORNOMEMORY:
+        return PLATFORM_ERR_NO_MEMORY;
+    case CST816T_ERRORUNSUPPORTED:
+        return PLATFORM_ERR_NOT_SUPPORTED;
+    case CST816T_ERRORISR:
+        return PLATFORM_ERR_IN_ISR;
+    default:
+        return PLATFORM_ERR_GENERAL;
+    }
+}
+
+/**
  * @brief Read the current finger count from the CST816T.
  */
-static wp_touch_status_t touch_get_finger_num_adapter(
+static platform_err_t touch_get_finger_num_adapter(
     struct _touch_drv_t *const dev, uint8_t *const p_finger)
 {
     (void)dev;
     if (!s_inst_ok || NULL == s_cst816t_drv.pf_cst816t_get_finger_num)
     {
-        return WP_TOUCH_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     }
     if (NULL == p_finger)
     {
-        return WP_TOUCH_ERRORPARAMETER;
+        return PLATFORM_ERR_PARAM;
     }
     cst816t_status_t st =
         s_cst816t_drv.pf_cst816t_get_finger_num(s_cst816t_drv, p_finger);
-    return (CST816T_OK == st) ? WP_TOUCH_OK : (wp_touch_status_t)st;
+    return cst816t_status_to_platform(st);
 }
 
 /**
  * @brief Read the current touch XY coordinate.
  */
-static wp_touch_status_t touch_get_xy_adapter(
+static platform_err_t touch_get_xy_adapter(
     struct _touch_drv_t *const dev, uint16_t *const p_x, uint16_t *const p_y)
 {
     (void)dev;
     if (!s_inst_ok || NULL == s_cst816t_drv.pf_cst816t_get_xy_axis)
     {
-        return WP_TOUCH_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     }
     if (NULL == p_x || NULL == p_y)
     {
-        return WP_TOUCH_ERRORPARAMETER;
+        return PLATFORM_ERR_PARAM;
     }
 
     cst816t_xy_t xy = {0u, 0u};
@@ -205,47 +236,47 @@ static wp_touch_status_t touch_get_xy_adapter(
         s_cst816t_drv.pf_cst816t_get_xy_axis(s_cst816t_drv, &xy);
     if (CST816T_OK != st)
     {
-        return (wp_touch_status_t)st;
+        return cst816t_status_to_platform(st);
     }
     *p_x = xy.x_pos;
     *p_y = xy.y_pos;
-    return WP_TOUCH_OK;
+    return PLATFORM_OK;
 }
 
 /**
  * @brief Probe the CST816T chip id.
  */
-static wp_touch_status_t touch_get_chip_id_adapter(
+static platform_err_t touch_get_chip_id_adapter(
     struct _touch_drv_t *const dev, uint8_t *const p_chip_id)
 {
     (void)dev;
     if (!s_inst_ok || NULL == s_cst816t_drv.pf_cst816t_get_chip_id)
     {
-        return WP_TOUCH_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     }
     if (NULL == p_chip_id)
     {
-        return WP_TOUCH_ERRORPARAMETER;
+        return PLATFORM_ERR_PARAM;
     }
     cst816t_status_t st =
         s_cst816t_drv.pf_cst816t_get_chip_id(s_cst816t_drv, p_chip_id);
-    return (CST816T_OK == st) ? WP_TOUCH_OK : (wp_touch_status_t)st;
+    return cst816t_status_to_platform(st);
 }
 
 /**
  * @brief Read the latest gesture id (CST816T-defined encoding).
  */
-static wp_touch_status_t touch_get_gesture_adapter(
+static platform_err_t touch_get_gesture_adapter(
     struct _touch_drv_t *const dev, uint8_t *const p_gesture)
 {
     (void)dev;
     if (!s_inst_ok || NULL == s_cst816t_drv.pf_cst816t_get_gesture_id)
     {
-        return WP_TOUCH_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     }
     if (NULL == p_gesture)
     {
-        return WP_TOUCH_ERRORPARAMETER;
+        return PLATFORM_ERR_PARAM;
     }
 
     cst816t_gesture_id_t gesture = NOGESTURE;
@@ -253,10 +284,10 @@ static wp_touch_status_t touch_get_gesture_adapter(
         s_cst816t_drv.pf_cst816t_get_gesture_id(s_cst816t_drv, &gesture);
     if (CST816T_OK != st)
     {
-        return (wp_touch_status_t)st;
+        return cst816t_status_to_platform(st);
     }
     *p_gesture = (uint8_t)gesture;
-    return WP_TOUCH_OK;
+    return PLATFORM_OK;
 }
 
 /* ---- Wrapper vtable registration ----------------------------------------- */
@@ -266,7 +297,7 @@ static wp_touch_status_t touch_get_gesture_adapter(
  * Pre-kernel safe: touches no hardware and no OSAL primitive.  The driver
  * instance behind the vtable stays uninstantiated until
  * drv_adapter_touch_inst() runs; wrapper calls return
- * WP_TOUCH_ERRORRESOURCE until then.
+ * PLATFORM_ERR_NO_RESOURCE until then.
  */
 void drv_adapter_touch_register(void)
 {

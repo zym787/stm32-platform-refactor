@@ -93,7 +93,7 @@ void externflash_drv_deinit(void)
     }
 }
 
-wp_externflash_status_t externflash_drv_read(uint32_t                  addr,
+platform_err_t externflash_drv_read(uint32_t                  addr,
                                              uint8_t  *                data,
                                              uint32_t                  size,
                                              wp_externflash_callback_t   cb,
@@ -105,10 +105,10 @@ wp_externflash_status_t externflash_drv_read(uint32_t                  addr,
         return p_drv->pf_externflash_read(p_drv, addr, data, size,
                                           cb, p_user_ctx);
     }
-    return WP_EXTERNFLASH_ERRORRESOURCE;
+    return PLATFORM_ERR_NO_RESOURCE;
 }
 
-wp_externflash_status_t externflash_drv_write(uint32_t                  addr,
+platform_err_t externflash_drv_write(uint32_t                  addr,
                                               uint8_t  *                data,
                                               uint32_t                  size,
                                               wp_externflash_callback_t   cb,
@@ -120,10 +120,10 @@ wp_externflash_status_t externflash_drv_write(uint32_t                  addr,
         return p_drv->pf_externflash_write(p_drv, addr, data, size,
                                            cb, p_user_ctx);
     }
-    return WP_EXTERNFLASH_ERRORRESOURCE;
+    return PLATFORM_ERR_NO_RESOURCE;
 }
 
-wp_externflash_status_t externflash_drv_write_noerase(uint32_t                  addr,
+platform_err_t externflash_drv_write_noerase(uint32_t                  addr,
                                                       uint8_t  *                data,
                                                       uint32_t                  size,
                                                       wp_externflash_callback_t   cb,
@@ -135,10 +135,10 @@ wp_externflash_status_t externflash_drv_write_noerase(uint32_t                  
         return p_drv->pf_externflash_write_noerase(p_drv, addr, data, size,
                                                    cb, p_user_ctx);
     }
-    return WP_EXTERNFLASH_ERRORRESOURCE;
+    return PLATFORM_ERR_NO_RESOURCE;
 }
 
-wp_externflash_status_t externflash_drv_erase_chip(wp_externflash_callback_t   cb,
+platform_err_t externflash_drv_erase_chip(wp_externflash_callback_t   cb,
                                                    void     *         p_user_ctx)
 {
     externflash_drv_t *p_drv = &s_externflash_drv[s_cur_externflash_drv_idx];
@@ -146,10 +146,10 @@ wp_externflash_status_t externflash_drv_erase_chip(wp_externflash_callback_t   c
     {
         return p_drv->pf_externflash_erase_chip(p_drv, cb, p_user_ctx);
     }
-    return WP_EXTERNFLASH_ERRORRESOURCE;
+    return PLATFORM_ERR_NO_RESOURCE;
 }
 
-wp_externflash_status_t externflash_drv_erase_sector(uint32_t                  addr,
+platform_err_t externflash_drv_erase_sector(uint32_t                  addr,
                                                      wp_externflash_callback_t   cb,
                                                      void     *         p_user_ctx)
 {
@@ -158,10 +158,10 @@ wp_externflash_status_t externflash_drv_erase_sector(uint32_t                  a
     {
         return p_drv->pf_externflash_erase_sector(p_drv, addr, cb, p_user_ctx);
     }
-    return WP_EXTERNFLASH_ERRORRESOURCE;
+    return PLATFORM_ERR_NO_RESOURCE;
 }
 
-wp_externflash_status_t externflash_drv_sleep(wp_externflash_callback_t   cb,
+platform_err_t externflash_drv_sleep(wp_externflash_callback_t   cb,
                                               void     *         p_user_ctx)
 {
     externflash_drv_t *p_drv = &s_externflash_drv[s_cur_externflash_drv_idx];
@@ -169,10 +169,10 @@ wp_externflash_status_t externflash_drv_sleep(wp_externflash_callback_t   cb,
     {
         return p_drv->pf_externflash_sleep(p_drv, cb, p_user_ctx);
     }
-    return WP_EXTERNFLASH_ERRORRESOURCE;
+    return PLATFORM_ERR_NO_RESOURCE;
 }
 
-wp_externflash_status_t externflash_drv_wakeup(wp_externflash_callback_t   cb,
+platform_err_t externflash_drv_wakeup(wp_externflash_callback_t   cb,
                                                void     *         p_user_ctx)
 {
     externflash_drv_t *p_drv = &s_externflash_drv[s_cur_externflash_drv_idx];
@@ -180,7 +180,7 @@ wp_externflash_status_t externflash_drv_wakeup(wp_externflash_callback_t   cb,
     {
         return p_drv->pf_externflash_wakeup(p_drv, cb, p_user_ctx);
     }
-    return WP_EXTERNFLASH_ERRORRESOURCE;
+    return PLATFORM_ERR_NO_RESOURCE;
 }
 
 //******************************* Functions *********************************//

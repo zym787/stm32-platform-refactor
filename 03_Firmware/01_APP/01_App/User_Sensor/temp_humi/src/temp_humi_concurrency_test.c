@@ -62,7 +62,7 @@ void temp_humi_test_task_a(void *argument)
     osal_task_delay(1000);
     (void)argument;
     float              temp = 0.0f;
-    wp_temp_humi_status_t ret;
+    platform_err_t ret;
 
     DEBUG_OUT(i, TEMP_HUMI_TEST_LOG_TAG, "[TaskA] started");
 
@@ -70,7 +70,7 @@ void temp_humi_test_task_a(void *argument)
     {
         ret = temp_humi_read_temp_sync(&temp, 500);
 
-        if (WP_TEMP_HUMI_OK == ret)
+        if (PLATFORM_OK == ret)
         {
             DEBUG_OUT(i, TEMP_HUMI_TEST_LOG_TAG,
                       "[TaskA] temp = %.2f C",
@@ -101,7 +101,7 @@ void temp_humi_test_task_b(void *argument)
     (void)argument;
     float              temp = 0.0f;
     float              humi = 0.0f;
-    wp_temp_humi_status_t ret;
+    platform_err_t ret;
 
     DEBUG_OUT(i, TEMP_HUMI_TEST_LOG_TAG, "[TaskB] started");
 
@@ -109,7 +109,7 @@ void temp_humi_test_task_b(void *argument)
     {
         ret = temp_humi_read_all_sync(&temp, &humi, 500);
 
-        if (WP_TEMP_HUMI_OK == ret)
+        if (PLATFORM_OK == ret)
         {
             DEBUG_OUT(i, TEMP_HUMI_TEST_LOG_TAG,
                       "[TaskB] temp = %.2f C  humi = %.2f %%",

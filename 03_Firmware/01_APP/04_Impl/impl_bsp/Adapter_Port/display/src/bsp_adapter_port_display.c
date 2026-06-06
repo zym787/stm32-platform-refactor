@@ -74,13 +74,13 @@ static bool s_inst_ok = false;
  * context (post-kernel) — st7789_input_arg.p_os_interface and the SPI
  * bus mutex are only valid after osKernelStart().  Idempotent.
  */
-static wp_display_status_t display_drv_inst_adapter(
+static platform_err_t display_drv_inst_adapter(
     struct _drv_display_t *const dev)
 {
     (void)dev;
     if (s_inst_ok)
     {
-        return WP_DISPLAY_OK;
+        return PLATFORM_OK;
     }
 
     st7789_status_t st = bsp_st7789_driver_inst(
@@ -95,11 +95,11 @@ static wp_display_status_t display_drv_inst_adapter(
                   "display_drv_inst_adapter: st7789 inst failed = %d",
                   (int)st);
         s_inst_ok = false;
-        return WP_DISPLAY_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
     s_inst_ok = true;
-    return WP_DISPLAY_OK;
+    return PLATFORM_OK;
 }
 
 /**
@@ -126,42 +126,73 @@ static void display_drv_deinit_adapter(struct _drv_display_t *const dev)
     }
 }
 
+/**
+ * @brief  Map an st7789_status_t onto platform_err_t.
+ *
+ * Explicit one-to-one mapping — the two vocabularies no longer share numeric
+ * values, so a cast would mis-translate (e.g. ERRORTIMEOUT=2 vs TIMEOUT=4).
+ */
+static platform_err_t st7789_status_to_platform(st7789_status_t st)
+{
+    switch (st)
+    {
+    case ST7789_OK:
+        return PLATFORM_OK;
+    case ST7789_ERROR:
+        return PLATFORM_ERR_GENERAL;
+    case ST7789_ERRORTIMEOUT:
+        return PLATFORM_ERR_TIMEOUT;
+    case ST7789_ERRORRESOURCE:
+        return PLATFORM_ERR_NO_RESOURCE;
+    case ST7789_ERRORPARAMETER:
+        return PLATFORM_ERR_PARAM;
+    case ST7789_ERRORNOMEMORY:
+        return PLATFORM_ERR_NO_MEMORY;
+    case ST7789_ERRORUNSUPPORTED:
+        return PLATFORM_ERR_NOT_SUPPORTED;
+    case ST7789_ERRORISR:
+        return PLATFORM_ERR_IN_ISR;
+    default:
+        return PLATFORM_ERR_GENERAL;
+    }
+}
+
 /* ---------- basic functions ----------------------------------------------- */
 /**
  * @brief   Forward fill-screen request to the ST7789 driver.
  */
-static wp_display_status_t display_fill_color_adapter(
+static platform_err_t display_fill_color_adapter(
     struct _drv_display_t *const driver_instance, uint16_t color)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_fill_color)
     {
-        return WP_DISPLAY_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     }
-    return (wp_display_status_t)s_st7789_drv.pf_st7789_fill_color(
-        &s_st7789_drv, color);
+    return st7789_status_to_platform(s_st7789_drv.pf_st7789_fill_color(
+        &s_st7789_drv, color));
 }
 
 /**
  * @brief   Forward draw-pixel request to the ST7789 driver.
  */
-static wp_display_status_t display_draw_pixel_adapter(
+static platform_err_t display_draw_pixel_adapter(
     struct _drv_display_t *const driver_instance,
     uint16_t x, uint16_t y, uint16_t color)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_draw_pixel)
     {
-        return WP_DISPLAY_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     }
-    return (wp_display_status_t)s_st7789_drv.pf_st7789_draw_pixel(
-        &s_st7789_drv, x, y, color);
+    return st7789_status_to_platform(s_st7789_drv.pf_st7789_draw_pixel(
+        &s_st7789_drv, x, y, color));
 }
 
 /**
  * @brief   Forward fill-region request to the ST7789 driver.
  */
-static wp_display_status_t display_fill_region_adapter(
+static platform_err_t display_fill_region_adapter(
     struct _drv_display_t *const driver_instance,
     uint16_t x_start, uint16_t y_start,
     uint16_t x_end,   uint16_t y_end, uint16_t color)
@@ -169,65 +200,65 @@ static wp_display_status_t display_fill_region_adapter(
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_fill_region)
     {
-        return WP_DISPLAY_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     }
-    return (wp_display_status_t)s_st7789_drv.pf_st7789_fill_region(
-        &s_st7789_drv, x_start, y_start, x_end, y_end, color);
+    return st7789_status_to_platform(s_st7789_drv.pf_st7789_fill_region(
+        &s_st7789_drv, x_start, y_start, x_end, y_end, color));
 }
 
 /* ---------- graphic functions --------------------------------------------- */
 /**
  * @brief   Forward draw-line request to the ST7789 driver.
  */
-static wp_display_status_t display_draw_line_adapter(
+static platform_err_t display_draw_line_adapter(
     struct _drv_display_t *const driver_instance,
     uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_draw_line)
     {
-        return WP_DISPLAY_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     }
-    return (wp_display_status_t)s_st7789_drv.pf_st7789_draw_line(
-        &s_st7789_drv, x0, y0, x1, y1, color);
+    return st7789_status_to_platform(s_st7789_drv.pf_st7789_draw_line(
+        &s_st7789_drv, x0, y0, x1, y1, color));
 }
 
 /**
  * @brief   Forward draw-rectangle request to the ST7789 driver.
  */
-static wp_display_status_t display_draw_rectangle_adapter(
+static platform_err_t display_draw_rectangle_adapter(
     struct _drv_display_t *const driver_instance,
     uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_draw_rectangle)
     {
-        return WP_DISPLAY_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     }
-    return (wp_display_status_t)s_st7789_drv.pf_st7789_draw_rectangle(
-        &s_st7789_drv, x0, y0, x1, y1, color);
+    return st7789_status_to_platform(s_st7789_drv.pf_st7789_draw_rectangle(
+        &s_st7789_drv, x0, y0, x1, y1, color));
 }
 
 /**
  * @brief   Forward draw-circle request to the ST7789 driver.
  */
-static wp_display_status_t display_draw_circle_adapter(
+static platform_err_t display_draw_circle_adapter(
     struct _drv_display_t *const driver_instance,
     uint16_t x_center, uint16_t y_center, uint16_t radius, uint16_t color)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_draw_circle)
     {
-        return WP_DISPLAY_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     }
-    return (wp_display_status_t)s_st7789_drv.pf_st7789_draw_circle(
-        &s_st7789_drv, x_center, y_center, radius, color);
+    return st7789_status_to_platform(s_st7789_drv.pf_st7789_draw_circle(
+        &s_st7789_drv, x_center, y_center, radius, color));
 }
 
 /**
  * @brief   Forward draw-image request to the ST7789 driver.
  */
-static wp_display_status_t display_draw_image_adapter(
+static platform_err_t display_draw_image_adapter(
     struct _drv_display_t *const driver_instance,
     uint16_t x_start, uint16_t y_start,
     uint16_t w, uint16_t h, uint16_t const *bitmap)
@@ -235,81 +266,81 @@ static wp_display_status_t display_draw_image_adapter(
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_draw_image)
     {
-        return WP_DISPLAY_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     }
-    return (wp_display_status_t)s_st7789_drv.pf_st7789_draw_image(
-        &s_st7789_drv, x_start, y_start, w, h, bitmap);
+    return st7789_status_to_platform(s_st7789_drv.pf_st7789_draw_image(
+        &s_st7789_drv, x_start, y_start, w, h, bitmap));
 }
 
 /**
  * @brief   Forward invert-colors request to the ST7789 driver.
  */
-static wp_display_status_t invert_colors_adapter(
+static platform_err_t invert_colors_adapter(
     struct _drv_display_t *const driver_instance, uint8_t invert)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_invert_colors)
     {
-        return WP_DISPLAY_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     }
-    return (wp_display_status_t)s_st7789_drv.pf_invert_colors(
-        &s_st7789_drv, invert);
+    return st7789_status_to_platform(s_st7789_drv.pf_invert_colors(
+        &s_st7789_drv, invert));
 }
 
 /* ---------- text functions ------------------------------------------------ */
 /**
  * @brief   Forward draw-character request to the ST7789 driver.
  */
-static wp_display_status_t display_draw_char_adapter(
+static platform_err_t display_draw_char_adapter(
     struct _drv_display_t *const driver_instance,
     uint16_t x, uint16_t y, char ch, uint16_t color, uint16_t bg_color)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_draw_char)
     {
-        return WP_DISPLAY_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     }
-    return (wp_display_status_t)s_st7789_drv.pf_st7789_draw_char(
-        &s_st7789_drv, x, y, ch, color, bg_color);
+    return st7789_status_to_platform(s_st7789_drv.pf_st7789_draw_char(
+        &s_st7789_drv, x, y, ch, color, bg_color));
 }
 
 /**
  * @brief   Forward draw-string request to the ST7789 driver.
  */
-static wp_display_status_t display_draw_string_adapter(
+static platform_err_t display_draw_string_adapter(
     struct _drv_display_t *const driver_instance,
     uint16_t x, uint16_t y, char const *str, uint16_t color, uint16_t bg_color)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_draw_string)
     {
-        return WP_DISPLAY_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     }
-    return (wp_display_status_t)s_st7789_drv.pf_st7789_draw_string(
-        &s_st7789_drv, x, y, str, color, bg_color);
+    return st7789_status_to_platform(s_st7789_drv.pf_st7789_draw_string(
+        &s_st7789_drv, x, y, str, color, bg_color));
 }
 
 /* ---------- extended functions -------------------------------------------- */
 /**
  * @brief   Forward draw-filled-rectangle request to the ST7789 driver.
  */
-static wp_display_status_t display_draw_filled_rectangle_adapter(
+static platform_err_t display_draw_filled_rectangle_adapter(
     struct _drv_display_t *const driver_instance,
     uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_draw_filled_rectangle)
     {
-        return WP_DISPLAY_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     }
-    return (wp_display_status_t)s_st7789_drv.pf_st7789_draw_filled_rectangle(
-        &s_st7789_drv, x0, y0, x1, y1, color);
+    return st7789_status_to_platform(s_st7789_drv.pf_st7789_draw_filled_rectangle(
+        &s_st7789_drv, x0, y0, x1, y1, color));
 }
 
 /**
  * @brief   Forward draw-filled-triangle request to the ST7789 driver.
  */
-static wp_display_status_t display_draw_filled_triangle_adapter(
+static platform_err_t display_draw_filled_triangle_adapter(
     struct _drv_display_t *const driver_instance,
     uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1,
     uint16_t x2, uint16_t y2, uint16_t color)
@@ -317,41 +348,41 @@ static wp_display_status_t display_draw_filled_triangle_adapter(
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_draw_filled_triangle)
     {
-        return WP_DISPLAY_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     }
-    return (wp_display_status_t)s_st7789_drv.pf_st7789_draw_filled_triangle(
-        &s_st7789_drv, x0, y0, x1, y1, x2, y2, color);
+    return st7789_status_to_platform(s_st7789_drv.pf_st7789_draw_filled_triangle(
+        &s_st7789_drv, x0, y0, x1, y1, x2, y2, color));
 }
 
 /**
  * @brief   Forward draw-filled-circle request to the ST7789 driver.
  */
-static wp_display_status_t display_draw_filled_circle_adapter(
+static platform_err_t display_draw_filled_circle_adapter(
     struct _drv_display_t *const driver_instance,
     uint16_t x_center, uint16_t y_center, uint16_t radius, uint16_t color)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_draw_filled_circle)
     {
-        return WP_DISPLAY_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     }
-    return (wp_display_status_t)s_st7789_drv.pf_st7789_draw_filled_circle(
-        &s_st7789_drv, x_center, y_center, radius, color);
+    return st7789_status_to_platform(s_st7789_drv.pf_st7789_draw_filled_circle(
+        &s_st7789_drv, x_center, y_center, radius, color));
 }
 
 /**
  * @brief   Forward tear-effect request to the ST7789 driver.
  */
-static wp_display_status_t display_tear_effect_adapter(
+static platform_err_t display_tear_effect_adapter(
     struct _drv_display_t *const driver_instance, uint8_t enable)
 {
     (void)driver_instance;
     if (!s_inst_ok || NULL == s_st7789_drv.pf_st7789_tear_effect)
     {
-        return WP_DISPLAY_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     }
-    return (wp_display_status_t)s_st7789_drv.pf_st7789_tear_effect(
-        &s_st7789_drv, enable);
+    return st7789_status_to_platform(s_st7789_drv.pf_st7789_tear_effect(
+        &s_st7789_drv, enable));
 }
 
 /* ---------- Wrapper vtable registration ----------------------------------- */
@@ -361,7 +392,7 @@ static wp_display_status_t display_tear_effect_adapter(
  * Pre-kernel safe: touches no hardware and no OSAL primitive.  The driver
  * instance behind the vtable stays uninstantiated until
  * drv_adapter_display_inst() runs; wrapper calls return
- * WP_DISPLAY_ERRORRESOURCE until then.
+ * PLATFORM_ERR_NO_RESOURCE until then.
  */
 void drv_adapter_display_register(void)
 {

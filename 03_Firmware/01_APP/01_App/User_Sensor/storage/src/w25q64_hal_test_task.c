@@ -86,7 +86,7 @@ typedef struct
 {
     const char              *  name;
     bool                         ok;
-    wp_externflash_status_t  status;
+    platform_err_t  status;
     uint32_t             elapsed_ms;
 } hal_test_record_t;
 
@@ -106,8 +106,8 @@ typedef enum
 static osal_sema_handle_t s_done_sema = NULL;
 
 /** Shared latch filled by the wrapper callback before s_done_sema is given. */
-static volatile wp_externflash_status_t s_last_status =
-                                            WP_EXTERNFLASH_RESERVED;
+static volatile platform_err_t s_last_status =
+                                            PLATFORM_ERR_RESERVED;
 
 /** Buffers used across the test sequence. */
 static uint8_t  s_write_buf[W25Q64_HAL_TEST_PATTERN_LEN];
@@ -151,9 +151,9 @@ static void w25q64_hal_event_done_cb(wp_externflash_result_t *result)
  *
  * @param[in] timeout_ms : Max wait for the callback in milliseconds.
  *
- * @return WP_EXTERNFLASH_OK on success, error code otherwise.
+ * @return PLATFORM_OK on success, error code otherwise.
  * */
-static wp_externflash_status_t w25q64_hal_wait_done(uint32_t timeout_ms)
+static platform_err_t w25q64_hal_wait_done(uint32_t timeout_ms)
 {
     int32_t take_ret = osal_sema_take(s_done_sema,
                                       (osal_tick_type_t)timeout_ms);
@@ -162,7 +162,7 @@ static wp_externflash_status_t w25q64_hal_wait_done(uint32_t timeout_ms)
         DEBUG_OUT(e, W25Q64_HAL_TEST_ERR_LOG_TAG,
                   "wrapper event timeout after %u ms",
                   (unsigned)timeout_ms);
-        return WP_EXTERNFLASH_ERRORTIMEOUT;
+        return PLATFORM_ERR_TIMEOUT;
     }
     return s_last_status;
 }
@@ -172,7 +172,7 @@ static wp_externflash_status_t w25q64_hal_wait_done(uint32_t timeout_ms)
  * */
 static void w25q64_hal_reset_latch(void)
 {
-    s_last_status = WP_EXTERNFLASH_RESERVED;
+    s_last_status = PLATFORM_ERR_RESERVED;
 }
 
 /**
@@ -237,7 +237,7 @@ static bool w25q64_hal_buf_all_eq(uint8_t const *buf, uint32_t len,
 static void w25q64_hal_record(hal_tc_idx_t            idx,
                               const char            *name,
                               bool                     ok,
-                              wp_externflash_status_t status,
+                              platform_err_t status,
                               uint32_t        elapsed_ms)
 {
     s_records[idx].name       = name;
@@ -341,7 +341,7 @@ void w25q64_hal_test_task(void *argument)
      * wrapper API and is harmless. */
     externflash_drv_init();
 
-    wp_externflash_status_t ret      = WP_EXTERNFLASH_OK;
+    platform_err_t ret      = PLATFORM_OK;
     uint32_t                t_start  = 0U;
     uint32_t                t_end    = 0U;
     bool                    ok       = false;
@@ -355,12 +355,12 @@ void w25q64_hal_test_task(void *argument)
     w25q64_hal_reset_latch();
     t_start = osal_task_get_tick_count();
     ret     = externflash_drv_wakeup(w25q64_hal_event_done_cb, NULL);
-    if (WP_EXTERNFLASH_OK == ret)
+    if (PLATFORM_OK == ret)
     {
         ret = w25q64_hal_wait_done(W25Q64_HAL_TIMEOUT_FAST_MS);
     }
     t_end   = osal_task_get_tick_count();
-    ok = (WP_EXTERNFLASH_OK == ret);
+    ok = (PLATFORM_OK == ret);
     w25q64_hal_record(HAL_TC_WAKEUP_BOOT, "WAKEUP_BOOT",
                       ok, ret, t_end - t_start);
     osal_task_delay(W25Q64_HAL_GAP_MS);
@@ -370,12 +370,12 @@ void w25q64_hal_test_task(void *argument)
     t_start = osal_task_get_tick_count();
     ret     = externflash_drv_erase_sector(W25Q64_HAL_TEST_ADDR,
                                            w25q64_hal_event_done_cb, NULL);
-    if (WP_EXTERNFLASH_OK == ret)
+    if (PLATFORM_OK == ret)
     {
         ret = w25q64_hal_wait_done(W25Q64_HAL_TIMEOUT_SECTOR_MS);
     }
     t_end   = osal_task_get_tick_count();
-    ok = (WP_EXTERNFLASH_OK == ret);
+    ok = (PLATFORM_OK == ret);
     w25q64_hal_record(HAL_TC_ERASE_SECTOR, "ERASE_SECTOR",
                       ok, ret, t_end - t_start);
     osal_task_delay(W25Q64_HAL_GAP_MS);
@@ -388,12 +388,12 @@ void w25q64_hal_test_task(void *argument)
                                     s_write_buf,
                                     (uint32_t)sizeof(s_write_buf),
                                     w25q64_hal_event_done_cb, NULL);
-    if (WP_EXTERNFLASH_OK == ret)
+    if (PLATFORM_OK == ret)
     {
         ret = w25q64_hal_wait_done(W25Q64_HAL_TIMEOUT_RW_MS);
     }
     t_end   = osal_task_get_tick_count();
-    ok = (WP_EXTERNFLASH_OK == ret);
+    ok = (PLATFORM_OK == ret);
     w25q64_hal_record(HAL_TC_WRITE, "WRITE", ok, ret, t_end - t_start);
     osal_task_delay(W25Q64_HAL_GAP_MS);
 
@@ -405,12 +405,12 @@ void w25q64_hal_test_task(void *argument)
                                    s_read_buf,
                                    (uint32_t)sizeof(s_read_buf),
                                    w25q64_hal_event_done_cb, NULL);
-    if (WP_EXTERNFLASH_OK == ret)
+    if (PLATFORM_OK == ret)
     {
         ret = w25q64_hal_wait_done(W25Q64_HAL_TIMEOUT_RW_MS);
     }
     t_end   = osal_task_get_tick_count();
-    ok = (WP_EXTERNFLASH_OK == ret) &&
+    ok = (PLATFORM_OK == ret) &&
          w25q64_hal_buf_equal(s_read_buf, s_write_buf,
                               (uint32_t)sizeof(s_read_buf));
     w25q64_hal_record(HAL_TC_READ_VERIFY, "READ_VERIFY",
@@ -421,12 +421,12 @@ void w25q64_hal_test_task(void *argument)
     w25q64_hal_reset_latch();
     t_start = osal_task_get_tick_count();
     ret     = externflash_drv_erase_chip(w25q64_hal_event_done_cb, NULL);
-    if (WP_EXTERNFLASH_OK == ret)
+    if (PLATFORM_OK == ret)
     {
         ret = w25q64_hal_wait_done(W25Q64_HAL_TIMEOUT_CHIP_MS);
     }
     t_end   = osal_task_get_tick_count();
-    ok = (WP_EXTERNFLASH_OK == ret);
+    ok = (PLATFORM_OK == ret);
     w25q64_hal_record(HAL_TC_ERASE_CHIP, "ERASE_CHIP",
                       ok, ret, t_end - t_start);
     osal_task_delay(W25Q64_HAL_GAP_MS);
@@ -439,12 +439,12 @@ void w25q64_hal_test_task(void *argument)
                                    s_read_buf,
                                    (uint32_t)sizeof(s_read_buf),
                                    w25q64_hal_event_done_cb, NULL);
-    if (WP_EXTERNFLASH_OK == ret)
+    if (PLATFORM_OK == ret)
     {
         ret = w25q64_hal_wait_done(W25Q64_HAL_TIMEOUT_RW_MS);
     }
     t_end   = osal_task_get_tick_count();
-    ok = (WP_EXTERNFLASH_OK == ret) &&
+    ok = (PLATFORM_OK == ret) &&
          w25q64_hal_buf_all_eq(s_read_buf,
                                (uint32_t)sizeof(s_read_buf), 0xFFU);
     w25q64_hal_record(HAL_TC_READ_BLANK, "READ_BLANK",
@@ -455,12 +455,12 @@ void w25q64_hal_test_task(void *argument)
     w25q64_hal_reset_latch();
     t_start = osal_task_get_tick_count();
     ret     = externflash_drv_sleep(w25q64_hal_event_done_cb, NULL);
-    if (WP_EXTERNFLASH_OK == ret)
+    if (PLATFORM_OK == ret)
     {
         ret = w25q64_hal_wait_done(W25Q64_HAL_TIMEOUT_FAST_MS);
     }
     t_end   = osal_task_get_tick_count();
-    ok = (WP_EXTERNFLASH_OK == ret);
+    ok = (PLATFORM_OK == ret);
     w25q64_hal_record(HAL_TC_SLEEP, "SLEEP", ok, ret, t_end - t_start);
     osal_task_delay(W25Q64_HAL_GAP_MS);
 
@@ -468,12 +468,12 @@ void w25q64_hal_test_task(void *argument)
     w25q64_hal_reset_latch();
     t_start = osal_task_get_tick_count();
     ret     = externflash_drv_wakeup(w25q64_hal_event_done_cb, NULL);
-    if (WP_EXTERNFLASH_OK == ret)
+    if (PLATFORM_OK == ret)
     {
         ret = w25q64_hal_wait_done(W25Q64_HAL_TIMEOUT_FAST_MS);
     }
     t_end   = osal_task_get_tick_count();
-    ok = (WP_EXTERNFLASH_OK == ret);
+    ok = (PLATFORM_OK == ret);
     w25q64_hal_record(HAL_TC_WAKEUP_END, "WAKEUP_END", ok, ret, t_end - t_start);
     osal_task_delay(W25Q64_HAL_GAP_MS);
 

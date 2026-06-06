@@ -8,7 +8,7 @@
  *
  * @brief Implementation of the abstract touch interface.  Forwards each
  *        public API to the currently mounted driver vtable slot; returns
- *        WP_TOUCH_ERRORRESOURCE if no driver was mounted.
+ *        PLATFORM_ERR_NO_RESOURCE if no driver was mounted.
  *
  * @version V1.0 2026-04-26
  *
@@ -67,14 +67,14 @@ bool drv_adapter_touch_mount(uint32_t idx, touch_drv_t *const drv)
  * @brief Forward driver-instantiation request to the active touch driver.
  *        Returns ERRORRESOURCE if no slot has an inst hook.
  */
-wp_touch_status_t touch_drv_inst(void)
+platform_err_t touch_drv_inst(void)
 {
     touch_drv_t *drv = &s_touch_drv[s_cur_touch_drv_idx];
     if (drv->pf_touch_drv_inst)
     {
         return drv->pf_touch_drv_inst(drv);
     }
-    return WP_TOUCH_ERRORRESOURCE;
+    return PLATFORM_ERR_NO_RESOURCE;
 }
 
 /**
@@ -120,52 +120,52 @@ void touch_drv_isr_notify(void)
 /**
  * @brief Forward finger-count read to the driver.
  */
-wp_touch_status_t touch_get_finger_num(uint8_t *const p_finger)
+platform_err_t touch_get_finger_num(uint8_t *const p_finger)
 {
     touch_drv_t *drv = &s_touch_drv[s_cur_touch_drv_idx];
     if (drv->pf_touch_get_finger_num)
     {
         return drv->pf_touch_get_finger_num(drv, p_finger);
     }
-    return WP_TOUCH_ERRORRESOURCE;
+    return PLATFORM_ERR_NO_RESOURCE;
 }
 
 /**
  * @brief Forward XY coordinate read to the driver.
  */
-wp_touch_status_t touch_get_xy(uint16_t *const p_x, uint16_t *const p_y)
+platform_err_t touch_get_xy(uint16_t *const p_x, uint16_t *const p_y)
 {
     touch_drv_t *drv = &s_touch_drv[s_cur_touch_drv_idx];
     if (drv->pf_touch_get_xy)
     {
         return drv->pf_touch_get_xy(drv, p_x, p_y);
     }
-    return WP_TOUCH_ERRORRESOURCE;
+    return PLATFORM_ERR_NO_RESOURCE;
 }
 
 /**
  * @brief Forward chip-id probe to the driver.
  */
-wp_touch_status_t touch_get_chip_id(uint8_t *const p_chip_id)
+platform_err_t touch_get_chip_id(uint8_t *const p_chip_id)
 {
     touch_drv_t *drv = &s_touch_drv[s_cur_touch_drv_idx];
     if (drv->pf_touch_get_chip_id)
     {
         return drv->pf_touch_get_chip_id(drv, p_chip_id);
     }
-    return WP_TOUCH_ERRORRESOURCE;
+    return PLATFORM_ERR_NO_RESOURCE;
 }
 
 /**
  * @brief Forward gesture id read to the driver.
  */
-wp_touch_status_t touch_get_gesture(uint8_t *const p_gesture)
+platform_err_t touch_get_gesture(uint8_t *const p_gesture)
 {
     touch_drv_t *drv = &s_touch_drv[s_cur_touch_drv_idx];
     if (drv->pf_touch_get_gesture)
     {
         return drv->pf_touch_get_gesture(drv, p_gesture);
     }
-    return WP_TOUCH_ERRORRESOURCE;
+    return PLATFORM_ERR_NO_RESOURCE;
 }
 //******************************* Functions *********************************//

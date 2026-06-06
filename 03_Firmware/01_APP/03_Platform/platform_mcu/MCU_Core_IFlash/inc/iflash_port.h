@@ -45,6 +45,7 @@
 
 //******************************** Includes *********************************//
 #include "platform_type.h"
+#include "platform_error.h"
 //******************************** Includes *********************************//
 
 //******************************* Declaring *********************************//
@@ -54,8 +55,8 @@
 * @param[in]  sector : F4 sector index (0 .. 7 on F411CE; sectors 0,1 hold
 *                      the bootloader, 2 is the OTA flag, 3..7 are the APP).
 *
-* @return  0  success
-*         -1  HAL_FLASH_Unlock / HAL_FLASHEx_Erase failure
+* @return  PLATFORM_OK            success
+*          PLATFORM_ERR_HW_FAULT  HAL_FLASH_Unlock / HAL_FLASHEx_Erase failure
 *
 * @warning Disables global interrupts for the duration (~1 s on F411). All
 *          ISR-driven activity (SysTick / UART RX / DMA / SPI) pauses while
@@ -63,7 +64,7 @@
 *          Caller is responsible for not erasing the sector their own
 *          execution lives in.
 * */
-int8_t mcu_iflash_erase_sector(uint8_t sector);
+platform_err_t mcu_iflash_erase_sector(uint8_t sector);
 
 /**
 * @brief Program @p n_words 32-bit words into internal Flash starting at
@@ -73,15 +74,15 @@ int8_t mcu_iflash_erase_sector(uint8_t sector);
 * @param[in]  src     : Source word array; must be non-NULL.
 * @param[in]  n_words : Number of 32-bit words to program.
 *
-* @return  0  success and read-back verified
-*         -1  alignment / NULL violation, program failure, or read-back
-*             mismatch
+* @return  PLATFORM_OK            success and read-back verified
+*          PLATFORM_ERR_PARAM     NULL src or misaligned addr
+*          PLATFORM_ERR_HW_FAULT  program failure or read-back mismatch
 *
 * @warning Same interrupt-mask semantics as mcu_iflash_erase_sector().
 * */
-int8_t mcu_iflash_program_words(uint32_t        addr,
-                                const uint32_t *src,
-                                uint32_t        n_words);
+platform_err_t mcu_iflash_program_words(uint32_t        addr,
+                                        const uint32_t *src,
+                                        uint32_t        n_words);
 //******************************* Declaring *********************************//
 
 #endif /* __IFLASH_PORT_H__ */

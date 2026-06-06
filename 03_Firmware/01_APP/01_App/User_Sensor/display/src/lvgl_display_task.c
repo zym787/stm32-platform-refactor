@@ -280,8 +280,8 @@ void lvgl_display_task(void *argument)
 
     /* 1. Display bring-up via wrapper. */
     display_drv_init();
-    wp_display_status_t dret = display_fill_color(LV_TASK_BG_COLOR_BLACK);
-    if (WP_DISPLAY_OK != dret)
+    platform_err_t dret = display_fill_color(LV_TASK_BG_COLOR_BLACK);
+    if (PLATFORM_OK != dret)
     {
         DEBUG_OUT(e, ST7789_ERR_LOG_TAG,
                   "display_fill_color failed = %d", (int)dret);
@@ -295,8 +295,8 @@ void lvgl_display_task(void *argument)
      *    so a probe failure is logged but does not block the task. */
     touch_drv_init();
     uint8_t chip_id = 0u;
-    wp_touch_status_t tret = touch_get_chip_id(&chip_id);
-    bool touch_ok = (WP_TOUCH_OK == tret);
+    platform_err_t tret = touch_get_chip_id(&chip_id);
+    bool touch_ok = (PLATFORM_OK == tret);
     if (touch_ok)
     {
         DEBUG_OUT(i, CST816T_LOG_TAG, "touch chip_id = 0x%02X",

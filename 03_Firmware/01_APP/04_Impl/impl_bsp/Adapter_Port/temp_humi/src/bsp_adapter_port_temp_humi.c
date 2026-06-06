@@ -25,7 +25,7 @@
  * (void*)(uintptr_t)req_id → verify req_id == s_inflight_req_id  (discard if
  * stale) → store temp/humi into s_temp_result/s_humi_result →
  * osal_event_group_set_bits()  ── unblock caller caller ◄── mutex released;
- * *temp / *humi filled; returns wp_temp_humi_status_t
+ * *temp / *humi filled; returns platform_err_t
  *
  * == Concurrency guarantee ==
  *
@@ -56,7 +56,7 @@
  * @version V3.0 2026-04-12
  * @upgrade 3.0: s_read_mutex serialises concurrent _sync calls; request-ID
  *               binding prevents stale-callback pollution after timeout;
- *               sync vtable slots return wp_temp_humi_status_t; async slots
+ *               sync vtable slots return platform_err_t; async slots
  *               accept user_ctx; all paths emit DEBUG_OUT diagnostics.
  * @version V4.0 2026-04-22
  * @upgrade 4.0: life_time parameter added to all read APIs; forwarded to
@@ -94,13 +94,13 @@
 static void aht21_drv_init(temp_humi_drv_t *const dev);
 static void aht21_drv_deinit(temp_humi_drv_t *const dev);
 
-static wp_temp_humi_status_t aht21_read_temp_sync(temp_humi_drv_t *const  dev,
+static platform_err_t aht21_read_temp_sync(temp_humi_drv_t *const  dev,
                                                             float *const temp,
                                                          uint32_t   life_time);
-static wp_temp_humi_status_t aht21_read_humi_sync(temp_humi_drv_t *const  dev,
+static platform_err_t aht21_read_humi_sync(temp_humi_drv_t *const  dev,
                                                             float *const humi,
                                                          uint32_t   life_time);
-static wp_temp_humi_status_t aht21_read_all_sync(temp_humi_drv_t *const   dev,
+static platform_err_t aht21_read_all_sync(temp_humi_drv_t *const   dev,
                                                            float *const  temp,
                                                            float *const  humi,
                                                         uint32_t    life_time);
@@ -198,6 +198,37 @@ static bool adapter_resources_init(void)
 }
 
 /**
+ * @brief  Map a temp_humi_status_t onto platform_err_t.
+ *
+ * Explicit one-to-one mapping — the two vocabularies no longer share numeric
+ * values, so a cast would mis-translate (e.g. ERRORTIMEOUT=2 vs TIMEOUT=4).
+ */
+static platform_err_t temp_humi_status_to_platform(temp_humi_status_t st)
+{
+    switch (st)
+    {
+    case TEMP_HUMI_OK:
+        return PLATFORM_OK;
+    case TEMP_HUMI_ERROR:
+        return PLATFORM_ERR_GENERAL;
+    case TEMP_HUMI_ERRORTIMEOUT:
+        return PLATFORM_ERR_TIMEOUT;
+    case TEMP_HUMI_ERRORRESOURCE:
+        return PLATFORM_ERR_NO_RESOURCE;
+    case TEMP_HUMI_ERRORPARAMETER:
+        return PLATFORM_ERR_PARAM;
+    case TEMP_HUMI_ERRORNOMEMORY:
+        return PLATFORM_ERR_NO_MEMORY;
+    case TEMP_HUMI_ERRORUNSUPPORTED:
+        return PLATFORM_ERR_NOT_SUPPORTED;
+    case TEMP_HUMI_ERRORISR:
+        return PLATFORM_ERR_IN_ISR;
+    default:
+        return PLATFORM_ERR_GENERAL;
+    }
+}
+
+/**
  * @brief Submit a read event and block the caller until data is ready.
  *
  * Protocol:
@@ -213,10 +244,10 @@ static bool adapter_resources_init(void)
  * @param event_type Which axis to read.
  * @param wait_bits  Event-group bits that signal completion.
  * @param life_time  Maximum age of cached data in ms; 0 forces a fresh read.
- * @return WP_TEMP_HUMI_OK, WP_TEMP_HUMI_ERRORTIMEOUT, or
- * WP_TEMP_HUMI_ERRORRESOURCE.
+ * @return PLATFORM_OK, PLATFORM_ERR_TIMEOUT, or
+ * PLATFORM_ERR_NO_RESOURCE.
  */
-static wp_temp_humi_status_t adapter_sync_read(temp_humi_data_type_event_t event_type,
+static platform_err_t adapter_sync_read(temp_humi_data_type_event_t event_type,
                                                                    uint32_t wait_bits,
                                                                    uint32_t life_time)
 {
@@ -224,7 +255,7 @@ static wp_temp_humi_status_t adapter_sync_read(temp_humi_data_type_event_t event
     {
         DEBUG_OUT(e, TEMP_HUMI_ERR_LOG_TAG,
                   "adapter_sync_read: resources not initialised");
-        return WP_TEMP_HUMI_ERRORRESOURCE;
+        return PLATFORM_ERR_NO_RESOURCE;
     }
 
     /* ---- 1. Acquire mutex ---- */
@@ -233,7 +264,7 @@ static wp_temp_humi_status_t adapter_sync_read(temp_humi_data_type_event_t event
     {
         DEBUG_OUT(e, TEMP_HUMI_ERR_LOG_TAG,
                   "adapter_sync_read: mutex take failed (%d)", (int)lock_ret);
-        return WP_TEMP_HUMI_ERRORTIMEOUT;
+        return PLATFORM_ERR_TIMEOUT;
     }
 
     /* ---- 2. Assign a fresh request ID ---- */
@@ -267,7 +298,7 @@ static wp_temp_humi_status_t adapter_sync_read(temp_humi_data_type_event_t event
                   "adapter_sync_read: queue post failed (%d)", (int)post_ret);
         s_inflight_req_id = ADAPTER_REQ_ID_NONE;
         (void)osal_mutex_give(s_read_mutex);
-        return (wp_temp_humi_status_t)post_ret;
+        return temp_humi_status_to_platform(post_ret);
     }
 
     /* ---- 5. Wait for the callback to signal completion ---- */
@@ -278,7 +309,7 @@ static wp_temp_humi_status_t adapter_sync_read(temp_humi_data_type_event_t event
         wait_all,                     /* AND for BOTH, OR for single-axis */
         ADAPTER_EG_READ_TIMEOUT_TICKS, NULL);
 
-    wp_temp_humi_status_t result;
+    platform_err_t result;
     if (OSAL_SUCCESS != eg_ret)
     {
         DEBUG_OUT(e, TEMP_HUMI_ERR_LOG_TAG,
@@ -289,7 +320,7 @@ static wp_temp_humi_status_t adapter_sync_read(temp_humi_data_type_event_t event
          * s_inflight_req_id == ADAPTER_REQ_ID_NONE != its own id and discard.
          */
         s_inflight_req_id = ADAPTER_REQ_ID_NONE;
-        result            = WP_TEMP_HUMI_ERRORTIMEOUT;
+        result            = PLATFORM_ERR_TIMEOUT;
     }
     else
     {
@@ -298,7 +329,7 @@ static wp_temp_humi_status_t adapter_sync_read(temp_humi_data_type_event_t event
                   "temp=%.2f humi=%.2f",
                   (unsigned)this_req_id, (double)s_temp_result,
                   (double)s_humi_result);
-        result = WP_TEMP_HUMI_OK;
+        result = PLATFORM_OK;
     }
 
     /* ---- 6. Release mutex ---- */
@@ -399,43 +430,43 @@ static void aht21_drv_deinit(temp_humi_drv_t *const dev)
 
 /* --- Synchronous vtable slots --- */
 
-static wp_temp_humi_status_t aht21_read_temp_sync(temp_humi_drv_t *const dev,
+static platform_err_t aht21_read_temp_sync(temp_humi_drv_t *const dev,
                                                   float *const           temp,
                                                   uint32_t life_time)
 {
     (void)dev;
-    wp_temp_humi_status_t ret =
+    platform_err_t ret =
         adapter_sync_read(TEMP_HUMI_EVENT_TEMP, ADAPTER_EG_BIT_TEMP, life_time);
-    if (WP_TEMP_HUMI_OK == ret && NULL != temp)
+    if (PLATFORM_OK == ret && NULL != temp)
     {
         *temp = s_temp_result;
     }
     return ret;
 }
 
-static wp_temp_humi_status_t aht21_read_humi_sync(temp_humi_drv_t *const dev,
+static platform_err_t aht21_read_humi_sync(temp_humi_drv_t *const dev,
                                                   float *const           humi,
                                                   uint32_t life_time)
 {
     (void)dev;
-    wp_temp_humi_status_t ret =
+    platform_err_t ret =
         adapter_sync_read(TEMP_HUMI_EVENT_HUMI, ADAPTER_EG_BIT_HUMI, life_time);
-    if (WP_TEMP_HUMI_OK == ret && NULL != humi)
+    if (PLATFORM_OK == ret && NULL != humi)
     {
         *humi = s_humi_result;
     }
     return ret;
 }
 
-static wp_temp_humi_status_t aht21_read_all_sync(temp_humi_drv_t *const dev,
+static platform_err_t aht21_read_all_sync(temp_humi_drv_t *const dev,
                                                  float *const           temp,
                                                  float *const           humi,
                                                  uint32_t          life_time)
 {
     (void)dev;
-    wp_temp_humi_status_t ret =
+    platform_err_t ret =
         adapter_sync_read(TEMP_HUMI_EVENT_BOTH, ADAPTER_EG_BIT_BOTH, life_time);
-    if (WP_TEMP_HUMI_OK == ret)
+    if (PLATFORM_OK == ret)
     {
         if (NULL != temp)
         {

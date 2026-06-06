@@ -96,11 +96,11 @@ static mcu_uart_state_t *state_for_handle(UART_HandleTypeDef *huart)
 
 /* ── init ───────────────────────────────────────────────────────────── */
 
-mcu_uart_status_t mcu_uart_port_init(mcu_uart_id_t id)
+platform_err_t mcu_uart_port_init(mcu_uart_id_t id)
 {
     if (id >= MCU_UART_COUNT)
     {
-        return MCU_UART_INVALID;
+        return PLATFORM_ERR_PARAM;
     }
 
     /* Snapshot the HAL handle pointer for ISR-side dispatch. Bind here
@@ -111,14 +111,14 @@ mcu_uart_status_t mcu_uart_port_init(mcu_uart_id_t id)
         s_state[id].hal_handle = &huart1;
         break;
     default:
-        return MCU_UART_INVALID;
+        return PLATFORM_ERR_PARAM;
     }
 
     if (NULL == s_state[id].byte_sem)
     {
         if (OSAL_SUCCESS != osal_sema_init(&s_state[id].byte_sem, 0))
         {
-            return MCU_UART_ERR;
+            return PLATFORM_ERR_GENERAL;
         }
     }
     if (NULL == s_state[id].frame_queue)
@@ -127,26 +127,26 @@ mcu_uart_status_t mcu_uart_port_init(mcu_uart_id_t id)
                                               MCU_UART_FRAME_QUEUE_DEPTH,
                                               sizeof(uint16_t)))
         {
-            return MCU_UART_ERR;
+            return PLATFORM_ERR_GENERAL;
         }
     }
-    return MCU_UART_OK;
+    return PLATFORM_OK;
 }
 
 /* ── byte path ──────────────────────────────────────────────────────── */
 
-mcu_uart_status_t mcu_uart_recv_byte_arm(mcu_uart_id_t id)
+platform_err_t mcu_uart_recv_byte_arm(mcu_uart_id_t id)
 {
     if (id >= MCU_UART_COUNT || NULL == s_state[id].hal_handle)
     {
-        return MCU_UART_INVALID;
+        return PLATFORM_ERR_PARAM;
     }
     /**
     * HAL returns BUSY if a previous RX is still active or the peripheral
     * hasn't drained from a Ymodem abort. Yield briefly and retry — never
     * spin-poll. ~5 ms gives the previous owner (frame-mode DMA) time to
     * release the bus. Capped at MCU_UART_BYTE_ARM_RETRY_MAX so a wedged
-    * HAL state machine surfaces as MCU_UART_BUSY instead of an infinite
+    * HAL state machine surfaces as PLATFORM_ERR_BUSY instead of an infinite
     * loop.
     **/
     for (uint32_t retry = 0U; retry < MCU_UART_BYTE_ARM_RETRY_MAX; retry++)
@@ -155,39 +155,39 @@ mcu_uart_status_t mcu_uart_recv_byte_arm(mcu_uart_id_t id)
                                           (uint8_t *)&s_state[id].byte_buf,
                                           1U))
         {
-            return MCU_UART_OK;
+            return PLATFORM_OK;
         }
         osal_task_delay(OS_MS_TO_TICKS(5));
     }
-    return MCU_UART_BUSY;
+    return PLATFORM_ERR_BUSY;
 }
 
-mcu_uart_status_t mcu_uart_recv_byte_wait(mcu_uart_id_t id,
+platform_err_t mcu_uart_recv_byte_wait(mcu_uart_id_t id,
                                            uint8_t      *out,
                                            uint32_t      timeout_ms)
 {
     if (id >= MCU_UART_COUNT || NULL == out)
     {
-        return MCU_UART_INVALID;
+        return PLATFORM_ERR_PARAM;
     }
     if (OSAL_SUCCESS != osal_sema_take(s_state[id].byte_sem,
                                         OS_MS_TO_TICKS(timeout_ms)))
     {
-        return MCU_UART_TIMEOUT;
+        return PLATFORM_ERR_TIMEOUT;
     }
     *out = s_state[id].byte_buf;
-    return MCU_UART_OK;
+    return PLATFORM_OK;
 }
 
 /* ── frame path ─────────────────────────────────────────────────────── */
 
-mcu_uart_status_t mcu_uart_recv_frame_arm(mcu_uart_id_t id,
+platform_err_t mcu_uart_recv_frame_arm(mcu_uart_id_t id,
                                            uint8_t      *buf,
                                            uint16_t      maxlen)
 {
     if (id >= MCU_UART_COUNT || NULL == buf || 0U == maxlen)
     {
-        return MCU_UART_INVALID;
+        return PLATFORM_ERR_PARAM;
     }
     UART_HandleTypeDef *h = s_state[id].hal_handle;
     HAL_StatusTypeDef st  = HAL_UARTEx_ReceiveToIdle_DMA(h, buf, maxlen);
@@ -199,7 +199,7 @@ mcu_uart_status_t mcu_uart_recv_frame_arm(mcu_uart_id_t id,
         st = HAL_UARTEx_ReceiveToIdle_DMA(h, buf, maxlen);
         if (HAL_OK != st)
         {
-            return MCU_UART_BUSY;
+            return PLATFORM_ERR_BUSY;
         }
     }
     /**
@@ -209,25 +209,25 @@ mcu_uart_status_t mcu_uart_recv_frame_arm(mcu_uart_id_t id,
     * at 256 kbps).
     **/
     __HAL_DMA_DISABLE_IT(h->hdmarx, DMA_IT_HT);
-    return MCU_UART_OK;
+    return PLATFORM_OK;
 }
 
-mcu_uart_status_t mcu_uart_recv_frame_wait(mcu_uart_id_t id,
+platform_err_t mcu_uart_recv_frame_wait(mcu_uart_id_t id,
                                             uint16_t     *out_len,
                                             uint32_t      timeout_ms)
 {
     if (id >= MCU_UART_COUNT || NULL == out_len)
     {
-        return MCU_UART_INVALID;
+        return PLATFORM_ERR_PARAM;
     }
     uint16_t len = 0U;
     if (OSAL_SUCCESS != osal_queue_receive(s_state[id].frame_queue, &len,
                                             OS_MS_TO_TICKS(timeout_ms)))
     {
-        return MCU_UART_TIMEOUT;
+        return PLATFORM_ERR_TIMEOUT;
     }
     *out_len = len;
-    return MCU_UART_OK;
+    return PLATFORM_OK;
 }
 
 int mcu_uart_recv_frame_is_armed(mcu_uart_id_t id)
@@ -247,23 +247,23 @@ int mcu_uart_recv_frame_is_armed(mcu_uart_id_t id)
     return (HAL_UART_STATE_BUSY_RX == rx) ? 1 : 0;
 }
 
-mcu_uart_status_t mcu_uart_recv_frame_abort(mcu_uart_id_t id)
+platform_err_t mcu_uart_recv_frame_abort(mcu_uart_id_t id)
 {
     if (id >= MCU_UART_COUNT || NULL == s_state[id].hal_handle)
     {
-        return MCU_UART_INVALID;
+        return PLATFORM_ERR_PARAM;
     }
     (void)HAL_UART_DMAStop(s_state[id].hal_handle);
-    return MCU_UART_OK;
+    return PLATFORM_OK;
 }
 
 /* ── TX ─────────────────────────────────────────────────────────────── */
 
-mcu_uart_status_t mcu_uart_send_byte(mcu_uart_id_t id, uint8_t b)
+platform_err_t mcu_uart_send_byte(mcu_uart_id_t id, uint8_t b)
 {
     if (id >= MCU_UART_COUNT || NULL == s_state[id].hal_handle)
     {
-        return MCU_UART_INVALID;
+        return PLATFORM_ERR_PARAM;
     }
     /**
     * Blocking polled send. UART1 TX in mode_TX_RX so RX DMA is not
@@ -271,7 +271,7 @@ mcu_uart_status_t mcu_uart_send_byte(mcu_uart_id_t id, uint8_t b)
     * takes ~40 us — fast enough we don't need to yield to other tasks.
     **/
     (void)HAL_UART_Transmit(s_state[id].hal_handle, &b, 1U, HAL_MAX_DELAY);
-    return MCU_UART_OK;
+    return PLATFORM_OK;
 }
 
 /* ── HAL ISR callbacks (defined ONCE for the whole project) ─────────── */

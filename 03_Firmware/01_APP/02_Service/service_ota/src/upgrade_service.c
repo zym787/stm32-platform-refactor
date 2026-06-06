@@ -64,14 +64,19 @@ int8_t ota_flag_write(const ota_flag_t *in)
     * go through the MCU IFlash port, which owns the __disable_irq() critical
     * section and the read-back verify. Keep semantics out of this file.
     **/
-    if (mcu_iflash_erase_sector(CFG_OTA_FLAG_SECTOR) != 0)
+    if (PLATFORM_IS_ERR(mcu_iflash_erase_sector(CFG_OTA_FLAG_SECTOR)))
     {
         return -1;
     }
 
     const uint32_t n_words = sizeof(*in) / sizeof(uint32_t);
-    return mcu_iflash_program_words(CFG_OTA_FLAG_ADDRESS,
-                                    (const uint32_t *)in,
-                                    n_words);
+
+    /* MCU IFlash port now returns platform_err_t; keep ota_flag_write's
+     * own int8_t 0/-1 contract by converting at this boundary. */
+    return PLATFORM_IS_OK(mcu_iflash_program_words(CFG_OTA_FLAG_ADDRESS,
+                                                   (const uint32_t *)in,
+                                                   n_words))
+               ? 0
+               : -1;
 }
 //******************************* Functions *********************************//

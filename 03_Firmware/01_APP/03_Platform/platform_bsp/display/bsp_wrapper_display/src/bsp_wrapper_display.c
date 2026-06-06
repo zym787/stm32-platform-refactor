@@ -107,14 +107,14 @@ bool drv_adapter_display_mount(uint32_t idx, drv_display_t *const drv)
  *          driver.  Returns ERRORRESOURCE if no slot has an inst hook
  *          (e.g. when the adapter only does mount).
  */
-wp_display_status_t display_drv_inst(void)
+platform_err_t display_drv_inst(void)
 {
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
     if (drv->pf_display_drv_inst)
     {
         return drv->pf_display_drv_inst(drv);
     }
-    return WP_DISPLAY_ERRORRESOURCE;
+    return PLATFORM_ERR_NO_RESOURCE;
 }
 
 /**
@@ -147,12 +147,12 @@ void display_drv_deinit(void)
  * @brief   Forward draw-pixel request to the display driver.
  *          Allocates one pixel at (x, y) with the given colour.
  *
- * @return  WP_DISPLAY_OK on success, WP_DISPLAY_ERRORRESOURCE if no driver mounted.
+ * @return  PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver mounted.
  */
-wp_display_status_t display_draw_pixel    (uint16_t x,  uint16_t y,
+platform_err_t display_draw_pixel    (uint16_t x,  uint16_t y,
                                            uint16_t color)
 {
-    wp_display_status_t ret = WP_DISPLAY_OK;
+    platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
     if (drv->pf_display_draw_pixel)
     {
@@ -160,7 +160,7 @@ wp_display_status_t display_draw_pixel    (uint16_t x,  uint16_t y,
     }
     else
     {
-        ret = WP_DISPLAY_ERRORRESOURCE;
+        ret = PLATFORM_ERR_NO_RESOURCE;
     }
 
     return ret;
@@ -169,9 +169,9 @@ wp_display_status_t display_draw_pixel    (uint16_t x,  uint16_t y,
 /**
  * @brief   Forward fill-screen request to the display driver.
  */
-wp_display_status_t display_fill_color    (uint16_t color)
+platform_err_t display_fill_color    (uint16_t color)
 {
-    wp_display_status_t ret = WP_DISPLAY_OK;
+    platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
     if (drv->pf_display_fill_color)
     {
@@ -179,7 +179,7 @@ wp_display_status_t display_fill_color    (uint16_t color)
     }
     else
     {
-        ret = WP_DISPLAY_ERRORRESOURCE;
+        ret = PLATFORM_ERR_NO_RESOURCE;
     }
     return ret;
 }
@@ -187,11 +187,11 @@ wp_display_status_t display_fill_color    (uint16_t color)
 /**
  * @brief   Forward fill-region request to the display driver.
  */
-wp_display_status_t display_fill_region   (uint16_t x0, uint16_t y0,
+platform_err_t display_fill_region   (uint16_t x0, uint16_t y0,
                                            uint16_t x1, uint16_t y1,
                                            uint16_t color)
 {
-    wp_display_status_t ret = WP_DISPLAY_OK;
+    platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
     if (drv->pf_display_fill_region)
     {
@@ -199,7 +199,7 @@ wp_display_status_t display_fill_region   (uint16_t x0, uint16_t y0,
     }
     else
     {
-        ret = WP_DISPLAY_ERRORRESOURCE;
+        ret = PLATFORM_ERR_NO_RESOURCE;
     }
     return ret;
 }
@@ -207,11 +207,11 @@ wp_display_status_t display_fill_region   (uint16_t x0, uint16_t y0,
 /**
  * @brief   Forward draw-line request to the display driver.
  */
-wp_display_status_t display_draw_line     (uint16_t x0, uint16_t y0,
+platform_err_t display_draw_line     (uint16_t x0, uint16_t y0,
                                            uint16_t x1, uint16_t y1,
                                            uint16_t color)
 {
-    wp_display_status_t ret = WP_DISPLAY_OK;
+    platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
     if (drv->pf_display_draw_line)
     {
@@ -219,7 +219,7 @@ wp_display_status_t display_draw_line     (uint16_t x0, uint16_t y0,
     }
     else
     {
-        ret = WP_DISPLAY_ERRORRESOURCE;
+        ret = PLATFORM_ERR_NO_RESOURCE;
     }
     return ret;
 }
@@ -227,11 +227,11 @@ wp_display_status_t display_draw_line     (uint16_t x0, uint16_t y0,
 /**
  * @brief   Forward draw-rectangle request to the display driver.
  */
-wp_display_status_t display_draw_rectangle(uint16_t x0, uint16_t y0,
+platform_err_t display_draw_rectangle(uint16_t x0, uint16_t y0,
                                            uint16_t x1, uint16_t y1,
                                            uint16_t color)
 {
-    wp_display_status_t ret = WP_DISPLAY_OK;
+    platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
     if (drv->pf_display_draw_rectangle)
     {
@@ -239,7 +239,7 @@ wp_display_status_t display_draw_rectangle(uint16_t x0, uint16_t y0,
     }
     else
     {
-        ret = WP_DISPLAY_ERRORRESOURCE;
+        ret = PLATFORM_ERR_NO_RESOURCE;
     }
     return ret;
 }
@@ -247,11 +247,11 @@ wp_display_status_t display_draw_rectangle(uint16_t x0, uint16_t y0,
 /**
  * @brief   Forward draw-circle request to the display driver.
  */
-wp_display_status_t display_draw_circle   (uint16_t x,  uint16_t y,
+platform_err_t display_draw_circle   (uint16_t x,  uint16_t y,
                                            uint16_t radius,
                                            uint16_t color)
 {
-    wp_display_status_t ret = WP_DISPLAY_OK;
+    platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
     if (drv->pf_display_draw_circle)
     {
@@ -259,7 +259,7 @@ wp_display_status_t display_draw_circle   (uint16_t x,  uint16_t y,
     }
     else
     {
-        ret = WP_DISPLAY_ERRORRESOURCE;
+        ret = PLATFORM_ERR_NO_RESOURCE;
     }
     return ret;
 }
@@ -267,11 +267,11 @@ wp_display_status_t display_draw_circle   (uint16_t x,  uint16_t y,
 /**
  * @brief   Forward draw-image request to the display driver.
  */
-wp_display_status_t display_draw_image    (uint16_t x0, uint16_t y0,
+platform_err_t display_draw_image    (uint16_t x0, uint16_t y0,
                                            uint16_t  w, uint16_t  h,
                                            uint16_t const* bitmap)
 {
-    wp_display_status_t ret = WP_DISPLAY_OK;
+    platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
     if (drv->pf_display_draw_image)
     {
@@ -279,7 +279,7 @@ wp_display_status_t display_draw_image    (uint16_t x0, uint16_t y0,
     }
     else
     {
-        ret = WP_DISPLAY_ERRORRESOURCE;
+        ret = PLATFORM_ERR_NO_RESOURCE;
     }
     return ret;
 }
@@ -287,9 +287,9 @@ wp_display_status_t display_draw_image    (uint16_t x0, uint16_t y0,
 /**
  * @brief   Forward invert-colors request to the display driver.
  */
-wp_display_status_t display_invert_colors (bool invert)
+platform_err_t display_invert_colors (bool invert)
 {
-    wp_display_status_t ret = WP_DISPLAY_OK;
+    platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
     if (drv->pf_invert_colors)
     {
@@ -297,7 +297,7 @@ wp_display_status_t display_invert_colors (bool invert)
     }
     else
     {
-        ret = WP_DISPLAY_ERRORRESOURCE;
+        ret = PLATFORM_ERR_NO_RESOURCE;
     }
     return ret;
 }
@@ -305,12 +305,12 @@ wp_display_status_t display_invert_colors (bool invert)
 /**
  * @brief   Forward draw-character request to the display driver.
  */
-wp_display_status_t display_draw_char            (uint16_t x, uint16_t y,
+platform_err_t display_draw_char            (uint16_t x, uint16_t y,
                                                       char c,
                                                   uint16_t color,
                                                   uint16_t bg_color)
 {
-    wp_display_status_t ret = WP_DISPLAY_OK;
+    platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
     if (drv->pf_display_draw_char)
     {
@@ -318,7 +318,7 @@ wp_display_status_t display_draw_char            (uint16_t x, uint16_t y,
     }
     else
     {
-        ret = WP_DISPLAY_ERRORRESOURCE;
+        ret = PLATFORM_ERR_NO_RESOURCE;
     }
     return ret;
 }
@@ -326,12 +326,12 @@ wp_display_status_t display_draw_char            (uint16_t x, uint16_t y,
 /**
  * @brief   Forward draw-string request to the display driver.
  */
-wp_display_status_t display_draw_string          (uint16_t x, uint16_t y,
+platform_err_t display_draw_string          (uint16_t x, uint16_t y,
                                                 const char* str,
                                                   uint16_t color,
                                                   uint16_t bg_color)
 {
-    wp_display_status_t ret = WP_DISPLAY_OK;
+    platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
     if (drv->pf_display_draw_string)
     {
@@ -339,7 +339,7 @@ wp_display_status_t display_draw_string          (uint16_t x, uint16_t y,
     }
     else
     {
-        ret = WP_DISPLAY_ERRORRESOURCE;
+        ret = PLATFORM_ERR_NO_RESOURCE;
     }
     return ret;
 }
@@ -347,11 +347,11 @@ wp_display_status_t display_draw_string          (uint16_t x, uint16_t y,
 /**
  * @brief   Forward draw-filled-rectangle request to the display driver.
  */
-wp_display_status_t display_draw_filled_rectangle(uint16_t x0, uint16_t y0,
+platform_err_t display_draw_filled_rectangle(uint16_t x0, uint16_t y0,
                                                   uint16_t x1, uint16_t y1,
                                                   uint16_t color)
 {
-    wp_display_status_t ret = WP_DISPLAY_OK;
+    platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
     if (drv->pf_display_draw_filled_rectangle)
     {
@@ -359,7 +359,7 @@ wp_display_status_t display_draw_filled_rectangle(uint16_t x0, uint16_t y0,
     }
     else
     {
-        ret = WP_DISPLAY_ERRORRESOURCE;
+        ret = PLATFORM_ERR_NO_RESOURCE;
     }
     return ret;
 }
@@ -367,12 +367,12 @@ wp_display_status_t display_draw_filled_rectangle(uint16_t x0, uint16_t y0,
 /**
  * @brief   Forward draw-filled-triangle request to the display driver.
  */
-wp_display_status_t display_draw_filled_triangle (uint16_t x0, uint16_t y0,
+platform_err_t display_draw_filled_triangle (uint16_t x0, uint16_t y0,
                                                   uint16_t x1, uint16_t y1,
                                                   uint16_t x2, uint16_t y2,
                                                   uint16_t color)
 {
-    wp_display_status_t ret = WP_DISPLAY_OK;
+    platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
     if (drv->pf_display_draw_filled_triangle)
     {
@@ -380,7 +380,7 @@ wp_display_status_t display_draw_filled_triangle (uint16_t x0, uint16_t y0,
     }
     else
     {
-        ret = WP_DISPLAY_ERRORRESOURCE;
+        ret = PLATFORM_ERR_NO_RESOURCE;
     }
     return ret;
 }
@@ -388,11 +388,11 @@ wp_display_status_t display_draw_filled_triangle (uint16_t x0, uint16_t y0,
 /**
  * @brief   Forward draw-filled-circle request to the display driver.
  */
-wp_display_status_t display_draw_filled_circle   (uint16_t x,   uint16_t y,
+platform_err_t display_draw_filled_circle   (uint16_t x,   uint16_t y,
                                                   uint16_t radius,
                                                   uint16_t color)
 {
-    wp_display_status_t ret = WP_DISPLAY_OK;
+    platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
     if (drv->pf_display_draw_filled_circle)
     {
@@ -400,7 +400,7 @@ wp_display_status_t display_draw_filled_circle   (uint16_t x,   uint16_t y,
     }
     else
     {
-        ret = WP_DISPLAY_ERRORRESOURCE;
+        ret = PLATFORM_ERR_NO_RESOURCE;
     }
     return ret;
 }
@@ -408,9 +408,9 @@ wp_display_status_t display_draw_filled_circle   (uint16_t x,   uint16_t y,
 /**
  * @brief   Forward tear-effect request to the display driver.
  */
-wp_display_status_t display_tear_effect(bool enable)
+platform_err_t display_tear_effect(bool enable)
 {
-    wp_display_status_t ret = WP_DISPLAY_OK;
+    platform_err_t ret = PLATFORM_OK;
     drv_display_t *drv = &s_display_driver[s_cur_display_drv_idx];
     if (drv->pf_display_tear_effect)
     {
@@ -418,7 +418,7 @@ wp_display_status_t display_tear_effect(bool enable)
     }
     else
     {
-        ret = WP_DISPLAY_ERRORRESOURCE;
+        ret = PLATFORM_ERR_NO_RESOURCE;
     }
     return ret;
 }

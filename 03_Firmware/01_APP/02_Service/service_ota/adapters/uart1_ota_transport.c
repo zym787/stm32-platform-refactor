@@ -53,18 +53,18 @@
 
 //******************************* Functions *********************************//
 /**
-* @brief Translate mcu_uart_status_t → ota_transport_status_t. Small
+* @brief Translate platform_err_t → ota_transport_status_t. Small
 *        wrapper so the rest of this file can stay 1-line shims.
 * */
-static ota_transport_status_t translate(mcu_uart_status_t st)
+static ota_transport_status_t translate(platform_err_t st)
 {
     switch (st)
     {
-    case MCU_UART_OK:      return OTA_TRANSPORT_OK;
-    case MCU_UART_TIMEOUT: return OTA_TRANSPORT_TIMEOUT;
-    case MCU_UART_BUSY:    return OTA_TRANSPORT_BUSY;
-    case MCU_UART_ERR:
-    case MCU_UART_INVALID:
+    case PLATFORM_OK:      return OTA_TRANSPORT_OK;
+    case PLATFORM_ERR_TIMEOUT: return OTA_TRANSPORT_TIMEOUT;
+    case PLATFORM_ERR_BUSY:    return OTA_TRANSPORT_BUSY;
+    case PLATFORM_ERR_GENERAL:
+    case PLATFORM_ERR_PARAM:
     default:               return OTA_TRANSPORT_ERR;
     }
 }

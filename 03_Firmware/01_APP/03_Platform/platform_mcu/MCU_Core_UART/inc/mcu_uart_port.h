@@ -46,6 +46,7 @@
 
 //******************************** Includes *********************************//
 #include "platform_type.h"
+#include "platform_error.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
@@ -62,15 +63,6 @@ typedef enum
     MCU_UART_1 = 0,
     MCU_UART_COUNT
 } mcu_uart_id_t;
-
-typedef enum
-{
-    MCU_UART_OK      =  0,
-    MCU_UART_ERR     = -1,
-    MCU_UART_TIMEOUT = -2,
-    MCU_UART_BUSY    = -3,
-    MCU_UART_INVALID = -4,
-} mcu_uart_status_t;
 //******************************** Defines **********************************//
 
 //******************************* Functions *********************************//
@@ -81,10 +73,10 @@ typedef enum
 *
 * @param[in]  id : logical UART id (see mcu_uart_id_t).
 *
-* @return MCU_UART_OK on success, MCU_UART_INVALID on bad id,
-*         MCU_UART_ERR on OS resource creation failure.
+* @return PLATFORM_OK on success, PLATFORM_ERR_PARAM on bad id,
+*         PLATFORM_ERR_GENERAL on OS resource creation failure.
 * */
-mcu_uart_status_t mcu_uart_port_init(mcu_uart_id_t id);
+platform_err_t mcu_uart_port_init(mcu_uart_id_t id);
 
 /* ── byte mode (HAL_UART_Receive_IT, 1 B at a time) ─────────────────── */
 
@@ -93,7 +85,7 @@ mcu_uart_status_t mcu_uart_port_init(mcu_uart_id_t id);
 *        mcu_uart_recv_byte_wait() until that byte arrives. Yields
 *        the CPU on transient BUSY rather than spin-polling.
 * */
-mcu_uart_status_t mcu_uart_recv_byte_arm(mcu_uart_id_t id);
+platform_err_t mcu_uart_recv_byte_arm(mcu_uart_id_t id);
 
 /**
 * @brief Block until the byte previously armed arrives.
@@ -102,9 +94,9 @@ mcu_uart_status_t mcu_uart_recv_byte_arm(mcu_uart_id_t id);
 * @param[out] out         : received byte.
 * @param[in]  timeout_ms  : pass OSAL_MAX_DELAY for indefinite wait.
 *
-* @return MCU_UART_OK on byte received, MCU_UART_TIMEOUT on expiry.
+* @return PLATFORM_OK on byte received, PLATFORM_ERR_TIMEOUT on expiry.
 * */
-mcu_uart_status_t mcu_uart_recv_byte_wait(mcu_uart_id_t id,
+platform_err_t mcu_uart_recv_byte_wait(mcu_uart_id_t id,
                                            uint8_t      *out,
                                            uint32_t      timeout_ms);
 
@@ -116,7 +108,7 @@ mcu_uart_status_t mcu_uart_recv_byte_wait(mcu_uart_id_t id,
 *        goes idle, then publishes the byte count to mcu_uart_recv_
 *        frame_wait().
 * */
-mcu_uart_status_t mcu_uart_recv_frame_arm(mcu_uart_id_t id,
+platform_err_t mcu_uart_recv_frame_arm(mcu_uart_id_t id,
                                            uint8_t      *buf,
                                            uint16_t      maxlen);
 
@@ -127,9 +119,9 @@ mcu_uart_status_t mcu_uart_recv_frame_arm(mcu_uart_id_t id,
 * @param[out] out_len     : actual bytes received.
 * @param[in]  timeout_ms  : pass OSAL_MAX_DELAY for indefinite wait.
 *
-* @return MCU_UART_OK on a frame, MCU_UART_TIMEOUT on expiry.
+* @return PLATFORM_OK on a frame, PLATFORM_ERR_TIMEOUT on expiry.
 * */
-mcu_uart_status_t mcu_uart_recv_frame_wait(mcu_uart_id_t id,
+platform_err_t mcu_uart_recv_frame_wait(mcu_uart_id_t id,
                                             uint16_t     *out_len,
                                             uint32_t      timeout_ms);
 
@@ -146,7 +138,7 @@ int mcu_uart_recv_frame_is_armed(mcu_uart_id_t id);
 * @brief Force-stop a pending frame RX. Used in error recovery before
 *        re-arming with a fresh buffer.
 * */
-mcu_uart_status_t mcu_uart_recv_frame_abort(mcu_uart_id_t id);
+platform_err_t mcu_uart_recv_frame_abort(mcu_uart_id_t id);
 
 /* ── TX ─────────────────────────────────────────────────────────────── */
 
@@ -154,7 +146,7 @@ mcu_uart_status_t mcu_uart_recv_frame_abort(mcu_uart_id_t id);
 * @brief Polled blocking byte send. Returns after the byte has been
 *        clocked out of the peripheral.
 * */
-mcu_uart_status_t mcu_uart_send_byte(mcu_uart_id_t id, uint8_t b);
+platform_err_t mcu_uart_send_byte(mcu_uart_id_t id, uint8_t b);
 
 //******************************* Functions *********************************//
 

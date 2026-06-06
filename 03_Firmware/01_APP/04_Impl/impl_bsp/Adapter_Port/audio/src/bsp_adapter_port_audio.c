@@ -64,9 +64,9 @@ void (wt588_drv_deinit)(struct _drv_audio_t * const dev)
  * @param[in] volume     : Volume code (pre-mapped by wrapper).
  * @param[in] voice_addr : Voice clip address.
  *
- * @return  WP_AUDIO_OK on success, WP_AUDIO_ERROR on handler failure.
+ * @return  PLATFORM_OK on success, PLATFORM_ERR_GENERAL on handler failure.
  */
-wp_audio_status_t (wt588_drv_play  )(struct _drv_audio_t * const dev,
+platform_err_t (wt588_drv_play  )(struct _drv_audio_t * const dev,
                                                  uint8_t    priority,
                                                  uint8_t      volume,
                                                  uint8_t  voice_addr)
@@ -77,26 +77,26 @@ wp_audio_status_t (wt588_drv_play  )(struct _drv_audio_t * const dev,
     ret = wt588_handler_play_request(voice_addr, volume, priority);
     if (WT_HANDLER_OK != ret)
     {
-        return WP_AUDIO_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
-    return WP_AUDIO_OK;
+    return PLATFORM_OK;
 }
 
 /**
  * @brief   Forward stop request to the WT588F handler.
  */
-wp_audio_status_t (wt588_drv_stop  )(struct _drv_audio_t * const dev)
+platform_err_t (wt588_drv_stop  )(struct _drv_audio_t * const dev)
 {
     (void)dev;
     wt_handler_status_t ret = WT_HANDLER_OK;
     ret = wt588_handler_stop();
     if (WT_HANDLER_OK != ret)
     {
-        return WP_AUDIO_ERROR;
+        return PLATFORM_ERR_GENERAL;
     }
 
-    return WP_AUDIO_OK;
+    return PLATFORM_OK;
 }
 
 

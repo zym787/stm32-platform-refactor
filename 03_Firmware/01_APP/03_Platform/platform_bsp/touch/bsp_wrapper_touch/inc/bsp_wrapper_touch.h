@@ -41,24 +41,13 @@
 
 //******************************** Includes *********************************//
 #include "platform_type.h"
+#include "platform_error.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
 /**
  * @brief Return codes for all touch abstraction-layer APIs.
  */
-typedef enum
-{
-    WP_TOUCH_OK               = 0,             /* Operation successful       */
-    WP_TOUCH_ERROR            = 1,             /* General error              */
-    WP_TOUCH_ERRORTIMEOUT     = 2,             /* Timeout error              */
-    WP_TOUCH_ERRORRESOURCE    = 3,             /* Resource unavailable       */
-    WP_TOUCH_ERRORPARAMETER   = 4,             /* Invalid parameter          */
-    WP_TOUCH_ERRORNOMEMORY    = 5,             /* Out of memory              */
-    WP_TOUCH_ERRORUNSUPPORTED = 6,             /* Unsupported feature        */
-    WP_TOUCH_ERRORISR         = 7,             /* ISR context error          */
-    WP_TOUCH_RESERVED         = 0xFF,          /* Reserved                   */
-} wp_touch_status_t;
 
 /**
  * @brief Driver vtable for a touch panel.
@@ -70,22 +59,22 @@ typedef struct _touch_drv_t
     uint32_t                    dev_id;        /* Hardware device id         */
     void *                   user_data;        /* Adapter private context    */
 
-    wp_touch_status_t (*pf_touch_drv_inst  )(struct _touch_drv_t *const dev);
+    platform_err_t (*pf_touch_drv_inst  )(struct _touch_drv_t *const dev);
     void (*pf_touch_drv_init  )(struct _touch_drv_t *const dev);
     void (*pf_touch_drv_deinit)(struct _touch_drv_t *const dev);
     void (*pf_touch_isr_notify)(struct _touch_drv_t *const dev);
 
-    wp_touch_status_t (*pf_touch_get_finger_num)(
+    platform_err_t (*pf_touch_get_finger_num)(
                                   struct _touch_drv_t *const  dev,
                                               uint8_t *const  p_finger);
-    wp_touch_status_t (*pf_touch_get_xy        )(
+    platform_err_t (*pf_touch_get_xy        )(
                                   struct _touch_drv_t *const  dev,
                                              uint16_t *const  p_x,
                                              uint16_t *const  p_y);
-    wp_touch_status_t (*pf_touch_get_chip_id   )(
+    platform_err_t (*pf_touch_get_chip_id   )(
                                   struct _touch_drv_t *const  dev,
                                               uint8_t *const  p_chip_id);
-    wp_touch_status_t (*pf_touch_get_gesture   )(
+    platform_err_t (*pf_touch_get_gesture   )(
                                   struct _touch_drv_t *const  dev,
                                               uint8_t *const  p_gesture);
 } touch_drv_t;
@@ -113,11 +102,11 @@ bool drv_adapter_touch_mount(uint32_t idx, touch_drv_t *const drv);
  * osKernelStart().  Idempotent — implementations should ignore repeated
  * calls after a successful instantiation.
  *
- * @return WP_TOUCH_OK on success, WP_TOUCH_ERRORRESOURCE if no driver
+ * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver
  *         is mounted or the slot has no inst hook, other values on driver
  *         failure (logged by the adapter).
  */
-wp_touch_status_t touch_drv_inst(void);
+platform_err_t touch_drv_inst(void);
 
 /**
  * @brief Initialize the currently active touch driver.
@@ -152,10 +141,10 @@ void touch_drv_deinit(void);
  *
  * @param[out] p_finger : Receives the finger count.
  *
- * @return WP_TOUCH_OK on success, WP_TOUCH_ERRORRESOURCE if no driver
+ * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver
  *         is mounted, other values on driver error.
  */
-wp_touch_status_t touch_get_finger_num(uint8_t  *const p_finger);
+platform_err_t touch_get_finger_num(uint8_t  *const p_finger);
 
 /**
  * @brief Read the latest touch coordinate.  Coordinates are in panel
@@ -164,10 +153,10 @@ wp_touch_status_t touch_get_finger_num(uint8_t  *const p_finger);
  * @param[out] p_x : Receives the X pixel coordinate.
  * @param[out] p_y : Receives the Y pixel coordinate.
  *
- * @return WP_TOUCH_OK on success, WP_TOUCH_ERRORRESOURCE if no driver
+ * @return PLATFORM_OK on success, PLATFORM_ERR_NO_RESOURCE if no driver
  *         is mounted, other values on driver error.
  */
-wp_touch_status_t touch_get_xy        (uint16_t *const p_x,
+platform_err_t touch_get_xy        (uint16_t *const p_x,
                                        uint16_t *const p_y);
 
 /**
@@ -175,9 +164,9 @@ wp_touch_status_t touch_get_xy        (uint16_t *const p_x,
  *
  * @param[out] p_chip_id : Receives the chip id byte.
  *
- * @return WP_TOUCH_OK on success.
+ * @return PLATFORM_OK on success.
  */
-wp_touch_status_t touch_get_chip_id   (uint8_t  *const p_chip_id);
+platform_err_t touch_get_chip_id   (uint8_t  *const p_chip_id);
 
 /**
  * @brief Read the latest gesture id (driver-defined encoding — caller
@@ -185,9 +174,9 @@ wp_touch_status_t touch_get_chip_id   (uint8_t  *const p_chip_id);
  *
  * @param[out] p_gesture : Receives the gesture id.
  *
- * @return WP_TOUCH_OK on success.
+ * @return PLATFORM_OK on success.
  */
-wp_touch_status_t touch_get_gesture   (uint8_t  *const p_gesture);
+platform_err_t touch_get_gesture   (uint8_t  *const p_gesture);
 //******************************* Functions *********************************//
 
 #endif /* __BSP_WRAPPER_TOUCH_H__ */

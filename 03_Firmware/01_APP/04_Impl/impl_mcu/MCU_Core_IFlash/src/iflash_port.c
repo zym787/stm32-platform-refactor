@@ -28,12 +28,12 @@
 //******************************** Includes *********************************//
 
 //******************************* Functions *********************************//
-int8_t mcu_iflash_erase_sector(uint8_t sector)
+platform_err_t mcu_iflash_erase_sector(uint8_t sector)
 {
     uint32_t primask = __get_PRIMASK();
     __disable_irq();
 
-    int8_t result = -1;
+    platform_err_t result = PLATFORM_ERR_HW_FAULT;
 
     if (HAL_FLASH_Unlock() != HAL_OK)
     {
@@ -49,7 +49,7 @@ int8_t mcu_iflash_erase_sector(uint8_t sector)
     uint32_t sector_error = 0xFFFFFFFFU;
     if (HAL_FLASHEx_Erase(&erase_init, &sector_error) == HAL_OK)
     {
-        result = 0;
+        result = PLATFORM_OK;
     }
 
     (void)HAL_FLASH_Lock();
@@ -66,19 +66,19 @@ exit:
     return result;
 }
 
-int8_t mcu_iflash_program_words(uint32_t        addr,
+platform_err_t mcu_iflash_program_words(uint32_t        addr,
                                 const uint32_t *src,
                                 uint32_t        n_words)
 {
     if ((src == NULL) || ((addr & 0x3U) != 0U))
     {
-        return -1;
+        return PLATFORM_ERR_PARAM;
     }
 
     uint32_t primask = __get_PRIMASK();
     __disable_irq();
 
-    int8_t result = -1;
+    platform_err_t result = PLATFORM_ERR_HW_FAULT;
 
     if (HAL_FLASH_Unlock() != HAL_OK)
     {
@@ -109,7 +109,7 @@ int8_t mcu_iflash_program_words(uint32_t        addr,
                    (const void *)src,
                    n_words * sizeof(uint32_t)) == 0)
         {
-            result = 0;
+            result = PLATFORM_OK;
         }
     }
 

@@ -11,7 +11,7 @@
  * Exposes two read modes to the application layer:
  *
  *  _sync  — blocks the caller until fresh data is available.
- *           Returns wp_temp_humi_status_t; values via float * out-parameters.
+ *           Returns platform_err_t; values via float * out-parameters.
  *
  *  _async — posts a read request and returns immediately.
  *           The supplied callback is invoked from the handler thread context
@@ -23,8 +23,8 @@
  * @version V2.0 2026-04-12
  * @upgrade 2.0: Added _sync / _async API variants.
  * @version V3.0 2026-04-12
- * @upgrade 3.0: wp_temp_humi_status_t moved here from handler header;
- *               sync API returns wp_temp_humi_status_t.
+ * @upgrade 3.0: platform_err_t moved here from handler header;
+ *               sync API returns platform_err_t.
  * @version V4.0 2026-04-13
  * @upgrade 4.0: Introduced temp_humi_cb_async_t (two-parameter, no user_ctx);
  *               async vtable slots and public async API use this type.
@@ -42,6 +42,7 @@
 
 //******************************** Includes *********************************//
 #include "platform_type.h"
+#include "platform_error.h"
 
 //******************************** Includes *********************************//
 
@@ -50,18 +51,6 @@
 /**
  * @brief Return codes for all temperature/humidity abstraction-layer APIs.
  */
-typedef enum
-{
-    WP_TEMP_HUMI_OK               = 0,         /* Operation successful       */
-    WP_TEMP_HUMI_ERROR            = 1,         /* General error              */
-    WP_TEMP_HUMI_ERRORTIMEOUT     = 2,         /* Timeout error              */
-    WP_TEMP_HUMI_ERRORRESOURCE    = 3,         /* Resource unavailable       */
-    WP_TEMP_HUMI_ERRORPARAMETER   = 4,         /* Invalid parameter          */
-    WP_TEMP_HUMI_ERRORNOMEMORY    = 5,         /* Out of memory              */
-    WP_TEMP_HUMI_ERRORUNSUPPORTED = 6,         /* Unsupported feature        */
-    WP_TEMP_HUMI_ERRORISR         = 7,         /* ISR context error          */
-    WP_TEMP_HUMI_RESERVED         = 0xFF,      /* Reserved                   */
-} wp_temp_humi_status_t;
 
 /**
  * @brief Callback type for asynchronous reads.
@@ -84,15 +73,15 @@ typedef struct _temp_humi_drv_t
     void (*pf_temp_humi_drv_deinit)(struct _temp_humi_drv_t *const dev);
 
     /* Synchronous — block caller until data is ready */
-    wp_temp_humi_status_t (*pf_temp_humi_read_temp_sync)(
+    platform_err_t (*pf_temp_humi_read_temp_sync)(
                             struct _temp_humi_drv_t *const  dev,
                                               float *const temp,
                                             uint32_t life_time);
-    wp_temp_humi_status_t (*pf_temp_humi_read_humi_sync)(
+    platform_err_t (*pf_temp_humi_read_humi_sync)(
                             struct _temp_humi_drv_t *const dev,
                                               float *const humi,
                                             uint32_t life_time);
-    wp_temp_humi_status_t (*pf_temp_humi_read_all_sync )(
+    platform_err_t (*pf_temp_humi_read_all_sync )(
                             struct _temp_humi_drv_t *const dev,
                                               float *const temp,
                                               float *const humi,
@@ -128,11 +117,11 @@ void temp_humi_drv_deinit(void);
  * @return TEMP_HUMI_OK on success, TEMP_HUMI_ERRORTIMEOUT on timeout,
  *         TEMP_HUMI_ERRORRESOURCE if no driver is mounted.
  */
-wp_temp_humi_status_t temp_humi_read_temp_sync(float *const      temp, 
+platform_err_t temp_humi_read_temp_sync(float *const      temp, 
                                                    uint32_t life_time);
-wp_temp_humi_status_t temp_humi_read_humi_sync(float *const      humi, 
+platform_err_t temp_humi_read_humi_sync(float *const      humi, 
                                                    uint32_t life_time);
-wp_temp_humi_status_t temp_humi_read_all_sync (float *const      temp,
+platform_err_t temp_humi_read_all_sync (float *const      temp,
                                                float *const      humi, 
                                                    uint32_t life_time);
 

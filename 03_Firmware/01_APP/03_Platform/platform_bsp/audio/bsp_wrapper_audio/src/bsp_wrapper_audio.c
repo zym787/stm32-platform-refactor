@@ -127,15 +127,15 @@ void audio_drv_deinit(void)
  * @param[in] volume     : Volume level (1..16).
  * @param[in] voice_addr : Voice clip address in the audio device.
  *
- * @return  WP_AUDIO_OK on success, error code otherwise.
+ * @return  PLATFORM_OK on success, error code otherwise.
  */
-wp_audio_status_t audio_drv_play  (uint8_t    priority,
+platform_err_t audio_drv_play  (uint8_t    priority,
                                    uint8_t      volume,
                                    uint8_t  voice_addr)
 {
     if (volume < AUDIO_VOLUME_LEVEL_MIN || volume > AUDIO_VOLUME_LEVEL_MAX)
     {
-        return WP_AUDIO_ERRORPARAMETER;
+        return PLATFORM_ERR_PARAM;
     }
 
     uint8_t volume_cmd = prv_volume_level_to_cmd(volume);
@@ -145,20 +145,20 @@ wp_audio_status_t audio_drv_play  (uint8_t    priority,
     {
         return p_drv->pf_audio_drv_play(p_drv, priority, volume_cmd, voice_addr);
     }
-    return WP_AUDIO_ERROR;
+    return PLATFORM_ERR_GENERAL;
 }
 
 /**
  * @brief   Forward stop request to the audio driver.
  */
-wp_audio_status_t audio_drv_stop  (void)
+platform_err_t audio_drv_stop  (void)
 {
     drv_audio_t *p_drv = &s_audio_drv[s_cur_audio_drv_idx];
     if (p_drv->pf_audio_drv_stop)
     {
         return p_drv->pf_audio_drv_stop(p_drv);
     }
-    return WP_AUDIO_ERROR;
+    return PLATFORM_ERR_GENERAL;
 }
 
 //******************************* Functions *********************************//

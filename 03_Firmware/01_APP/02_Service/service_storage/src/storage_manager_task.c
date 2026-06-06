@@ -77,7 +77,7 @@ typedef struct
     uint32_t                size;
     uint8_t                *buf;         /* read: dst, write: src           */
     storage_op_t              op;
-    wp_externflash_status_t   last_status;
+    platform_err_t   last_status;
 } storage_request_t;
 //******************************** Typedefs *********************************//
 
@@ -97,7 +97,7 @@ static storage_request_t          s_pending      = {0};
 static void on_done_cb(wp_externflash_result_t *result)
 {
     s_pending.last_status = (NULL != result) ? result->status
-                                             : WP_EXTERNFLASH_ERROR;
+                                             : PLATFORM_ERR_GENERAL;
     if (NULL != s_done_sem)
     {
         (void)osal_sema_give(s_done_sem);
@@ -107,15 +107,15 @@ static void on_done_cb(wp_externflash_result_t *result)
 /**
  * @brief Translate the wrapper status into the APP-layer status enum.
  */
-static ext_flash_status_t translate_status(wp_externflash_status_t st)
+static ext_flash_status_t translate_status(platform_err_t st)
 {
     switch (st)
     {
-        case WP_EXTERNFLASH_OK:                 return EXT_FLASH_OK;
-        case WP_EXTERNFLASH_ERRORTIMEOUT:       return EXT_FLASH_ERRORTIMEOUT;
-        case WP_EXTERNFLASH_ERRORRESOURCE:      return EXT_FLASH_ERRORRESOURCE;
-        case WP_EXTERNFLASH_ERRORPARAMETER:     return EXT_FLASH_ERRORPARAMETER;
-        case WP_EXTERNFLASH_ERRORNOMEMORY:      return EXT_FLASH_ERRORNOMEMORY;
+        case PLATFORM_OK:                 return EXT_FLASH_OK;
+        case PLATFORM_ERR_TIMEOUT:       return EXT_FLASH_ERRORTIMEOUT;
+        case PLATFORM_ERR_NO_RESOURCE:      return EXT_FLASH_ERRORRESOURCE;
+        case PLATFORM_ERR_PARAM:     return EXT_FLASH_ERRORPARAMETER;
+        case PLATFORM_ERR_NO_MEMORY:      return EXT_FLASH_ERRORNOMEMORY;
         default:                                return EXT_FLASH_ERROR;
     }
 }
@@ -161,7 +161,7 @@ static ext_flash_status_t lvgl_blocking_dispatch(uint32_t      addr,
     s_pending.size        = size;
     s_pending.buf         = buf;
     s_pending.op          = op;
-    s_pending.last_status = WP_EXTERNFLASH_ERROR;
+    s_pending.last_status = PLATFORM_ERR_GENERAL;
 
     (void)osal_event_group_set_bits(s_evgrp, event_bit);
 
@@ -265,7 +265,7 @@ static ext_flash_status_t ota_blocking_dispatch(uint32_t      addr,
     s_pending.size        = size;
     s_pending.buf         = buf;
     s_pending.op          = op;
-    s_pending.last_status = WP_EXTERNFLASH_ERROR;
+    s_pending.last_status = PLATFORM_ERR_GENERAL;
 
     (void)osal_event_group_set_bits(s_evgrp, EVENT_OTA);
 
@@ -335,7 +335,7 @@ static ext_flash_status_t calib_blocking_dispatch(uint32_t      addr,
     s_pending.size        = size;
     s_pending.buf         = buf;
     s_pending.op          = op;
-    s_pending.last_status = WP_EXTERNFLASH_ERROR;
+    s_pending.last_status = PLATFORM_ERR_GENERAL;
 
     (void)osal_event_group_set_bits(s_evgrp, event_bit);
 
@@ -388,7 +388,7 @@ void storage_manager_task(void *argument)
             continue;
         }
 
-        wp_externflash_status_t  st       = WP_EXTERNFLASH_ERROR;
+        platform_err_t  st       = PLATFORM_ERR_GENERAL;
         bool                     handled  = false;
 
         /**
@@ -458,7 +458,7 @@ void storage_manager_task(void *argument)
                       (unsigned int)bits_set);
         }
 
-        if (handled && (WP_EXTERNFLASH_OK != st))
+        if (handled && (PLATFORM_OK != st))
         {
             /* Submit failed synchronously -- callback will not fire, so
              * publish the error and unblock the caller ourselves. */

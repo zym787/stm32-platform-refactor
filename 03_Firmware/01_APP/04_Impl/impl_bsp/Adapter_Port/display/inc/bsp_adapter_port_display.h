@@ -43,7 +43,7 @@
  * safe to call from platform_io_register() before osKernelStart().  The
  * driver instance behind the vtable stays uninstantiated until the consumer
  * task calls display_drv_inst() — until then every wrapper call returns
- * WP_DISPLAY_ERRORRESOURCE.
+ * PLATFORM_ERR_NO_RESOURCE.
  */
 void drv_adapter_display_register(void);
 //******************************* Functions *********************************//

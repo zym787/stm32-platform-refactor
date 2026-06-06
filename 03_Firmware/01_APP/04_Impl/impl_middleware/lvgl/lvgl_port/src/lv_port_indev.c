@@ -95,8 +95,8 @@ static void lv_port_indev_read_cb(lv_indev_drv_t *drv, lv_indev_data_t *data)
     data->point = s_last_point;
 
     uint8_t finger_num = 0u;
-    wp_touch_status_t st = touch_get_finger_num(&finger_num);
-    if (WP_TOUCH_OK != st)
+    platform_err_t st = touch_get_finger_num(&finger_num);
+    if (PLATFORM_OK != st)
     {
         return;
     }
@@ -120,7 +120,7 @@ static void lv_port_indev_read_cb(lv_indev_drv_t *drv, lv_indev_data_t *data)
     uint16_t x_pos = 0u;
     uint16_t y_pos = 0u;
     st = touch_get_xy(&x_pos, &y_pos);
-    if (WP_TOUCH_OK != st)
+    if (PLATFORM_OK != st)
     {
         return;
     }

@@ -119,15 +119,36 @@ static void adapter_slot_free(trampoline_slot_t *p_slot)
 }
 
 /**
- * @brief  Map a flash_handler_status_t onto wp_externflash_status_t.
+ * @brief  Map a flash_handler_status_t onto platform_err_t.
  *
- * Both enums share values 0..7 (OK / ERROR / TIMEOUT / RESOURCE / PARAMETER /
- * NOMEMORY / UNSUPPORTED / ISR), so a direct cast is safe.
+ * Explicit one-to-one mapping: the two enums no longer share numeric values
+ * (platform_err_t has TIMEOUT=4 / NO_RESOURCE=7 / ... ), so a cast would mis-
+ * translate. Keep this switch in sync if either vocabulary gains a code.
  */
-static wp_externflash_status_t adapter_status_translate(
+static platform_err_t adapter_status_translate(
                                             flash_handler_status_t hdl_status)
 {
-    return (wp_externflash_status_t)hdl_status;
+    switch (hdl_status)
+    {
+    case FLASH_HANLDER_OK:
+        return PLATFORM_OK;
+    case FLASH_HANLDER_ERROR:
+        return PLATFORM_ERR_GENERAL;
+    case FLASH_HANLDER_ERRORTIMEOUT:
+        return PLATFORM_ERR_TIMEOUT;
+    case FLASH_HANLDER_ERRORRESOURCE:
+        return PLATFORM_ERR_NO_RESOURCE;
+    case FLASH_HANLDER_ERRORPARAMETER:
+        return PLATFORM_ERR_PARAM;
+    case FLASH_HANLDER_ERRORNOMEMORY:
+        return PLATFORM_ERR_NO_MEMORY;
+    case FLASH_HANLDER_ERRORUNSUPPORTED:
+        return PLATFORM_ERR_NOT_SUPPORTED;
+    case FLASH_HANLDER_ERRORISR:
+        return PLATFORM_ERR_IN_ISR;
+    default:
+        return PLATFORM_ERR_GENERAL;
+    }
 }
 
 /**
@@ -174,7 +195,7 @@ static void adapter_trampoline(void *args)
 /**
  * @brief  Common path: package the event, attach the trampoline, and submit.
  */
-static wp_externflash_status_t adapter_submit_event(
+static platform_err_t adapter_submit_event(
                                   flash_handler_event_type_t  event_type,
                                   uint32_t                          addr,
                                   uint8_t  *                        data,
@@ -185,7 +206,7 @@ static wp_externflash_status_t adapter_submit_event(
     trampoline_slot_t *p_slot = adapter_slot_alloc();
     if (NULL == p_slot)
     {
-        return WP_EXTERNFLASH_ERRORNOMEMORY;
+        return PLATFORM_ERR_NO_MEMORY;
     }
 
     p_slot->user_cb  = user_cb;
@@ -208,7 +229,7 @@ static wp_externflash_status_t adapter_submit_event(
         return adapter_status_translate(ret);
     }
 
-    return WP_EXTERNFLASH_OK;
+    return PLATFORM_OK;
 }
 
 /* ---- Vtable functions --------------------------------------------------- */
@@ -225,7 +246,7 @@ static void w25q64_externflash_drv_deinit(externflash_drv_t *const dev)
     (void)dev;
 }
 
-static wp_externflash_status_t w25q64_externflash_read(
+static platform_err_t w25q64_externflash_read(
                                             externflash_drv_t *const   dev,
                                                           uint32_t    addr,
                                                           uint8_t *   data,
@@ -236,13 +257,13 @@ static wp_externflash_status_t w25q64_externflash_read(
     (void)dev;
     if (NULL == data || 0U == size)
     {
-        return WP_EXTERNFLASH_ERRORPARAMETER;
+        return PLATFORM_ERR_PARAM;
     }
     return adapter_submit_event(FLASH_HANDLER_EVENT_READ,
                                 addr, data, size, cb, p_user_ctx);
 }
 
-static wp_externflash_status_t w25q64_externflash_write(
+static platform_err_t w25q64_externflash_write(
                                             externflash_drv_t *const   dev,
                                                           uint32_t    addr,
                                                           uint8_t *   data,
@@ -253,13 +274,13 @@ static wp_externflash_status_t w25q64_externflash_write(
     (void)dev;
     if (NULL == data || 0U == size)
     {
-        return WP_EXTERNFLASH_ERRORPARAMETER;
+        return PLATFORM_ERR_PARAM;
     }
     return adapter_submit_event(FLASH_HANDLER_EVENT_WRITE,
                                 addr, data, size, cb, p_user_ctx);
 }
 
-static wp_externflash_status_t w25q64_externflash_write_noerase(
+static platform_err_t w25q64_externflash_write_noerase(
                                             externflash_drv_t *const   dev,
                                                           uint32_t    addr,
                                                           uint8_t *   data,
@@ -270,13 +291,13 @@ static wp_externflash_status_t w25q64_externflash_write_noerase(
     (void)dev;
     if (NULL == data || 0U == size)
     {
-        return WP_EXTERNFLASH_ERRORPARAMETER;
+        return PLATFORM_ERR_PARAM;
     }
     return adapter_submit_event(FLASH_HANDLER_EVENT_WRITE_NOERASE,
                                 addr, data, size, cb, p_user_ctx);
 }
 
-static wp_externflash_status_t w25q64_externflash_erase_chip(
+static platform_err_t w25q64_externflash_erase_chip(
                                             externflash_drv_t *const   dev,
                                             wp_externflash_callback_t   cb,
                                                           void *p_user_ctx)
@@ -286,7 +307,7 @@ static wp_externflash_status_t w25q64_externflash_erase_chip(
                                 0U, NULL, 0U, cb, p_user_ctx);
 }
 
-static wp_externflash_status_t w25q64_externflash_erase_sector(
+static platform_err_t w25q64_externflash_erase_sector(
                                             externflash_drv_t *const   dev,
                                                           uint32_t    addr,
                                             wp_externflash_callback_t   cb,
@@ -297,7 +318,7 @@ static wp_externflash_status_t w25q64_externflash_erase_sector(
                                 addr, NULL, 0U, cb, p_user_ctx);
 }
 
-static wp_externflash_status_t w25q64_externflash_sleep(
+static platform_err_t w25q64_externflash_sleep(
                                             externflash_drv_t *const   dev,
                                             wp_externflash_callback_t   cb,
                                                           void *p_user_ctx)
@@ -307,7 +328,7 @@ static wp_externflash_status_t w25q64_externflash_sleep(
                                 0U, NULL, 0U, cb, p_user_ctx);
 }
 
-static wp_externflash_status_t w25q64_externflash_wakeup(
+static platform_err_t w25q64_externflash_wakeup(
                                             externflash_drv_t *const   dev,
                                             wp_externflash_callback_t   cb,
                                                           void *p_user_ctx)
