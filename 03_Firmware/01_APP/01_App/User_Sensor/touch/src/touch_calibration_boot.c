@@ -27,6 +27,7 @@
 
 //******************************** Includes *********************************//
 #include "touch_calibration_boot.h"
+#include "platform_type.h"
 
 #include "bsp_cst816t_calibration.h"
 #include "touch_calibration_ui.h"
@@ -49,7 +50,7 @@
  * that is spinning lv_timer_handler.  No cross-task synchronisation needed —
  * a plain volatile flag is enough to break the polling loop.
  */
-static volatile bool                 s_done = false;
+static volatile BOOL_T                 s_done = false;
 static volatile calibration_status_t s_result = CALIBRATION_SUCCESS;
 //******************************* Variables *********************************//
 

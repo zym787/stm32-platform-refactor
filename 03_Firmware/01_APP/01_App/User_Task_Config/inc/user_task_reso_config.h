@@ -21,6 +21,7 @@
 
 //******************************** Includes *********************************//
 #include "osal_wrapper_adapter.h"
+#include "platform_type.h"
 #include "FreeRTOSConfig.h"
 
 //******************************** Includes *********************************//
@@ -170,8 +171,8 @@ typedef struct
 {
     const char        *task_name;
     osal_task_entry_t  func_pointer;
-    size_t             stack_depth;
-    uint32_t           priority;
+    SIZE_T             stack_depth;
+    UINT32_T           priority;
     osal_task_handle_t task_handle;
     void              *argument;
     OsalTaskAlloc      alloc_type;

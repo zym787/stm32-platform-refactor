@@ -17,6 +17,7 @@
 
 //******************************** Includes *********************************//
 #include "osal_wrapper_adapter.h"
+#include "platform_type.h"
 
 #include "i2c_port.h"
 #include "spi_port.h"
@@ -42,13 +43,13 @@ extern usertaskcfg_t g_user_task_cfg[USER_TASK_NUM];
 //******************************* Functions *********************************//
 static void user_init_task_function(void *argument)
 {
-    int32_t ret = 0;
+    INT32_T ret = 0;
 
     /* OTA service init: post-OTA verify (auto-confirm CHECK_START /
      * CHECKING) + OS resources for ota_service_task / firmware_upgrade_task.
      * Kept first so the auto-confirm write happens well within the IWDG
      * window. */
-    if (0 != firmware_upgrade_service_init())
+    if (PLATFORM_IS_ERR(firmware_upgrade_service_init()))
     {
         DEBUG_OUT(e, USER_INIT_ERR_LOG_TAG,
                   "firmware_upgrade_service_init failed");
@@ -70,7 +71,7 @@ static void user_init_task_function(void *argument)
     (void)mcu_spi_port_init(MCU_SPI_BUS_1);   /* ST7789  / SPI1       */
     (void)mcu_spi_port_init(MCU_SPI_BUS_2);   /* W25Q64  / SPI2       */
 
-    for (int8_t i = 0; i < USER_TASK_NUM; i++)
+    for (INT8_T i = 0; i < USER_TASK_NUM; i++)
     {
         /* Static tasks bring their own stack + TCB; dynamic tasks fall back
            to the RTOS heap. alloc_type defaults to DYNAMIC for any entry that

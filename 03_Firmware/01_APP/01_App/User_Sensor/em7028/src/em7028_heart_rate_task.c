@@ -28,7 +28,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
@@ -72,19 +72,19 @@
  */
 typedef struct
 {
-    uint16_t bpm;
-    uint8_t  confidence;
-    uint32_t timestamp_ms;
-    bool     beat_detected;
+    UINT16_T bpm;
+    UINT8_T  confidence;
+    UINT32_T timestamp_ms;
+    BOOL_T     beat_detected;
 } hr_queue_item_t;
 
 /* ---- Volatile globals for J-Scope / debugger observation ---- */
-volatile uint16_t g_hr_bpm;
-volatile uint8_t  g_hr_confidence;
-volatile uint32_t g_hr_frame_cnt;
-volatile uint32_t g_hr_drop_cnt;
-volatile uint32_t g_hr_last_beat_ts_ms;
-volatile int32_t  g_hr_filtered_signal;
+volatile UINT16_T g_hr_bpm;
+volatile UINT8_T  g_hr_confidence;
+volatile UINT32_T g_hr_frame_cnt;
+volatile UINT32_T g_hr_drop_cnt;
+volatile UINT32_T g_hr_last_beat_ts_ms;
+volatile INT32_T  g_hr_filtered_signal;
 
 /* ---- OSAL result queue handle (extern for downstream consumers) ---- */
 osal_queue_handle_t g_hr_result_queue = NULL;
@@ -166,9 +166,9 @@ void em7028_heart_rate_task(void *argument)
     hr_algo_state_t  algo_state;
 
 #if (EM7028_HR_ALGO_VARIANT == 0)
-    int32_t algo_ret = hr_algo_get_default_config(HR_ALGO_SIMPLE, &algo_cfg);
+    INT32_T algo_ret = hr_algo_get_default_config(HR_ALGO_SIMPLE, &algo_cfg);
 #else
-    int32_t algo_ret = hr_algo_get_default_config(HR_ALGO_BIQUAD, &algo_cfg);
+    INT32_T algo_ret = hr_algo_get_default_config(HR_ALGO_BIQUAD, &algo_cfg);
 #endif
 
     if ((0 != algo_ret) || (0 != hr_algo_init(&algo_state, &algo_cfg)))
@@ -178,7 +178,7 @@ void em7028_heart_rate_task(void *argument)
     }
 
     /* Create result queue for downstream consumers. */
-    int32_t qret = osal_queue_create(&g_hr_result_queue,
+    INT32_T qret = osal_queue_create(&g_hr_result_queue,
                                      EM7028_HR_RESULT_QUEUE_DEPTH,
                                      sizeof(hr_queue_item_t));
     if (0 != qret)
@@ -230,7 +230,7 @@ void em7028_heart_rate_task(void *argument)
         g_hr_bpm          = result.bpm;
         g_hr_confidence   = result.confidence;
         g_hr_frame_cnt++;
-        g_hr_filtered_signal = (int32_t)p_frame->hrs1_sum;
+        g_hr_filtered_signal = (INT32_T)p_frame->hrs1_sum;
 
         if (result.beat_detected)
         {

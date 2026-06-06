@@ -26,7 +26,7 @@
 #define __OTA_STORAGE_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
@@ -56,7 +56,7 @@ ota_storage_status_t ota_storage_init(void);
 *
 * @return Sector size in bytes (e.g. 4096 for W25Q64).
 * */
-uint32_t ota_storage_sector_size(void);
+UINT32_T ota_storage_sector_size(void);
 
 /**
 * @brief Erase + program a chunk of the staging area.
@@ -73,9 +73,9 @@ uint32_t ota_storage_sector_size(void);
 * @return OTA_STORAGE_OK on success, OTA_STORAGE_ERR on any I/O failure
 *         (offset out of range, erase fail, program fail, verify mismatch).
 * */
-ota_storage_status_t ota_storage_write(uint32_t       offset,
-                                       const uint8_t *buf,
-                                       uint32_t       len);
+ota_storage_status_t ota_storage_write(UINT32_T       offset,
+                                       const UINT8_T *buf,
+                                       UINT32_T       len);
 
 /**
 * @brief Read a range of bytes from the staging area.
@@ -86,9 +86,9 @@ ota_storage_status_t ota_storage_write(uint32_t       offset,
 *
 * @return OTA_STORAGE_OK on success, OTA_STORAGE_ERR otherwise.
 * */
-ota_storage_status_t ota_storage_read(uint32_t  offset,
-                                      uint8_t  *buf,
-                                      uint32_t  len);
+ota_storage_status_t ota_storage_read(UINT32_T  offset,
+                                      UINT8_T  *buf,
+                                      UINT32_T  len);
 //******************************* Functions *********************************//
 
 #endif /* __OTA_STORAGE_H__ */

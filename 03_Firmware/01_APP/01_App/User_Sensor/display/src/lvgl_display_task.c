@@ -56,7 +56,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
@@ -65,6 +65,7 @@
 #include "bsp_wrapper_display.h"
 #include "bsp_wrapper_touch.h"
 #include "service_storage_facade.h"
+#include "platform_def.h"
 #include "Debug.h"
 
 #include "lvgl.h"
@@ -152,7 +153,7 @@ static lvgl_log_level_t lvgl_log_parse_level(const char *buf, const char **body)
         return level;
     }
 
-    for (size_t i = 0U; i < (sizeof(k_level_map) / sizeof(k_level_map[0])); i++)
+    for (SIZE_T i = 0U; i < ARRAY_SIZE(k_level_map); i++)
     {
         if (0 == strncmp(buf, k_level_map[i].name,
                          strlen(k_level_map[i].name)))
@@ -214,8 +215,8 @@ static void lvgl_log_output_cb(const char *buf)
     /* Temporarily strip the trailing '\n'.  LVGL's buffer is a stack-local in
      * _lv_log_add(); writing is safe and we restore it before returning.
      * Truncating the whole buffer also terminates the body substring. */
-    size_t      blen     = strlen(buf);
-    bool        stripped = (blen > 0U) && ('\n' == buf[blen - 1U]);
+    SIZE_T      blen     = strlen(buf);
+    BOOL_T        stripped = (blen > 0U) && ('\n' == buf[blen - 1U]);
     char *const mut_buf  = (char *const)buf;
     if (stripped)
     {
@@ -294,9 +295,9 @@ void lvgl_display_task(void *argument)
     /* 2. Touch bring-up via wrapper.  Display still works without touch,
      *    so a probe failure is logged but does not block the task. */
     touch_drv_init();
-    uint8_t chip_id = 0u;
+    UINT8_T chip_id = 0u;
     platform_err_t tret = touch_get_chip_id(&chip_id);
-    bool touch_ok = (PLATFORM_OK == tret);
+    BOOL_T touch_ok = (PLATFORM_OK == tret);
     if (touch_ok)
     {
         DEBUG_OUT(i, CST816T_LOG_TAG, "touch chip_id = 0x%02X",

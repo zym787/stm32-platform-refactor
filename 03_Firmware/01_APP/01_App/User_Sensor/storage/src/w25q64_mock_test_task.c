@@ -27,7 +27,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
@@ -90,51 +90,51 @@ static w25q64_os_delay_t            s_mock_os;
  */
 typedef struct
 {
-    uint8_t  fake_flash[W25Q64_MOCK_FAKE_SIZE];
+    UINT8_T  fake_flash[W25Q64_MOCK_FAKE_SIZE];
 
     /* CS-framed transaction state. */
-    bool     cs_active;
-    bool     cmd_latched;
-    uint8_t  current_cmd;
-    uint8_t  addr_bytes_collected;
-    uint32_t addr_value;
-    uint8_t  data_in[W25Q64_MOCK_DATA_IN_CAP];
-    uint32_t data_in_len;
+    BOOL_T     cs_active;
+    BOOL_T     cmd_latched;
+    UINT8_T  current_cmd;
+    UINT8_T  addr_bytes_collected;
+    UINT32_T addr_value;
+    UINT8_T  data_in[W25Q64_MOCK_DATA_IN_CAP];
+    UINT32_T data_in_len;
 
     /* Device flags. */
-    bool     wel;
-    bool     sleeping;
-    uint32_t busy_polls_remaining;
+    BOOL_T     wel;
+    BOOL_T     sleeping;
+    UINT32_T busy_polls_remaining;
 
     /* Fault injection. */
-    bool     force_jedec_mismatch;
-    bool     force_busy_forever;
+    BOOL_T     force_jedec_mismatch;
+    BOOL_T     force_busy_forever;
 
     /* Counters. */
-    uint32_t spi_init_count;
-    uint32_t spi_deinit_count;
-    uint32_t cs_low_count;
-    uint32_t cs_high_count;
-    uint32_t transmit_count;
-    uint32_t read_count;
-    uint32_t delay_ms_count;
-    uint32_t os_delay_ms_count;
-    uint32_t last_delay_ms;
+    UINT32_T spi_init_count;
+    UINT32_T spi_deinit_count;
+    UINT32_T cs_low_count;
+    UINT32_T cs_high_count;
+    UINT32_T transmit_count;
+    UINT32_T read_count;
+    UINT32_T delay_ms_count;
+    UINT32_T os_delay_ms_count;
+    UINT32_T last_delay_ms;
 
     /* Per-command observability. */
-    uint32_t we_count;
-    uint32_t pp_count;
-    uint32_t sector_erase_count;
-    uint32_t chip_erase_count;
-    uint32_t sleep_count;
-    uint32_t wakeup_count;
+    UINT32_T we_count;
+    UINT32_T pp_count;
+    UINT32_T sector_erase_count;
+    UINT32_T chip_erase_count;
+    UINT32_T sleep_count;
+    UINT32_T wakeup_count;
 } mock_state_t;
 
 static mock_state_t s_st;
-static uint32_t     s_fake_tick_ms;
+static UINT32_T     s_fake_tick_ms;
 
-static uint32_t     s_pass_count;
-static uint32_t     s_fail_count;
+static UINT32_T     s_pass_count;
+static UINT32_T     s_fail_count;
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
@@ -162,7 +162,7 @@ static void mock_commit(void)
     case W25Q64_CMD_ERASE_SECTOR:
         if ((true == s_st.wel) && (3u == s_st.addr_bytes_collected))
         {
-            uint32_t base = s_st.addr_value & ~(W25Q64_SECTOR_SIZE - 1u);
+            UINT32_T base = s_st.addr_value & ~(W25Q64_SECTOR_SIZE - 1u);
             if ((base + W25Q64_SECTOR_SIZE) <= sizeof(s_st.fake_flash))
             {
                 memset(&s_st.fake_flash[base], 0xFF, W25Q64_SECTOR_SIZE);
@@ -181,7 +181,7 @@ static void mock_commit(void)
                                             sizeof(s_st.fake_flash)))
         {
             /* Page Program is bitwise-AND (only 1 -> 0). */
-            for (uint32_t i = 0u; i < s_st.data_in_len; i++)
+            for (UINT32_T i = 0u; i < s_st.data_in_len; i++)
             {
                 s_st.fake_flash[s_st.addr_value + i] &= s_st.data_in[i];
             }
@@ -231,7 +231,7 @@ static w25q64_status_t mock_spi_deinit(void)
     return W25Q64_OK;
 }
 
-static w25q64_status_t mock_spi_write_cs_pin(uint8_t state)
+static w25q64_status_t mock_spi_write_cs_pin(UINT8_T state)
 {
     if (W25Q64_MOCK_PIN_LOW == state)
     {
@@ -255,8 +255,8 @@ static w25q64_status_t mock_spi_write_cs_pin(uint8_t state)
     return W25Q64_OK;
 }
 
-static w25q64_status_t mock_spi_transmit(uint8_t const *p_data,
-                                         uint32_t       data_length)
+static w25q64_status_t mock_spi_transmit(UINT8_T const *p_data,
+                                         UINT32_T       data_length)
 {
     if ((NULL == p_data) || (0u == data_length) || (false == s_st.cs_active))
     {
@@ -265,7 +265,7 @@ static w25q64_status_t mock_spi_transmit(uint8_t const *p_data,
 
     s_st.transmit_count++;
 
-    uint32_t i = 0u;
+    UINT32_T i = 0u;
     if (false == s_st.cmd_latched)
     {
         s_st.current_cmd = p_data[0];
@@ -274,7 +274,7 @@ static w25q64_status_t mock_spi_transmit(uint8_t const *p_data,
     }
 
     /* Commands consuming a 3-byte address. */
-    bool needs_addr =
+    BOOL_T needs_addr =
         (W25Q64_CMD_READ_ID      == s_st.current_cmd) ||
         (W25Q64_CMD_READ_DATA    == s_st.current_cmd) ||
         (W25Q64_CMD_ERASE_SECTOR == s_st.current_cmd) ||
@@ -285,7 +285,7 @@ static w25q64_status_t mock_spi_transmit(uint8_t const *p_data,
            (s_st.addr_bytes_collected < 3u))
     {
         s_st.addr_value =
-            (s_st.addr_value << 8) | (uint32_t)p_data[i];
+            (s_st.addr_value << 8) | (UINT32_T)p_data[i];
         s_st.addr_bytes_collected++;
         i++;
     }
@@ -303,8 +303,8 @@ static w25q64_status_t mock_spi_transmit(uint8_t const *p_data,
     return W25Q64_OK;
 }
 
-static w25q64_status_t mock_spi_read(uint8_t *p_buffer,
-                                     uint32_t buffer_length)
+static w25q64_status_t mock_spi_read(UINT8_T *p_buffer,
+                                     UINT32_T buffer_length)
 {
     if ((NULL == p_buffer)            ||
         (0u == buffer_length)         ||
@@ -320,7 +320,7 @@ static w25q64_status_t mock_spi_read(uint8_t *p_buffer,
     {
     case W25Q64_CMD_JEDEC_ID:
     {
-        uint8_t id[3];
+        UINT8_T id[3];
         if (true == s_st.force_jedec_mismatch)
         {
             id[0] = 0xAAu;  id[1] = 0xBBu;  id[2] = 0xCCu;
@@ -331,7 +331,7 @@ static w25q64_status_t mock_spi_read(uint8_t *p_buffer,
             id[1] = W25Q64_MOCK_JEDEC_TYPE;
             id[2] = W25Q64_MOCK_JEDEC_CAP;
         }
-        for (uint32_t i = 0u; i < buffer_length; i++)
+        for (UINT32_T i = 0u; i < buffer_length; i++)
         {
             p_buffer[i] = id[i % 3u];
         }
@@ -340,8 +340,8 @@ static w25q64_status_t mock_spi_read(uint8_t *p_buffer,
 
     case W25Q64_CMD_READ_ID:
     {
-        uint8_t id[2] = { W25Q64_MOCK_JEDEC_MFR, W25Q64_MOCK_DEV_ID };
-        for (uint32_t i = 0u; i < buffer_length; i++)
+        UINT8_T id[2] = { W25Q64_MOCK_JEDEC_MFR, W25Q64_MOCK_DEV_ID };
+        for (UINT32_T i = 0u; i < buffer_length; i++)
         {
             p_buffer[i] = id[i % 2u];
         }
@@ -350,7 +350,7 @@ static w25q64_status_t mock_spi_read(uint8_t *p_buffer,
 
     case W25Q64_CMD_READ_REG:
     {
-        uint8_t status = 0u;
+        UINT8_T status = 0u;
         if (true == s_st.force_busy_forever)
         {
             status = W25Q64_STATUS_BUSY;
@@ -364,7 +364,7 @@ static w25q64_status_t mock_spi_read(uint8_t *p_buffer,
         {
             status = 0u;
         }
-        for (uint32_t i = 0u; i < buffer_length; i++)
+        for (UINT32_T i = 0u; i < buffer_length; i++)
         {
             p_buffer[i] = status;
         }
@@ -373,10 +373,10 @@ static w25q64_status_t mock_spi_read(uint8_t *p_buffer,
 
     case W25Q64_CMD_READ_DATA:
     {
-        uint32_t base = s_st.addr_value;
-        for (uint32_t i = 0u; i < buffer_length; i++)
+        UINT32_T base = s_st.addr_value;
+        for (UINT32_T i = 0u; i < buffer_length; i++)
         {
-            uint32_t a = base + i;
+            UINT32_T a = base + i;
             p_buffer[i] = (a < sizeof(s_st.fake_flash))
                             ? s_st.fake_flash[a]
                             : 0xFFu;
@@ -395,40 +395,40 @@ static w25q64_status_t mock_spi_read(uint8_t *p_buffer,
     return W25Q64_OK;
 }
 
-static w25q64_status_t mock_spi_transmit_dma(uint8_t const *p_data,
-                                             uint32_t       data_length)
+static w25q64_status_t mock_spi_transmit_dma(UINT8_T const *p_data,
+                                             UINT32_T       data_length)
 {
     (void)p_data;
     (void)data_length;
     return W25Q64_OK;
 }
 
-static w25q64_status_t mock_spi_wait_dma_complete(uint32_t timeout_ms)
+static w25q64_status_t mock_spi_wait_dma_complete(UINT32_T timeout_ms)
 {
     (void)timeout_ms;
     return W25Q64_OK;
 }
 
-static w25q64_status_t mock_spi_write_dc_pin(uint8_t state)
+static w25q64_status_t mock_spi_write_dc_pin(UINT8_T state)
 {
     (void)state;
     return W25Q64_OK;
 }
 
 /* ---- Timebase / OS mocks ------------------------------------------------ */
-static uint32_t mock_get_tick_ms(void)
+static UINT32_T mock_get_tick_ms(void)
 {
     return s_fake_tick_ms;
 }
 
-static void mock_delay_ms(uint32_t ms)
+static void mock_delay_ms(UINT32_T ms)
 {
     s_st.delay_ms_count++;
     s_st.last_delay_ms = ms;
     s_fake_tick_ms    += ms;
 }
 
-static void mock_os_delay_ms(uint32_t ms)
+static void mock_os_delay_ms(UINT32_T ms)
 {
     s_st.os_delay_ms_count++;
     s_fake_tick_ms += ms;
@@ -462,7 +462,7 @@ static w25q64_status_t mock_driver_bind(void)
 }
 
 /* ---- Pass / fail helpers ------------------------------------------------ */
-static void case_report(const char *name, bool ok)
+static void case_report(const char *name, BOOL_T ok)
 {
     if (true == ok)
     {
@@ -493,7 +493,7 @@ static void test_case_inst_null_args(void)
     state_reset();
 
     bsp_w25q64_driver_t drv;
-    bool ok =
+    BOOL_T ok =
       (W25Q64_ERRORPARAMETER ==
             w25q64_driver_inst(NULL, &s_mock_spi, &s_mock_tb, &s_mock_os))    &&
       (W25Q64_ERRORPARAMETER ==
@@ -516,7 +516,7 @@ static void test_case_inst_missing_cb(void)
     w25q64_spi_interface_t       spi = s_mock_spi;
     spi.pf_spi_transmit              = NULL;
 
-    bool ok = (W25Q64_ERRORRESOURCE ==
+    BOOL_T ok = (W25Q64_ERRORRESOURCE ==
                w25q64_driver_inst(&drv, &spi, &s_mock_tb, &s_mock_os));
     case_report("CASE 2 inst missing cb", ok);
 }
@@ -530,7 +530,7 @@ static void test_case_init_success(void)
 
     w25q64_status_t ret = s_mock_driver.pf_w25q64_init(&s_mock_driver);
 
-    bool ok = (W25Q64_OK == ret)                       &&
+    BOOL_T ok = (W25Q64_OK == ret)                       &&
               (1u == s_st.spi_init_count)              &&
               (1u == s_st.delay_ms_count)              &&
               (50u == s_st.last_delay_ms)              &&
@@ -548,7 +548,7 @@ static void test_case_init_jedec_mismatch(void)
 
     w25q64_status_t ret = s_mock_driver.pf_w25q64_init(&s_mock_driver);
 
-    bool ok = (W25Q64_ERRORRESOURCE == ret);
+    BOOL_T ok = (W25Q64_ERRORRESOURCE == ret);
     case_report("CASE 4 init jedec mismatch", ok);
 }
 
@@ -560,7 +560,7 @@ static void test_case_init_null_arg(void)
 
     w25q64_status_t ret = s_mock_driver.pf_w25q64_init(NULL);
 
-    bool ok = (W25Q64_ERRORPARAMETER == ret) &&
+    BOOL_T ok = (W25Q64_ERRORPARAMETER == ret) &&
               (0u == s_st.transmit_count)    &&
               (0u == s_st.read_count);
     case_report("CASE 5 init NULL arg", ok);
@@ -572,8 +572,8 @@ static void test_case_read_id_invalid_param(void)
               "===== CASE 6: pf_w25q64_read_id invalid param =====");
     state_reset();
 
-    uint8_t buf[2];
-    bool ok =
+    UINT8_T buf[2];
+    BOOL_T ok =
         (W25Q64_ERRORPARAMETER ==
             s_mock_driver.pf_w25q64_read_id(NULL, buf, 2u))           &&
         (W25Q64_ERRORPARAMETER ==
@@ -589,11 +589,11 @@ static void test_case_read_id_returns_id(void)
               "===== CASE 7: pf_w25q64_read_id returns 0xEF / 0x16 =====");
     state_reset();
 
-    uint8_t buf[2] = { 0u, 0u };
+    UINT8_T buf[2] = { 0u, 0u };
     w25q64_status_t ret =
         s_mock_driver.pf_w25q64_read_id(&s_mock_driver, buf, 2u);
 
-    bool ok = (W25Q64_OK == ret)                  &&
+    BOOL_T ok = (W25Q64_OK == ret)                  &&
               (W25Q64_CMD_READ_ID == s_st.current_cmd) &&
               (W25Q64_MOCK_JEDEC_MFR == buf[0])   &&
               (W25Q64_MOCK_DEV_ID    == buf[1]);
@@ -606,8 +606,8 @@ static void test_case_read_data_invalid_param(void)
               "===== CASE 8: pf_w25q64_read_data invalid param =====");
     state_reset();
 
-    uint8_t buf[16];
-    bool ok =
+    UINT8_T buf[16];
+    BOOL_T ok =
       (W25Q64_ERRORPARAMETER ==
         s_mock_driver.pf_w25q64_read_data(NULL, 0u, buf, 16u))             &&
       (W25Q64_ERRORPARAMETER ==
@@ -627,24 +627,24 @@ static void test_case_read_data_returns_flash(void)
               "bytes =====");
     state_reset();
 
-    for (uint32_t i = 0u; i < W25Q64_MOCK_PAYLOAD_LEN; i++)
+    for (UINT32_T i = 0u; i < W25Q64_MOCK_PAYLOAD_LEN; i++)
     {
-        s_st.fake_flash[W25Q64_MOCK_ADDR_READ_SEED + i] = (uint8_t)(0xA0u + i);
+        s_st.fake_flash[W25Q64_MOCK_ADDR_READ_SEED + i] = (UINT8_T)(0xA0u + i);
     }
 
-    uint8_t buf[W25Q64_MOCK_PAYLOAD_LEN] = { 0u };
+    UINT8_T buf[W25Q64_MOCK_PAYLOAD_LEN] = { 0u };
     w25q64_status_t ret = s_mock_driver.pf_w25q64_read_data(
         &s_mock_driver, W25Q64_MOCK_ADDR_READ_SEED, buf,
         W25Q64_MOCK_PAYLOAD_LEN);
 
-    bool ok = (W25Q64_OK == ret) &&
+    BOOL_T ok = (W25Q64_OK == ret) &&
               (W25Q64_CMD_READ_DATA == s_st.current_cmd) &&
               (W25Q64_MOCK_ADDR_READ_SEED == s_st.addr_value);
     if (true == ok)
     {
-        for (uint32_t i = 0u; i < W25Q64_MOCK_PAYLOAD_LEN; i++)
+        for (UINT32_T i = 0u; i < W25Q64_MOCK_PAYLOAD_LEN; i++)
         {
-            if ((uint8_t)(0xA0u + i) != buf[i])
+            if ((UINT8_T)(0xA0u + i) != buf[i])
             {
                 ok = false;
                 break;
@@ -661,8 +661,8 @@ static void test_case_write_noerase_invalid(void)
               "param =====");
     state_reset();
 
-    uint8_t data[4] = { 1u, 2u, 3u, 4u };
-    bool ok =
+    UINT8_T data[4] = { 1u, 2u, 3u, 4u };
+    BOOL_T ok =
       (W25Q64_ERRORPARAMETER ==
         s_mock_driver.pf_w25q64_write_data_noerase(NULL, 0u, data, 4u))    &&
       (W25Q64_ERRORPARAMETER ==
@@ -685,16 +685,16 @@ static void test_case_write_noerase_persists(void)
               "fake flash =====");
     state_reset();
 
-    uint8_t pattern[16];
-    for (uint32_t i = 0u; i < 16u; i++)
+    UINT8_T pattern[16];
+    for (UINT32_T i = 0u; i < 16u; i++)
     {
-        pattern[i] = (uint8_t)(0x10u + i);
+        pattern[i] = (UINT8_T)(0x10u + i);
     }
 
     w25q64_status_t ret = s_mock_driver.pf_w25q64_write_data_noerase(
         &s_mock_driver, W25Q64_MOCK_ADDR_NOERASE, pattern, 16u);
 
-    bool ok = (W25Q64_OK == ret)         &&
+    BOOL_T ok = (W25Q64_OK == ret)         &&
               (1u == s_st.we_count)      &&
               (1u == s_st.pp_count)      &&
               (0 == memcmp(pattern,
@@ -711,23 +711,23 @@ static void test_case_write_erase_overwrites(void)
     /* Dirty target so a Page Program alone could not flip 0 -> 1 bits. */
     memset(&s_st.fake_flash[W25Q64_MOCK_ADDR_ERASE], 0x00u, 32u);
 
-    uint8_t pattern[16];
-    for (uint32_t i = 0u; i < 16u; i++)
+    UINT8_T pattern[16];
+    for (UINT32_T i = 0u; i < 16u; i++)
     {
-        pattern[i] = (uint8_t)(0xC0u | i);
+        pattern[i] = (UINT8_T)(0xC0u | i);
     }
 
     w25q64_status_t ret = s_mock_driver.pf_w25q64_write_data_erase(
         &s_mock_driver, W25Q64_MOCK_ADDR_ERASE, pattern, 16u);
 
-    bool ok = (W25Q64_OK == ret)              &&
+    BOOL_T ok = (W25Q64_OK == ret)              &&
               (s_st.sector_erase_count >= 1u) &&
               (s_st.pp_count >= 1u)           &&
               (0 == memcmp(pattern,
                            &s_st.fake_flash[W25Q64_MOCK_ADDR_ERASE], 16u));
     if (true == ok)
     {
-        for (uint32_t i = 16u; i < 32u; i++)
+        for (UINT32_T i = 16u; i < 32u; i++)
         {
             if (0xFFu != s_st.fake_flash[W25Q64_MOCK_ADDR_ERASE + i])
             {
@@ -746,17 +746,17 @@ static void test_case_write_erase_spans_two_sectors(void)
               "2 PPs =====");
     state_reset();
 
-    uint32_t addr = W25Q64_SECTOR_SIZE - 8u;     /* end of sector 0 */
-    uint8_t  pattern[16];
-    for (uint32_t i = 0u; i < 16u; i++)
+    UINT32_T addr = W25Q64_SECTOR_SIZE - 8u;     /* end of sector 0 */
+    UINT8_T  pattern[16];
+    for (UINT32_T i = 0u; i < 16u; i++)
     {
-        pattern[i] = (uint8_t)(0x80u + i);
+        pattern[i] = (UINT8_T)(0x80u + i);
     }
 
     w25q64_status_t ret = s_mock_driver.pf_w25q64_write_data_erase(
         &s_mock_driver, addr, pattern, 16u);
 
-    bool ok = (W25Q64_OK == ret)            &&
+    BOOL_T ok = (W25Q64_OK == ret)            &&
               (2u == s_st.sector_erase_count) &&
               (2u == s_st.pp_count)         &&
               (0 == memcmp(pattern,
@@ -777,7 +777,7 @@ static void test_case_erase_chip(void)
 
     w25q64_status_t ret = s_mock_driver.pf_w25q64_erase_chip(&s_mock_driver);
 
-    bool ok = (W25Q64_OK == ret)            &&
+    BOOL_T ok = (W25Q64_OK == ret)            &&
               (1u == s_st.chip_erase_count) &&
               (0xFFu == s_st.fake_flash[0]) &&
               (0xFFu == s_st.fake_flash[sizeof(s_st.fake_flash) / 2u]) &&
@@ -794,7 +794,7 @@ static void test_case_erase_chip_busy_forever(void)
 
     w25q64_status_t ret = s_mock_driver.pf_w25q64_erase_chip(&s_mock_driver);
 
-    bool ok = (W25Q64_ERRORTIMEOUT == ret);
+    BOOL_T ok = (W25Q64_ERRORTIMEOUT == ret);
     case_report("CASE 15 busy-forever timeout", ok);
 }
 
@@ -805,12 +805,12 @@ static void test_case_sleep_wakeup(void)
               "delay =====");
     state_reset();
 
-    bool ok =
+    BOOL_T ok =
         (W25Q64_OK == s_mock_driver.pf_w25q64_sleep(&s_mock_driver)) &&
         (true == s_st.sleeping)                                      &&
         (1u == s_st.sleep_count);
 
-    uint32_t delays_before = s_st.delay_ms_count;
+    UINT32_T delays_before = s_st.delay_ms_count;
     ok = ok &&
          (W25Q64_OK == s_mock_driver.pf_w25q64_wakeup(&s_mock_driver)) &&
          (false == s_st.sleeping)                                      &&
@@ -827,7 +827,7 @@ static void test_case_sleep_wakeup_null_arg(void)
               "-> ERRORPARAMETER =====");
     state_reset();
 
-    bool ok =
+    BOOL_T ok =
         (W25Q64_ERRORPARAMETER == s_mock_driver.pf_w25q64_sleep(NULL))      &&
         (W25Q64_ERRORPARAMETER == s_mock_driver.pf_w25q64_wakeup(NULL))     &&
         (W25Q64_ERRORPARAMETER == s_mock_driver.pf_w25q64_erase_chip(NULL)) &&
@@ -844,7 +844,7 @@ static void test_case_deinit(void)
 
     w25q64_status_t ret = s_mock_driver.pf_w25q64_deinit(&s_mock_driver);
 
-    bool ok = (W25Q64_OK == ret)               &&
+    BOOL_T ok = (W25Q64_OK == ret)               &&
               (1u == s_st.spi_deinit_count)    &&
               (1u == s_st.cs_high_count)       &&
               (W25Q64_ERRORPARAMETER ==
@@ -859,20 +859,20 @@ static void test_case_end_to_end(void)
               "round-trip =====");
     state_reset();
 
-    bool ok =
+    BOOL_T ok =
         (W25Q64_OK == s_mock_driver.pf_w25q64_init(&s_mock_driver));
 
-    uint8_t tx[64];
-    for (uint32_t i = 0u; i < 64u; i++)
+    UINT8_T tx[64];
+    for (UINT32_T i = 0u; i < 64u; i++)
     {
-        tx[i] = (uint8_t)(i ^ 0x5Au);
+        tx[i] = (UINT8_T)(i ^ 0x5Au);
     }
 
     ok = ok &&
         (W25Q64_OK == s_mock_driver.pf_w25q64_write_data_erase(
                           &s_mock_driver, W25Q64_MOCK_ADDR_E2E, tx, 64u));
 
-    uint8_t rx[64] = { 0u };
+    UINT8_T rx[64] = { 0u };
     ok = ok &&
         (W25Q64_OK == s_mock_driver.pf_w25q64_read_data(
                           &s_mock_driver, W25Q64_MOCK_ADDR_E2E, rx, 64u)) &&

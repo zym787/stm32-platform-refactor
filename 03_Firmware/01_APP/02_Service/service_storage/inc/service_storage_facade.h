@@ -45,6 +45,7 @@
 
 //******************************** Includes *********************************//
 #include "osal_common_types.h"
+#include "platform_type.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
@@ -116,9 +117,9 @@ ext_flash_status_t storage_manager_resources_init(void);
  *
  * @return EXT_FLASH_OK on success, error code otherwise.
  */
-ext_flash_status_t Read_LvglData(uint32_t  addr,
-                                 uint32_t  size,
-                                 uint8_t  *out_buf);
+ext_flash_status_t Read_LvglData(UINT32_T  addr,
+                                 UINT32_T  size,
+                                 UINT8_T  *out_buf);
 
 /**
  * @brief Blocking write (with sector auto-erase by the underlying handler)
@@ -132,9 +133,9 @@ ext_flash_status_t Read_LvglData(uint32_t  addr,
  *
  * @return EXT_FLASH_OK on success, error code otherwise.
  */
-ext_flash_status_t Write_LvglData(uint32_t        addr,
-                                  uint32_t        size,
-                                  const uint8_t  *in_buf);
+ext_flash_status_t Write_LvglData(UINT32_T        addr,
+                                  UINT32_T        size,
+                                  const UINT8_T  *in_buf);
 
 /**
  * @brief Blocking read from the OTA sub-region of the external flash.
@@ -145,9 +146,9 @@ ext_flash_status_t Write_LvglData(uint32_t        addr,
  *
  * @return EXT_FLASH_OK on success, error code otherwise.
  */
-ext_flash_status_t Read_OtaData(uint32_t  addr,
-                                uint32_t  size,
-                                uint8_t  *out_buf);
+ext_flash_status_t Read_OtaData(UINT32_T  addr,
+                                UINT32_T  size,
+                                UINT8_T  *out_buf);
 
 /**
  * @brief Blocking write (with sector auto-erase) into the OTA sub-region.
@@ -158,9 +159,9 @@ ext_flash_status_t Read_OtaData(uint32_t  addr,
  *
  * @return EXT_FLASH_OK on success, error code otherwise.
  */
-ext_flash_status_t Write_OtaData(uint32_t        addr,
-                                 uint32_t        size,
-                                 const uint8_t  *in_buf);
+ext_flash_status_t Write_OtaData(UINT32_T        addr,
+                                 UINT32_T        size,
+                                 const UINT8_T  *in_buf);
 
 /**
  * @brief Blocking read from the calibration sub-region of the external flash.
@@ -178,9 +179,9 @@ ext_flash_status_t Write_OtaData(uint32_t        addr,
  *
  * @return EXT_FLASH_OK on success, error code otherwise.
  */
-ext_flash_status_t Read_CalibData (uint32_t  addr,
-                                   uint32_t  size,
-                                   uint8_t  *out_buf);
+ext_flash_status_t Read_CalibData (UINT32_T  addr,
+                                   UINT32_T  size,
+                                   UINT8_T  *out_buf);
 
 /**
  * @brief Blocking write (with sector auto-erase) into the calibration sub-region.
@@ -195,9 +196,9 @@ ext_flash_status_t Read_CalibData (uint32_t  addr,
  *
  * @return EXT_FLASH_OK on success, error code otherwise.
  */
-ext_flash_status_t Write_CalibData(uint32_t        addr,
-                                   uint32_t        size,
-                                   const uint8_t  *in_buf);
+ext_flash_status_t Write_CalibData(UINT32_T        addr,
+                                   UINT32_T        size,
+                                   const UINT8_T  *in_buf);
 
 /**
  * @brief Storage manager task entry.  Drains the event group and dispatches

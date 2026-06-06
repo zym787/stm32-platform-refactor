@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 #include <stddef.h>
 #include <stdbool.h>
 
@@ -77,16 +77,16 @@ static cst816t_os_delay_interface_t      s_hal_os;
 static void (*s_int_cb)(void *, void *)  = NULL;
 
 static osal_task_handle_t                s_hal_task_handle = NULL;
-static volatile uint32_t                 s_irq_count       = 0u;
+static volatile UINT32_T                 s_irq_count       = 0u;
 
 /* Last-printed sample, used to suppress identical reads. CST816T's gesture
  * register is latched (not auto-cleared) so spurious EXTI bursts read the
  * same stale (gesture, x, y) tuple over and over — without dedup the log
  * fills with copies of the previous swipe. */
-static uint8_t                           s_last_finger     = 0xFFu;
+static UINT8_T                           s_last_finger     = 0xFFu;
 static cst816t_gesture_id_t              s_last_gesture    = (cst816t_gesture_id_t)0xFFu;
-static uint16_t                          s_last_x          = 0xFFFFu;
-static uint16_t                          s_last_y          = 0xFFFFu;
+static UINT16_T                          s_last_x          = 0xFFFFu;
+static UINT16_T                          s_last_y          = 0xFFFFu;
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
@@ -133,12 +133,12 @@ static cst816t_status_t hal_iic_deinit(void const * const hi2c)
  * @return     CST816T_OK on HAL_OK, CST816T_ERROR otherwise.
  * */
 static cst816t_status_t hal_iic_mem_write(void    *i2c,
-                                          uint16_t des_addr,
-                                          uint16_t mem_addr,
-                                          uint16_t mem_size,
-                                          uint8_t *p_data,
-                                          uint16_t size,
-                                          uint32_t timeout)
+                                          UINT16_T des_addr,
+                                          UINT16_T mem_addr,
+                                          UINT16_T mem_size,
+                                          UINT8_T *p_data,
+                                          UINT16_T size,
+                                          UINT32_T timeout)
 {
     (void)i2c;
     HAL_StatusTypeDef hs = HAL_I2C_Mem_Write(&hi2c1, des_addr, mem_addr,
@@ -152,12 +152,12 @@ static cst816t_status_t hal_iic_mem_write(void    *i2c,
  * @return     CST816T_OK on HAL_OK, CST816T_ERROR otherwise.
  * */
 static cst816t_status_t hal_iic_mem_read(void    *i2c,
-                                         uint16_t des_addr,
-                                         uint16_t mem_addr,
-                                         uint16_t mem_size,
-                                         uint8_t *p_data,
-                                         uint16_t size,
-                                         uint32_t timeout)
+                                         UINT16_T des_addr,
+                                         UINT16_T mem_addr,
+                                         UINT16_T mem_size,
+                                         UINT8_T *p_data,
+                                         UINT16_T size,
+                                         UINT32_T timeout)
 {
     (void)i2c;
     HAL_StatusTypeDef hs = HAL_I2C_Mem_Read(&hi2c1, des_addr, mem_addr,
@@ -166,7 +166,7 @@ static cst816t_status_t hal_iic_mem_read(void    *i2c,
 }
 
 /* ---- Timebase / delay / OS yield ---------------------------------------- */
-static uint32_t hal_tb_get_tick_count(void)
+static UINT32_T hal_tb_get_tick_count(void)
 {
     return HAL_GetTick();
 }
@@ -176,7 +176,7 @@ static void hal_delay_init(void)
     /* HAL tick is already running by the time this fires. */
 }
 
-static void hal_delay_ms(uint32_t const ms)
+static void hal_delay_ms(UINT32_T const ms)
 {
     /**
      * Use osal_task_delay so the scheduler can run other ready tasks during
@@ -185,7 +185,7 @@ static void hal_delay_ms(uint32_t const ms)
     osal_task_delay(ms);
 }
 
-static void hal_delay_us(uint32_t const us)
+static void hal_delay_us(UINT32_T const us)
 {
     /* Tight busy-loop around HAL_GetTick is too coarse for us-level delays;
      * the CST816T driver currently never calls this in production paths so
@@ -193,7 +193,7 @@ static void hal_delay_us(uint32_t const us)
     (void)us;
 }
 
-static void hal_os_yield(uint32_t const ms)
+static void hal_os_yield(UINT32_T const ms)
 {
     osal_task_delay(ms);
 }
@@ -273,7 +273,7 @@ static cst816t_status_t hal_driver_bind(void)
  * */
 static void hal_read_and_report(const char *trigger)
 {
-    uint8_t              finger_num  = 0u;
+    UINT8_T              finger_num  = 0u;
     cst816t_gesture_id_t gesture     = NOGESTURE;
     cst816t_xy_t         xy          = {0u, 0u};
 
@@ -378,7 +378,7 @@ void cst816t_hal_test_task(void *argument)
      * Probe the chip id explicitly so a wrong wiring shows up in the log
      * before we sit waiting for an interrupt that never comes.
      **/
-    uint8_t chip_id = 0u;
+    UINT8_T chip_id = 0u;
     cst816t_status_t id_ret =
         s_hal_driver.pf_cst816t_get_chip_id(s_hal_driver, &chip_id);
     if (CST816T_OK != id_ret)
@@ -399,7 +399,7 @@ void cst816t_hal_test_task(void *argument)
      * first interrupt corresponds to a real new touch event.
      **/
     {
-        uint8_t              flush_finger  = 0u;
+        UINT8_T              flush_finger  = 0u;
         cst816t_gesture_id_t flush_gesture = NOGESTURE;
         cst816t_xy_t         flush_xy      = {0u, 0u};
         (void)s_hal_driver.pf_cst816t_get_finger_num(s_hal_driver,
@@ -426,8 +426,8 @@ void cst816t_hal_test_task(void *argument)
 
     for (;;)
     {
-        uint32_t notif = 0u;
-        int32_t  wr    = osal_notify_wait(0u, CST816T_HAL_NOTIFY_BIT, &notif,
+        UINT32_T notif = 0u;
+        INT32_T  wr    = osal_notify_wait(0u, CST816T_HAL_NOTIFY_BIT, &notif,
                                           CST816T_HAL_NOTIFY_TIMEOUT_TICKS);
         if ((0 == wr) && (0u != (notif & CST816T_HAL_NOTIFY_BIT)))
         {

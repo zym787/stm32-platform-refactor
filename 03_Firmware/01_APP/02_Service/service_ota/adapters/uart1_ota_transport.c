@@ -29,7 +29,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 
 #include "stm32f4xx_hal.h"           /* NVIC_SystemReset only —
                                         will move to MCU_Core_Reset later */
@@ -81,21 +81,21 @@ ota_transport_status_t ota_transport_listen_byte_arm(void)
     return translate(mcu_uart_recv_byte_arm(OTA_UART_ID));
 }
 
-ota_transport_status_t ota_transport_listen_byte_wait(uint8_t *out,
-                                                      uint32_t timeout_ms)
+ota_transport_status_t ota_transport_listen_byte_wait(UINT8_T *out,
+                                                      UINT32_T timeout_ms)
 {
     return translate(mcu_uart_recv_byte_wait(OTA_UART_ID, out, timeout_ms));
 }
 
 /* ── frame path ─────────────────────────────────────────────────────── */
 
-ota_transport_status_t ota_transport_frame_arm(uint8_t *buf, uint16_t maxlen)
+ota_transport_status_t ota_transport_frame_arm(UINT8_T *buf, UINT16_T maxlen)
 {
     return translate(mcu_uart_recv_frame_arm(OTA_UART_ID, buf, maxlen));
 }
 
-ota_transport_status_t ota_transport_frame_wait(uint16_t *out_len,
-                                                uint32_t timeout_ms)
+ota_transport_status_t ota_transport_frame_wait(UINT16_T *out_len,
+                                                UINT32_T timeout_ms)
 {
     return translate(mcu_uart_recv_frame_wait(OTA_UART_ID, out_len,
                                                timeout_ms));
@@ -113,7 +113,7 @@ ota_transport_status_t ota_transport_frame_stop(void)
 
 /* ── TX ─────────────────────────────────────────────────────────────── */
 
-ota_transport_status_t ota_transport_tx_byte(uint8_t b)
+ota_transport_status_t ota_transport_tx_byte(UINT8_T b)
 {
     return translate(mcu_uart_send_byte(OTA_UART_ID, b));
 }

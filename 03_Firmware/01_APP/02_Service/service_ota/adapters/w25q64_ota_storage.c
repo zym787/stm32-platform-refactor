@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 
 #include "service_storage_facade.h"
 
@@ -50,25 +50,25 @@ ota_storage_status_t ota_storage_init(void)
     return OTA_STORAGE_OK;
 }
 
-uint32_t ota_storage_sector_size(void)
+UINT32_T ota_storage_sector_size(void)
 {
     return W25Q64_SECTOR_SIZE;
 }
 
-ota_storage_status_t ota_storage_write(uint32_t       offset,
-                                       const uint8_t *buf,
-                                       uint32_t       len)
+ota_storage_status_t ota_storage_write(UINT32_T       offset,
+                                       const UINT8_T *buf,
+                                       UINT32_T       len)
 {
-    /* Write_OtaData accepts non-const uint8_t * for legacy reasons; the
+    /* Write_OtaData accepts non-const UINT8_T * for legacy reasons; the
        blocking façade copies into a request struct before posting to the
        storage queue so the const-cast is safe. */
-    ext_flash_status_t st = Write_OtaData(offset, len, (uint8_t *)buf);
+    ext_flash_status_t st = Write_OtaData(offset, len, (UINT8_T *)buf);
     return (EXT_FLASH_OK == st) ? OTA_STORAGE_OK : OTA_STORAGE_ERR;
 }
 
-ota_storage_status_t ota_storage_read(uint32_t  offset,
-                                      uint8_t  *buf,
-                                      uint32_t  len)
+ota_storage_status_t ota_storage_read(UINT32_T  offset,
+                                      UINT8_T  *buf,
+                                      UINT32_T  len)
 {
     ext_flash_status_t st = Read_OtaData(offset, len, buf);
     return (EXT_FLASH_OK == st) ? OTA_STORAGE_OK : OTA_STORAGE_ERR;

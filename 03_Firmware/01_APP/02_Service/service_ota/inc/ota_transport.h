@@ -42,7 +42,7 @@
 #define __OTA_TRANSPORT_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
@@ -93,8 +93,8 @@ ota_transport_status_t ota_transport_listen_byte_arm(void);
 * @return OTA_TRANSPORT_OK on byte received, OTA_TRANSPORT_TIMEOUT on
 *         expiry without a byte.
 * */
-ota_transport_status_t ota_transport_listen_byte_wait(uint8_t *out,
-                                                      uint32_t timeout_ms);
+ota_transport_status_t ota_transport_listen_byte_wait(UINT8_T *out,
+                                                      UINT32_T timeout_ms);
 
 /* ── Frame receive path (Ymodem DMA-idle) ───────────────────────────── */
 
@@ -111,7 +111,7 @@ ota_transport_status_t ota_transport_listen_byte_wait(uint8_t *out,
 *
 * @return OTA_TRANSPORT_OK on successful arm.
 * */
-ota_transport_status_t ota_transport_frame_arm(uint8_t *buf, uint16_t maxlen);
+ota_transport_status_t ota_transport_frame_arm(UINT8_T *buf, UINT16_T maxlen);
 
 /**
 * @brief Block until a frame's worth of bytes arrives. Returns the
@@ -122,8 +122,8 @@ ota_transport_status_t ota_transport_frame_arm(uint8_t *buf, uint16_t maxlen);
 *
 * @return OTA_TRANSPORT_OK on a frame, OTA_TRANSPORT_TIMEOUT on expiry.
 * */
-ota_transport_status_t ota_transport_frame_wait(uint16_t *out_len,
-                                                uint32_t timeout_ms);
+ota_transport_status_t ota_transport_frame_wait(UINT16_T *out_len,
+                                                UINT32_T timeout_ms);
 
 /**
 * @brief Query whether the frame RX is currently armed. Used by Ymodem
@@ -155,7 +155,7 @@ ota_transport_status_t ota_transport_frame_stop(void);
 *
 * @return OTA_TRANSPORT_OK on success.
 * */
-ota_transport_status_t ota_transport_tx_byte(uint8_t b);
+ota_transport_status_t ota_transport_tx_byte(UINT8_T b);
 
 //******************************* Functions *********************************//
 

@@ -28,7 +28,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
@@ -45,8 +45,8 @@
 #define EM7028_MOCK_BOOT_WAIT_MS                2000u
 #define EM7028_MOCK_STEP_GAP_MS                  200u
 
-#define EM7028_MOCK_I2C_WRITE_ADDR            (uint16_t)((EM7028_ADDR << 1) | 0)
-#define EM7028_MOCK_I2C_READ_ADDR             (uint16_t)((EM7028_ADDR << 1) | 1)
+#define EM7028_MOCK_I2C_WRITE_ADDR            (UINT16_T)((EM7028_ADDR << 1) | 0)
+#define EM7028_MOCK_I2C_READ_ADDR             (UINT16_T)((EM7028_ADDR << 1) | 1)
 
 /* Expected stats from auto-init inside bsp_em7028_driver_inst.
  * Sequence: iic_init -> yield(boot 5ms) -> write SOFT_RESET -> yield(7ms)
@@ -81,8 +81,8 @@
 #define EM7028_MOCK_FRAME_PIXEL2               0xABCDu
 #define EM7028_MOCK_FRAME_PIXEL3               0xEF01u
 #define EM7028_MOCK_FRAME_SUM                                                 \
-    ((uint32_t)EM7028_MOCK_FRAME_PIXEL0 + (uint32_t)EM7028_MOCK_FRAME_PIXEL1 +\
-     (uint32_t)EM7028_MOCK_FRAME_PIXEL2 + (uint32_t)EM7028_MOCK_FRAME_PIXEL3)
+    ((UINT32_T)EM7028_MOCK_FRAME_PIXEL0 + (UINT32_T)EM7028_MOCK_FRAME_PIXEL1 +\
+     (UINT32_T)EM7028_MOCK_FRAME_PIXEL2 + (UINT32_T)EM7028_MOCK_FRAME_PIXEL3)
 //******************************** Defines **********************************//
 
 //******************************* Declaring *********************************//
@@ -101,35 +101,35 @@ static em7028_os_delay_interface_t      s_mock_os_delay;
  */
 typedef struct
 {
-    uint32_t iic_init_count;
-    uint32_t iic_deinit_count;
-    uint32_t write_count;
-    uint32_t read_count;
-    uint32_t delay_ms_count;
-    uint32_t yield_ms_count;
-    uint32_t last_delay_ms;
-    uint32_t last_yield_ms;
-    uint16_t last_write_reg;
-    uint16_t last_read_reg;
-    uint16_t last_write_len;
-    uint16_t last_read_len;
-    uint8_t  last_write_byte;
+    UINT32_T iic_init_count;
+    UINT32_T iic_deinit_count;
+    UINT32_T write_count;
+    UINT32_T read_count;
+    UINT32_T delay_ms_count;
+    UINT32_T yield_ms_count;
+    UINT32_T last_delay_ms;
+    UINT32_T last_yield_ms;
+    UINT16_T last_write_reg;
+    UINT16_T last_read_reg;
+    UINT16_T last_write_len;
+    UINT16_T last_read_len;
+    UINT8_T  last_write_byte;
     void    *last_i2c_handle;
-    uint16_t last_dev_addr;
+    UINT16_T last_dev_addr;
     /* Capture every register byte the driver pushes during an init or
      * apply_config sequence, so the test can verify the full series.   */
-    uint8_t  write_log_reg[16];
-    uint8_t  write_log_byte[16];
-    uint8_t  write_log_len;
+    UINT8_T  write_log_reg[16];
+    UINT8_T  write_log_byte[16];
+    UINT8_T  write_log_len;
 } mock_stats_t;
 
 static mock_stats_t s_stats;
-static uint8_t      s_next_read[16];
-static uint16_t     s_next_read_len;
-static uint32_t     s_fake_tick_ms;
+static UINT8_T      s_next_read[16];
+static UINT16_T     s_next_read_len;
+static UINT32_T     s_fake_tick_ms;
 
-static uint32_t     s_pass_count;
-static uint32_t     s_fail_count;
+static UINT32_T     s_pass_count;
+static UINT32_T     s_fail_count;
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
@@ -156,7 +156,7 @@ static void stats_reset(void)
  *
  * @return     None.
  * */
-static void mock_arm_read(uint8_t const *p_data, uint16_t len)
+static void mock_arm_read(UINT8_T const *p_data, UINT16_T len)
 {
     if ((p_data == NULL) || (len == 0U))
     {
@@ -165,7 +165,7 @@ static void mock_arm_read(uint8_t const *p_data, uint16_t len)
     }
     if (len > sizeof(s_next_read))
     {
-        len = (uint16_t)sizeof(s_next_read);
+        len = (UINT16_T)sizeof(s_next_read);
     }
     memcpy(s_next_read, p_data, len);
     s_next_read_len = len;
@@ -222,12 +222,12 @@ static em7028_status_t mock_iic_deinit(void *hi2c)
  * @return     EM7028_OK always.
  * */
 static em7028_status_t mock_iic_mem_write(void    *i2c,
-                                          uint16_t des_addr,
-                                          uint16_t mem_addr,
-                                          uint16_t mem_size,
-                                          uint8_t *p_data,
-                                          uint16_t size,
-                                          uint32_t timeout)
+                                          UINT16_T des_addr,
+                                          UINT16_T mem_addr,
+                                          UINT16_T mem_size,
+                                          UINT8_T *p_data,
+                                          UINT16_T size,
+                                          UINT32_T timeout)
 {
     (void)mem_size;
     (void)timeout;
@@ -240,9 +240,9 @@ static em7028_status_t mock_iic_mem_write(void    *i2c,
 
     /* Append to write log so init/apply_config sequences can be replayed
      * by the case bodies for full-sequence assertion.                  */
-    if (s_stats.write_log_len < (uint8_t)(sizeof(s_stats.write_log_reg)))
+    if (s_stats.write_log_len < (UINT8_T)(sizeof(s_stats.write_log_reg)))
     {
-        s_stats.write_log_reg [s_stats.write_log_len] = (uint8_t)mem_addr;
+        s_stats.write_log_reg [s_stats.write_log_len] = (UINT8_T)mem_addr;
         s_stats.write_log_byte[s_stats.write_log_len] =
                                                 (size > 0U) ? p_data[0] : 0U;
         s_stats.write_log_len++;
@@ -275,12 +275,12 @@ static em7028_status_t mock_iic_mem_write(void    *i2c,
  * @return     EM7028_OK always.
  * */
 static em7028_status_t mock_iic_mem_read(void    *i2c,
-                                         uint16_t des_addr,
-                                         uint16_t mem_addr,
-                                         uint16_t mem_size,
-                                         uint8_t *p_data,
-                                         uint16_t size,
-                                         uint32_t timeout)
+                                         UINT16_T des_addr,
+                                         UINT16_T mem_addr,
+                                         UINT16_T mem_size,
+                                         UINT8_T *p_data,
+                                         UINT16_T size,
+                                         UINT32_T timeout)
 {
     (void)mem_size;
     (void)timeout;
@@ -294,14 +294,14 @@ static em7028_status_t mock_iic_mem_read(void    *i2c,
      * Serve the synthetic response armed by the test; zero-fill any bytes
      * the test forgot to provide so old values cannot leak between cases.
      **/
-    uint16_t copy = (size < s_next_read_len) ? size : s_next_read_len;
+    UINT16_T copy = (size < s_next_read_len) ? size : s_next_read_len;
     if ((p_data != NULL) && (copy > 0U))
     {
         memcpy(p_data, s_next_read, copy);
     }
     if ((p_data != NULL) && (size > copy))
     {
-        memset(&p_data[copy], 0, (size_t)(size - copy));
+        memset(&p_data[copy], 0, (SIZE_T)(size - copy));
     }
     DEBUG_OUT(i, EM7028_LOG_TAG,
               "mock mem_read addr=0x%02X reg=0x%02X len=%u served=%u",
@@ -317,7 +317,7 @@ static em7028_status_t mock_iic_mem_read(void    *i2c,
  *
  * @return     Current synthetic tick in milliseconds.
  * */
-static uint32_t mock_tb_get_tick_count(void)
+static UINT32_T mock_tb_get_tick_count(void)
 {
     return s_fake_tick_ms;
 }
@@ -339,7 +339,7 @@ static void mock_delay_init(void)
  *
  * @return     None.
  * */
-static void mock_delay_ms(uint32_t const ms)
+static void mock_delay_ms(UINT32_T const ms)
 {
     s_stats.delay_ms_count++;
     s_stats.last_delay_ms = ms;
@@ -355,7 +355,7 @@ static void mock_delay_ms(uint32_t const ms)
  *
  * @return     None.
  * */
-static void mock_delay_us(uint32_t const us)
+static void mock_delay_us(UINT32_T const us)
 {
     (void)us;
 }
@@ -367,7 +367,7 @@ static void mock_delay_us(uint32_t const us)
  *
  * @return     None.
  * */
-static void mock_os_delay(uint32_t const ms)
+static void mock_os_delay(UINT32_T const ms)
 {
     s_stats.yield_ms_count++;
     s_stats.last_yield_ms = ms;
@@ -403,7 +403,7 @@ static em7028_status_t mock_driver_bind(void)
      * Arm the ID_REG response BEFORE inst, because bsp_em7028_driver_inst
      * auto-invokes pf_init which reads ID_REG synchronously.
      **/
-    uint8_t chip_id = EM7028_ID;
+    UINT8_T chip_id = EM7028_ID;
     mock_arm_read(&chip_id, 1U);
 
     return bsp_em7028_driver_inst(&s_mock_driver,
@@ -423,7 +423,7 @@ static em7028_status_t mock_driver_bind(void)
  *
  * @return     None.
  * */
-static void case_report(const char *name, bool ok)
+static void case_report(const char *name, BOOL_T ok)
 {
     if (ok)
     {
@@ -456,10 +456,10 @@ static void case_report(const char *name, bool ok)
  *
  * @return     true if `reg` was written at least once during this case.
  * */
-static bool find_logged_write(uint8_t reg, uint8_t *p_byte)
+static BOOL_T find_logged_write(UINT8_T reg, UINT8_T *p_byte)
 {
-    bool found = false;
-    for (uint8_t i = 0U; i < s_stats.write_log_len; i++)
+    BOOL_T found = false;
+    for (UINT8_T i = 0U; i < s_stats.write_log_len; i++)
     {
         if (s_stats.write_log_reg[i] == reg)
         {
@@ -490,8 +490,8 @@ static void test_case_inst_auto_init(void)
      * mock_driver_bind has already been called by the task entry; the
      * captured stats are still fresh because no case has run yet.
      **/
-    bool seq_ok = true;
-    uint8_t got = 0U;
+    BOOL_T seq_ok = true;
+    UINT8_T got = 0U;
 
     if (!find_logged_write(SOFT_RESET, &got) || (got != 0x4Du))
     {
@@ -523,7 +523,7 @@ static void test_case_inst_auto_init(void)
         seq_ok = false;
     }
 
-    const bool ok =
+    const BOOL_T ok =
         (1U == s_stats.iic_init_count)                                     &&
         (EM7028_MOCK_EXPECTED_INIT_YIELDS  == s_stats.yield_ms_count)      &&
         (EM7028_MOCK_EXPECTED_INIT_READS   == s_stats.read_count)          &&
@@ -549,13 +549,13 @@ static void test_case_read_id(void)
     DEBUG_OUT(i, EM7028_LOG_TAG,
               "===== CASE 2: pf_read_id -- read ID_REG (0x00) =====");
     stats_reset();
-    uint8_t armed = EM7028_ID;
+    UINT8_T armed = EM7028_ID;
     mock_arm_read(&armed, 1U);
 
-    uint8_t id = 0U;
+    UINT8_T id = 0U;
     em7028_status_t ret = s_mock_driver.pf_read_id(&s_mock_driver, &id);
 
-    const bool ok = (EM7028_OK == ret)                  &&
+    const BOOL_T ok = (EM7028_OK == ret)                  &&
                     (1U        == s_stats.read_count)   &&
                     (0U        == s_stats.write_count)  &&
                     (ID_REG    == s_stats.last_read_reg)&&
@@ -579,7 +579,7 @@ static void test_case_soft_reset(void)
 
     em7028_status_t ret = s_mock_driver.pf_soft_reset(&s_mock_driver);
 
-    const bool ok = (EM7028_OK    == ret)                                  &&
+    const BOOL_T ok = (EM7028_OK    == ret)                                  &&
                     (1U           == s_stats.write_count)                  &&
                     (0U           == s_stats.read_count)                   &&
                     (SOFT_RESET   == s_stats.last_write_reg)               &&
@@ -630,8 +630,8 @@ static void test_case_apply_config(void)
     em7028_status_t ret =
         s_mock_driver.pf_apply_config(&s_mock_driver, &cfg);
 
-    uint8_t got = 0U;
-    bool seq_ok = true;
+    UINT8_T got = 0U;
+    BOOL_T seq_ok = true;
     if (!find_logged_write(HRS_CFG, &got)        || (got != 0x00u))
     {
         seq_ok = false;
@@ -653,7 +653,7 @@ static void test_case_apply_config(void)
         seq_ok = false;
     }
 
-    const bool ok = (EM7028_OK == ret)              &&
+    const BOOL_T ok = (EM7028_OK == ret)              &&
                     (5U == s_stats.write_count)     &&
                     (0U == s_stats.read_count)      &&
                     (HRS1_CTRL == s_stats.last_write_reg) &&
@@ -676,15 +676,15 @@ static void test_case_start(void)
               "write back =====");
     stats_reset();
     /* Arm HRS_CFG read response = 0 (post-apply state)                */
-    uint8_t armed_cfg = 0x00u;
+    UINT8_T armed_cfg = 0x00u;
     mock_arm_read(&armed_cfg, 1U);
 
     em7028_status_t ret = s_mock_driver.pf_start(&s_mock_driver);
 
     /* CASE 4 cfg enabled both channels: bit7 (HRS2_EN) | bit3 (HRS1_EN)
      * = 0x88                                                          */
-    const uint8_t expected = (uint8_t)((1u << 7) | (1u << 3));
-    const bool ok = (EM7028_OK == ret)                  &&
+    const UINT8_T expected = (UINT8_T)((1u << 7) | (1u << 3));
+    const BOOL_T ok = (EM7028_OK == ret)                  &&
                     (1U == s_stats.read_count)          &&
                     (1U == s_stats.write_count)         &&
                     (HRS_CFG == s_stats.last_read_reg)  &&
@@ -706,12 +706,12 @@ static void test_case_stop(void)
               "write back =====");
     stats_reset();
     /* Arm HRS_CFG read response = both enable bits set                */
-    uint8_t armed_cfg = (uint8_t)((1u << 7) | (1u << 3));
+    UINT8_T armed_cfg = (UINT8_T)((1u << 7) | (1u << 3));
     mock_arm_read(&armed_cfg, 1U);
 
     em7028_status_t ret = s_mock_driver.pf_stop(&s_mock_driver);
 
-    const bool ok = (EM7028_OK == ret)                  &&
+    const BOOL_T ok = (EM7028_OK == ret)                  &&
                     (1U == s_stats.read_count)          &&
                     (1U == s_stats.write_count)         &&
                     (HRS_CFG == s_stats.last_read_reg)  &&
@@ -754,7 +754,7 @@ static void test_case_read_frame_hrs1_only(void)
     (void)s_mock_driver.pf_apply_config(&s_mock_driver, &cfg);
 
     /* Now arm 8 bytes that decode (LSB-first) to the four test pixels */
-    static const uint8_t ppg_bytes[8] = {
+    static const UINT8_T ppg_bytes[8] = {
         0x34u, 0x12u, /* pixel 0 = 0x1234 */
         0x78u, 0x56u, /* pixel 1 = 0x5678 */
         0xCDu, 0xABu, /* pixel 2 = 0xABCD */
@@ -767,7 +767,7 @@ static void test_case_read_frame_hrs1_only(void)
     em7028_status_t ret =
         s_mock_driver.pf_read_frame(&s_mock_driver, &frame);
 
-    const bool ok =
+    const BOOL_T ok =
         (EM7028_OK == ret)                                                  &&
         (1U                          == s_stats.read_count)                 &&
         (0U                          == s_stats.write_count)                &&
@@ -813,7 +813,7 @@ static void test_case_read_frame_both(void)
     };
     (void)s_mock_driver.pf_apply_config(&s_mock_driver, &cfg);
 
-    static const uint8_t ppg_bytes[8] = {
+    static const UINT8_T ppg_bytes[8] = {
         0x34u, 0x12u, 0x78u, 0x56u, 0xCDu, 0xABu, 0x01u, 0xEFu,
     };
     stats_reset();
@@ -823,7 +823,7 @@ static void test_case_read_frame_both(void)
     em7028_status_t ret =
         s_mock_driver.pf_read_frame(&s_mock_driver, &frame);
 
-    const bool ok =
+    const BOOL_T ok =
         (EM7028_OK == ret)                                                  &&
         (2U                          == s_stats.read_count)                 &&
         (HRS1_DATA0_L                == s_stats.last_read_reg)              &&
@@ -845,14 +845,14 @@ static void test_case_read_reg_raw(void)
               "===== CASE 9: pf_read_reg -- raw access reads INT_CTRL "
               "(0x0E) =====");
     stats_reset();
-    uint8_t armed = 0xA5u;
+    UINT8_T armed = 0xA5u;
     mock_arm_read(&armed, 1U);
 
-    uint8_t val = 0U;
+    UINT8_T val = 0U;
     em7028_status_t ret =
         s_mock_driver.pf_read_reg(&s_mock_driver, INT_CTRL, &val);
 
-    const bool ok = (EM7028_OK == ret)                  &&
+    const BOOL_T ok = (EM7028_OK == ret)                  &&
                     (1U == s_stats.read_count)          &&
                     (0U == s_stats.write_count)         &&
                     (INT_CTRL == s_stats.last_read_reg) &&
@@ -877,7 +877,7 @@ static void test_case_write_reg_raw(void)
     em7028_status_t ret =
         s_mock_driver.pf_write_reg(&s_mock_driver, HRS_LT_L, 0x12u);
 
-    const bool ok = (EM7028_OK == ret)                  &&
+    const BOOL_T ok = (EM7028_OK == ret)                  &&
                     (1U == s_stats.write_count)         &&
                     (0U == s_stats.read_count)          &&
                     (HRS_LT_L == s_stats.last_write_reg)&&
@@ -901,7 +901,7 @@ static void test_case_null_param_rejected(void)
     em7028_status_t ret =
         s_mock_driver.pf_read_id(&s_mock_driver, NULL);
 
-    const bool ok = (EM7028_ERRORPARAMETER == ret) &&
+    const BOOL_T ok = (EM7028_ERRORPARAMETER == ret) &&
                     (0U == s_stats.read_count)    &&
                     (0U == s_stats.write_count);
     case_report("CASE 11 null-arg reject", ok);
@@ -924,16 +924,16 @@ static void test_case_deinit_clears_is_init(void)
     em7028_status_t ret = s_mock_driver.pf_deinit(&s_mock_driver);
 
     /* deinit writes HRS_CFG=0 best-effort + calls iic_deinit            */
-    const bool deinit_ok = (EM7028_OK == ret)                  &&
+    const BOOL_T deinit_ok = (EM7028_OK == ret)                  &&
                            (1U == s_stats.write_count)         &&
                            (HRS_CFG == s_stats.last_write_reg) &&
                            (0x00u == s_stats.last_write_byte)  &&
                            (1U == s_stats.iic_deinit_count);
 
     /* Confirm is_init was cleared: subsequent typed call should bounce */
-    uint8_t id = 0U;
+    UINT8_T id = 0U;
     em7028_status_t after = s_mock_driver.pf_read_id(&s_mock_driver, &id);
-    const bool guard_ok = (EM7028_ERRORPARAMETER == after);
+    const BOOL_T guard_ok = (EM7028_ERRORPARAMETER == after);
 
     case_report("CASE 12 deinit + is_init cleared",
                 deinit_ok && guard_ok);

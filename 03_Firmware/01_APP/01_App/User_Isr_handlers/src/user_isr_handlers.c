@@ -17,6 +17,7 @@
 
 //******************************** Includes *********************************//
 #include "main.h"
+#include "platform_type.h"
 
 #include "i2c.h"
 #include "bsp_mpuxxxx_handler.h"
@@ -40,7 +41,7 @@ void  *g_cst816t_pin_interrupt_arg                        = NULL;
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+void HAL_GPIO_EXTI_Callback(UINT16_T GPIO_Pin)
 {
     if (GPIO_PIN_5 == GPIO_Pin)
     {

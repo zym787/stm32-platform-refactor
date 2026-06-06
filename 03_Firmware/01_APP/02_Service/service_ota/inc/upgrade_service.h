@@ -29,6 +29,7 @@
 #include <stdint.h>
 
 #include "cfg_ota.h"
+#include "platform_error.h"
 //******************************** Includes *********************************//
 
 //******************************* Functions *********************************//
@@ -37,24 +38,26 @@
 *
 * @param[out] out : caller-supplied buffer; populated on success.
 *
-* @return  0  success (magic valid)
-*         -1  invalid magic (caller should treat as uninitialised)
+* @return  PLATFORM_OK              success (magic valid)
+*          PLATFORM_ERR_PARAM       out == NULL
+*          PLATFORM_ERR_NOT_INITIALIZED  invalid magic (treat as uninitialised)
 * */
-int8_t ota_flag_read(ota_flag_t *out);
+platform_err_t ota_flag_read(ota_flag_t *out);
 
 /**
 * @brief Erase Sector 2 and program a fresh OTA flag struct.
 *
 * @param[in] in : struct to program; caller fills magic = CFG_OTA_FLAG_MAGIC.
 *
-* @return  0 success, -1 erase/program failure.
+* @return  PLATFORM_OK on success; PLATFORM_ERR_PARAM on NULL; otherwise the
+*          MCU IFlash port's error code (erase/program failure) is propagated.
 *
 * @warning Disables global interrupts for the duration (~1 s on F411 single
 *          bank). All ISR-driven activity (SysTick / UART RX / DMA / SPI)
 *          pauses while this runs. Call from a low-priority context, never
 *          from an ISR.
 * */
-int8_t ota_flag_write(const ota_flag_t *in);
+platform_err_t ota_flag_write(const ota_flag_t *in);
 
 //******************************* Functions *********************************//
 

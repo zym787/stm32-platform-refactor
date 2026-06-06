@@ -18,6 +18,7 @@
 
 //******************************** Includes *********************************//
 #include "user_task_reso_config.h"
+#include "platform_type.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -40,7 +41,7 @@ static void stack_higher_water_report_once(void)
 {
     DEBUG_OUT(i, STACK_MONITOR_LOG_TAG, "---------------------------------------------");
 
-    for (uint32_t i = 0; i < (uint32_t)USER_TASK_NUM; i++)
+    for (UINT32_T i = 0; i < (UINT32_T)USER_TASK_NUM; i++)
     {
         const char        *task_name   = g_user_task_cfg[i].task_name;
         osal_task_handle_t task_handle = g_user_task_cfg[i].task_handle;
@@ -51,9 +52,9 @@ static void stack_higher_water_report_once(void)
         }
 
         UBaseType_t min_free_words = uxTaskGetStackHighWaterMark((TaskHandle_t)task_handle);
-        uint32_t    cfg_words      = (uint32_t)g_user_task_cfg[i].stack_depth;
-        uint32_t    used_max_words = (cfg_words > (uint32_t)min_free_words) ?
-                                     (cfg_words - (uint32_t)min_free_words) : 0U;
+        UINT32_T    cfg_words      = (UINT32_T)g_user_task_cfg[i].stack_depth;
+        UINT32_T    used_max_words = (cfg_words > (UINT32_T)min_free_words) ?
+                                     (cfg_words - (UINT32_T)min_free_words) : 0U;
 
         DEBUG_OUT(i, STACK_MONITOR_LOG_TAG,
                   "[%-25s] cfg=%5luW  used_max=%5luW  min_free=%5luW",

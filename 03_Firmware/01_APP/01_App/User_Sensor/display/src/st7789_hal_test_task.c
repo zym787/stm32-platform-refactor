@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 #include <stddef.h>
 #include <stdbool.h>
 
@@ -44,6 +44,7 @@
 #include "user_task_reso_config.h"
 #include "bsp_st7789_driver.h"
 #include "bsp_st7789_reg.h"
+#include "platform_def.h"
 #include "Debug.h"
 //******************************** Includes *********************************//
 
@@ -102,10 +103,10 @@ static st7789_status_t hal_spi_deinit(void)
     return ST7789_OK;
 }
 
-static st7789_status_t hal_spi_transmit(uint8_t const *p_data,
-                                        uint32_t       data_length)
+static st7789_status_t hal_spi_transmit(UINT8_T const *p_data,
+                                        UINT32_T       data_length)
 {
-    /* HAL caps Size at uint16_t.  All blocking transfers in the driver are
+    /* HAL caps Size at UINT16_T.  All blocking transfers in the driver are
      * short (command byte + up to ~16 B of register data), so the cast is
      * safe, but bail loudly if that ever stops being true. */
     if (data_length > UINT16_MAX)
@@ -114,13 +115,13 @@ static st7789_status_t hal_spi_transmit(uint8_t const *p_data,
     }
 
     HAL_StatusTypeDef hs =
-        HAL_SPI_Transmit(&hspi1, (uint8_t *)p_data, (uint16_t)data_length,
+        HAL_SPI_Transmit(&hspi1, (UINT8_T *)p_data, (UINT16_T)data_length,
                          ST7789_HAL_SPI_TX_TIMEOUT_MS);
     return (HAL_OK == hs) ? ST7789_OK : ST7789_ERROR;
 }
 
-static st7789_status_t hal_spi_transmit_dma(uint8_t const *p_data,
-                                            uint32_t       data_length)
+static st7789_status_t hal_spi_transmit_dma(UINT8_T const *p_data,
+                                            UINT32_T       data_length)
 {
     if (data_length > UINT16_MAX)
     {
@@ -128,11 +129,11 @@ static st7789_status_t hal_spi_transmit_dma(uint8_t const *p_data,
     }
 
     HAL_StatusTypeDef hs =
-        HAL_SPI_Transmit_DMA(&hspi1, (uint8_t *)p_data, (uint16_t)data_length);
+        HAL_SPI_Transmit_DMA(&hspi1, (UINT8_T *)p_data, (UINT16_T)data_length);
     return (HAL_OK == hs) ? ST7789_OK : ST7789_ERROR;
 }
 
-static st7789_status_t hal_spi_wait_dma_complete(uint32_t timeout_ms)
+static st7789_status_t hal_spi_wait_dma_complete(UINT32_T timeout_ms)
 {
     /* After HAL_SPI_Transmit_DMA the SPI state machine sits in
      * HAL_SPI_STATE_BUSY_TX until the DMA2_Stream2 IRQ fires TxCpltCallback
@@ -140,7 +141,7 @@ static st7789_status_t hal_spi_wait_dma_complete(uint32_t timeout_ms)
      * DMA TC flag directly -- the HAL callback also clears CR2_TXDMAEN and
      * waits for the SPI shift register to drain, which is exactly the
      * "safe to release CS" condition we need. */
-    uint32_t start = HAL_GetTick();
+    UINT32_T start = HAL_GetTick();
     while (HAL_SPI_GetState(&hspi1) != HAL_SPI_STATE_READY)
     {
         if ((HAL_GetTick() - start) > timeout_ms)
@@ -151,21 +152,21 @@ static st7789_status_t hal_spi_wait_dma_complete(uint32_t timeout_ms)
     return ST7789_OK;
 }
 
-static st7789_status_t hal_spi_write_cs_pin(uint8_t state)
+static st7789_status_t hal_spi_write_cs_pin(UINT8_T state)
 {
     HAL_GPIO_WritePin(DISPALY_SPI1_CS_GPIO_Port, DISPALY_SPI1_CS_Pin,
                       (0U != state) ? GPIO_PIN_SET : GPIO_PIN_RESET);
     return ST7789_OK;
 }
 
-static st7789_status_t hal_spi_write_dc_pin(uint8_t state)
+static st7789_status_t hal_spi_write_dc_pin(UINT8_T state)
 {
     HAL_GPIO_WritePin(DISPALY_SPI1_DC_GPIO_Port, DISPALY_SPI1_DC_Pin,
                       (0U != state) ? GPIO_PIN_SET : GPIO_PIN_RESET);
     return ST7789_OK;
 }
 
-static st7789_status_t hal_spi_write_rst_pin(uint8_t state)
+static st7789_status_t hal_spi_write_rst_pin(UINT8_T state)
 {
     HAL_GPIO_WritePin(DISPALY_SPI1_RST_GPIO_Port, DISPALY_SPI1_RST_Pin,
                       (0U != state) ? GPIO_PIN_SET : GPIO_PIN_RESET);
@@ -173,12 +174,12 @@ static st7789_status_t hal_spi_write_rst_pin(uint8_t state)
 }
 
 /* ---- Timebase / OS ------------------------------------------------------ */
-static uint32_t hal_tb_get_tick_ms(void)
+static UINT32_T hal_tb_get_tick_ms(void)
 {
     return HAL_GetTick();
 }
 
-static void hal_tb_delay_ms(uint32_t ms)
+static void hal_tb_delay_ms(UINT32_T ms)
 {
     /* The driver calls this for datasheet-mandated reset / SLPOUT timings.
      * Using osal_task_delay (not HAL_Delay) lets other tasks run during
@@ -186,7 +187,7 @@ static void hal_tb_delay_ms(uint32_t ms)
     osal_task_delay(ms);
 }
 
-static void hal_os_delay_ms(uint32_t ms)
+static void hal_os_delay_ms(UINT32_T ms)
 {
     osal_task_delay(ms);
 }
@@ -249,9 +250,9 @@ void st7789_hal_test_task(void *argument)
     DEBUG_OUT(i, ST7789_LOG_TAG,
               "st7789_hal_test_task: panel ready, cycling colors");
 
-    static const uint16_t s_color_cycle[] = {BLACK, RED, GREEN, BLUE, WHITE};
-    const uint32_t cycle_len = sizeof(s_color_cycle) / sizeof(s_color_cycle[0]);
-    uint32_t       idx       = 0U;
+    static const UINT16_T s_color_cycle[] = {BLACK, RED, GREEN, BLUE, WHITE};
+    const UINT32_T cycle_len = ARRAY_SIZE(s_color_cycle);
+    UINT32_T       idx       = 0U;
 
     // s_hal_driver.pf_st7789_fill_region(&s_hal_driver,
     //                               0U, 0U,
@@ -262,8 +263,8 @@ void st7789_hal_test_task(void *argument)
 
     for (;;)
     {
-        const uint16_t color    = s_color_cycle[idx];
-        const uint16_t fg_color = (BLACK == color) ? WHITE : color;
+        const UINT16_T color    = s_color_cycle[idx];
+        const UINT16_T fg_color = (BLACK == color) ? WHITE : color;
         do
         {
             ret = s_hal_driver.pf_st7789_fill_color(&s_hal_driver, BLACK);
@@ -337,11 +338,11 @@ void st7789_hal_test_task(void *argument)
             // }
 
             {
-                uint16_t image_24x24[24U * 24U];
+                UINT16_T image_24x24[24U * 24U];
 
-                for (uint32_t row = 0U; row < 24U; row++)
+                for (UINT32_T row = 0U; row < 24U; row++)
                 {
-                    for (uint32_t col = 0U; col < 24U; col++)
+                    for (UINT32_T col = 0U; col < 24U; col++)
                     {
                         image_24x24[(row * 24U) + col] =
                             (((row + col) & 0x01U) != 0U) ? fg_color : BLUE;

@@ -35,6 +35,7 @@
 
 //******************************** Includes *********************************//
 #include "bsp_wrapper_temp_humi.h"
+#include "platform_type.h"
 #include "osal_wrapper_adapter.h"
 #include "Debug.h"
 //******************************** Includes *********************************//
@@ -61,7 +62,7 @@ void temp_humi_test_task_a(void *argument)
 {
     osal_task_delay(1000);
     (void)argument;
-    float              temp = 0.0f;
+    FLOAT32_T              temp = 0.0f;
     platform_err_t ret;
 
     DEBUG_OUT(i, TEMP_HUMI_TEST_LOG_TAG, "[TaskA] started");
@@ -74,7 +75,7 @@ void temp_humi_test_task_a(void *argument)
         {
             DEBUG_OUT(i, TEMP_HUMI_TEST_LOG_TAG,
                       "[TaskA] temp = %.2f C",
-                      (double)temp);
+                      (FLOAT64_T)temp);
         }
         else
         {
@@ -99,8 +100,8 @@ void temp_humi_test_task_b(void *argument)
 {
     osal_task_delay(1000);
     (void)argument;
-    float              temp = 0.0f;
-    float              humi = 0.0f;
+    FLOAT32_T              temp = 0.0f;
+    FLOAT32_T              humi = 0.0f;
     platform_err_t ret;
 
     DEBUG_OUT(i, TEMP_HUMI_TEST_LOG_TAG, "[TaskB] started");
@@ -113,8 +114,8 @@ void temp_humi_test_task_b(void *argument)
         {
             DEBUG_OUT(i, TEMP_HUMI_TEST_LOG_TAG,
                       "[TaskB] temp = %.2f C  humi = %.2f %%",
-                      (double)temp,
-                      (double)humi);
+                      (FLOAT64_T)temp,
+                      (FLOAT64_T)humi);
         }
         else
         {

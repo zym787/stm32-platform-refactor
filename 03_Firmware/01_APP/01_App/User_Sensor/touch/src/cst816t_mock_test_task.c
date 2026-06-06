@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
@@ -70,30 +70,30 @@ static void (*s_int_cb)(void *, void *)  = NULL;
  */
 typedef struct
 {
-    uint32_t iic_init_count;
-    uint32_t iic_deinit_count;
-    uint32_t write_count;
-    uint32_t read_count;
-    uint32_t delay_ms_count;
-    uint32_t yield_ms_count;
-    uint32_t last_delay_ms;
-    uint32_t last_yield_ms;
-    uint16_t last_write_reg;
-    uint16_t last_read_reg;
-    uint16_t last_write_len;
-    uint16_t last_read_len;
-    uint8_t  last_write_byte;
+    UINT32_T iic_init_count;
+    UINT32_T iic_deinit_count;
+    UINT32_T write_count;
+    UINT32_T read_count;
+    UINT32_T delay_ms_count;
+    UINT32_T yield_ms_count;
+    UINT32_T last_delay_ms;
+    UINT32_T last_yield_ms;
+    UINT16_T last_write_reg;
+    UINT16_T last_read_reg;
+    UINT16_T last_write_len;
+    UINT16_T last_read_len;
+    UINT8_T  last_write_byte;
     void    *last_i2c_handle;
-    uint16_t last_dev_addr;
+    UINT16_T last_dev_addr;
 } mock_stats_t;
 
 static mock_stats_t s_stats;
-static uint8_t      s_next_read[8];
-static uint16_t     s_next_read_len;
-static uint32_t     s_fake_tick_ms;
+static UINT8_T      s_next_read[8];
+static UINT16_T     s_next_read_len;
+static UINT32_T     s_fake_tick_ms;
 
-static uint32_t     s_pass_count;
-static uint32_t     s_fail_count;
+static UINT32_T     s_pass_count;
+static UINT32_T     s_fail_count;
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
@@ -111,7 +111,7 @@ static void stats_reset(void)
  *
  * @return     None.
  * */
-static void mock_arm_read(uint8_t const *p_data, uint16_t len)
+static void mock_arm_read(UINT8_T const *p_data, UINT16_T len)
 {
     if ((p_data == NULL) || (len == 0U))
     {
@@ -120,7 +120,7 @@ static void mock_arm_read(uint8_t const *p_data, uint16_t len)
     }
     if (len > sizeof(s_next_read))
     {
-        len = (uint16_t)sizeof(s_next_read);
+        len = (UINT16_T)sizeof(s_next_read);
     }
     memcpy(s_next_read, p_data, len);
     s_next_read_len = len;
@@ -144,12 +144,12 @@ static cst816t_status_t mock_iic_deinit(void const * const hi2c)
 }
 
 static cst816t_status_t mock_iic_mem_write(void    *i2c,
-                                           uint16_t des_addr,
-                                           uint16_t mem_addr,
-                                           uint16_t mem_size,
-                                           uint8_t *p_data,
-                                           uint16_t size,
-                                           uint32_t timeout)
+                                           UINT16_T des_addr,
+                                           UINT16_T mem_addr,
+                                           UINT16_T mem_size,
+                                           UINT8_T *p_data,
+                                           UINT16_T size,
+                                           UINT32_T timeout)
 {
     (void)mem_size;
     (void)timeout;
@@ -167,12 +167,12 @@ static cst816t_status_t mock_iic_mem_write(void    *i2c,
 }
 
 static cst816t_status_t mock_iic_mem_read(void    *i2c,
-                                          uint16_t des_addr,
-                                          uint16_t mem_addr,
-                                          uint16_t mem_size,
-                                          uint8_t *p_data,
-                                          uint16_t size,
-                                          uint32_t timeout)
+                                          UINT16_T des_addr,
+                                          UINT16_T mem_addr,
+                                          UINT16_T mem_size,
+                                          UINT8_T *p_data,
+                                          UINT16_T size,
+                                          UINT32_T timeout)
 {
     (void)mem_size;
     (void)timeout;
@@ -186,14 +186,14 @@ static cst816t_status_t mock_iic_mem_read(void    *i2c,
      * Serve the synthetic response armed by the test; zero-fill any bytes
      * the test forgot to provide so old values cannot leak between cases.
      **/
-    uint16_t copy = (size < s_next_read_len) ? size : s_next_read_len;
+    UINT16_T copy = (size < s_next_read_len) ? size : s_next_read_len;
     if ((p_data != NULL) && (copy > 0U))
     {
         memcpy(p_data, s_next_read, copy);
     }
     if ((p_data != NULL) && (size > copy))
     {
-        memset(&p_data[copy], 0, (size_t)(size - copy));
+        memset(&p_data[copy], 0, (SIZE_T)(size - copy));
     }
     DEBUG_OUT(i, CST816T_LOG_TAG,
               "mock mem_read addr=0x%02X reg=0x%02X len=%u served=%u",
@@ -203,7 +203,7 @@ static cst816t_status_t mock_iic_mem_read(void    *i2c,
 }
 
 /* ---- Timebase / delay / OS mocks ---------------------------------------- */
-static uint32_t mock_tb_get_tick_count(void)
+static UINT32_T mock_tb_get_tick_count(void)
 {
     return s_fake_tick_ms;
 }
@@ -213,7 +213,7 @@ static void mock_delay_init(void)
     DEBUG_OUT(i, CST816T_LOG_TAG, "mock delay_init");
 }
 
-static void mock_delay_ms(uint32_t const ms)
+static void mock_delay_ms(UINT32_T const ms)
 {
     s_stats.delay_ms_count++;
     s_stats.last_delay_ms = ms;
@@ -221,12 +221,12 @@ static void mock_delay_ms(uint32_t const ms)
     DEBUG_OUT(i, CST816T_LOG_TAG, "mock delay_ms %u", (unsigned)ms);
 }
 
-static void mock_delay_us(uint32_t const us)
+static void mock_delay_us(UINT32_T const us)
 {
     (void)us;
 }
 
-static void mock_os_yield(uint32_t const ms)
+static void mock_os_yield(UINT32_T const ms)
 {
     s_stats.yield_ms_count++;
     s_stats.last_yield_ms = ms;
@@ -264,7 +264,7 @@ static cst816t_status_t mock_driver_bind(void)
      * Arm the CHIPID response before inst, because bsp_cst816t_inst invokes
      * cst816t_init which reads CHIPID synchronously.
      **/
-    uint8_t chip_id = CST816T_MOCK_EXPECTED_CHIP_ID;
+    UINT8_T chip_id = CST816T_MOCK_EXPECTED_CHIP_ID;
     mock_arm_read(&chip_id, 1U);
 
     return bsp_cst816t_inst(&s_mock_driver, &s_mock_iic, &s_mock_timebase,
@@ -272,7 +272,7 @@ static cst816t_status_t mock_driver_bind(void)
 }
 
 /* ---- Pass/fail helpers -------------------------------------------------- */
-static void case_report(const char *name, bool ok)
+static void case_report(const char *name, BOOL_T ok)
 {
     if (ok)
     {
@@ -306,10 +306,10 @@ static void case_report(const char *name, bool ok)
  *
  * @return     None.
  * */
-static void assert_single_write(const char *name, uint8_t reg, uint8_t value,
+static void assert_single_write(const char *name, UINT8_T reg, UINT8_T value,
                                 cst816t_status_t ret)
 {
-    const bool ok = (CST816T_OK == ret)                              &&
+    const BOOL_T ok = (CST816T_OK == ret)                              &&
                     (1U == s_stats.write_count)                      &&
                     (0U == s_stats.read_count)                       &&
                     (reg == s_stats.last_write_reg)                  &&
@@ -332,12 +332,12 @@ static void test_case_init(void)
               (unsigned)CST816T_MOCK_EXPECTED_BOOT_DELAY_MS,
               (unsigned)CST816T_MOCK_EXPECTED_INIT_WRITES);
     stats_reset();
-    uint8_t chip_id = CST816T_MOCK_EXPECTED_CHIP_ID;
+    UINT8_T chip_id = CST816T_MOCK_EXPECTED_CHIP_ID;
     mock_arm_read(&chip_id, 1U);
 
     cst816t_status_t ret = s_mock_driver.pf_cst816t_init(s_mock_driver);
 
-    const bool ok = (CST816T_OK == ret)                                     &&
+    const BOOL_T ok = (CST816T_OK == ret)                                     &&
                     (1U == s_stats.iic_init_count)                          &&
                     (1U == s_stats.yield_ms_count)                          &&
                     (CST816T_MOCK_EXPECTED_BOOT_DELAY_MS ==
@@ -357,14 +357,14 @@ static void test_case_get_chip_id(void)
     DEBUG_OUT(i, CST816T_LOG_TAG,
               "===== CASE 2: pf_cst816t_get_chip_id -- read 0xA7 =====");
     stats_reset();
-    uint8_t chip_id_mock = CST816T_MOCK_EXPECTED_CHIP_ID;
+    UINT8_T chip_id_mock = CST816T_MOCK_EXPECTED_CHIP_ID;
     mock_arm_read(&chip_id_mock, 1U);
 
-    uint8_t chip_id = 0U;
+    UINT8_T chip_id = 0U;
     cst816t_status_t ret =
         s_mock_driver.pf_cst816t_get_chip_id(s_mock_driver, &chip_id);
 
-    const bool ok = (CST816T_OK == ret)                    &&
+    const BOOL_T ok = (CST816T_OK == ret)                    &&
                     (1U == s_stats.read_count)             &&
                     (0U == s_stats.write_count)            &&
                     (CHIPID == s_stats.last_read_reg)      &&
@@ -378,14 +378,14 @@ static void test_case_get_finger_num(void)
     DEBUG_OUT(i, CST816T_LOG_TAG,
               "===== CASE 3: pf_cst816t_get_finger_num -- read 0x02 =====");
     stats_reset();
-    uint8_t fingers = 1U;
+    UINT8_T fingers = 1U;
     mock_arm_read(&fingers, 1U);
 
-    uint8_t num = 0U;
+    UINT8_T num = 0U;
     cst816t_status_t ret =
         s_mock_driver.pf_cst816t_get_finger_num(s_mock_driver, &num);
 
-    const bool ok = (CST816T_OK == ret)                 &&
+    const BOOL_T ok = (CST816T_OK == ret)                 &&
                     (1U == s_stats.read_count)          &&
                     (FINGER_NUM == s_stats.last_read_reg) &&
                     (1U == s_stats.last_read_len)       &&
@@ -399,14 +399,14 @@ static void test_case_get_gesture_id(void)
               "===== CASE 4: pf_cst816t_get_gesture_id -- read 0x01 (CLICK) "
               "=====");
     stats_reset();
-    uint8_t gesture_raw = (uint8_t)CLICK;   /* 0x05 */
+    UINT8_T gesture_raw = (UINT8_T)CLICK;   /* 0x05 */
     mock_arm_read(&gesture_raw, 1U);
 
     cst816t_gesture_id_t gesture = NOGESTURE;
     cst816t_status_t ret =
         s_mock_driver.pf_cst816t_get_gesture_id(s_mock_driver, &gesture);
 
-    const bool ok = (CST816T_OK == ret)                   &&
+    const BOOL_T ok = (CST816T_OK == ret)                   &&
                     (1U == s_stats.read_count)            &&
                     (GESTURE_ID == s_stats.last_read_reg) &&
                     (1U == s_stats.last_read_len)         &&
@@ -418,9 +418,9 @@ static void test_case_get_xy_axis(void)
 {
     /* XposH[3:0]=0x0, XposL=0x78 -> X=0x078=120
      * YposH[3:0]=0x0, YposL=0xC8 -> Y=0x0C8=200 */
-    static const uint8_t xy_raw[4] = {0x00U, 0x78U, 0x00U, 0xC8U};
-    const uint16_t expected_x = 120U;
-    const uint16_t expected_y = 200U;
+    static const UINT8_T xy_raw[4] = {0x00U, 0x78U, 0x00U, 0xC8U};
+    const UINT16_T expected_x = 120U;
+    const UINT16_T expected_y = 200U;
 
     DEBUG_OUT(i, CST816T_LOG_TAG,
               "===== CASE 5: pf_cst816t_get_xy_axis -- burst 4B from 0x03 "
@@ -435,7 +435,7 @@ static void test_case_get_xy_axis(void)
     cst816t_status_t ret =
         s_mock_driver.pf_cst816t_get_xy_axis(s_mock_driver, &xy);
 
-    const bool ok = (CST816T_OK == ret)                &&
+    const BOOL_T ok = (CST816T_OK == ret)                &&
                     (1U == s_stats.read_count)         &&
                     (X_POSH == s_stats.last_read_reg)  &&
                     (4U == s_stats.last_read_len)      &&
@@ -472,7 +472,7 @@ static void test_case_set_err_reset_ctl(void)
     cst816t_status_t ret = s_mock_driver.pf_cst816t_set_err_reset_ctl(
         s_mock_driver, ERR_RESET_DOUBLE);
     assert_single_write("CASE 8 set_err_reset_ctl", ERRRESETCTL,
-                        (uint8_t)ERR_RESET_DOUBLE, ret);
+                        (UINT8_T)ERR_RESET_DOUBLE, ret);
 }
 
 static void test_case_set_long_press_tick(void)
@@ -495,7 +495,7 @@ static void test_case_set_motion_mask(void)
     cst816t_status_t ret =
         s_mock_driver.pf_cst816t_set_motion_mask(s_mock_driver, EN_DCLICK);
     assert_single_write("CASE 10 set_motion_mask", MOTIONMASK,
-                        (uint8_t)EN_DCLICK, ret);
+                        (UINT8_T)EN_DCLICK, ret);
 }
 
 static void test_case_set_irq_pulse_width(void)
@@ -601,7 +601,7 @@ static void test_case_set_irq_ctl(void)
     stats_reset();
     cst816t_status_t ret =
         s_mock_driver.pf_cst816t_set_irq_ctl(&s_mock_driver, EN_TOUCH);
-    assert_single_write("CASE 20 set_irq_ctl", IRQCTL, (uint8_t)EN_TOUCH, ret);
+    assert_single_write("CASE 20 set_irq_ctl", IRQCTL, (UINT8_T)EN_TOUCH, ret);
 }
 
 static void test_case_set_auto_reset(void)
@@ -655,7 +655,7 @@ static void test_case_null_param_rejected(void)
     cst816t_status_t ret =
         s_mock_driver.pf_cst816t_get_xy_axis(s_mock_driver, NULL);
 
-    const bool ok = (CST816T_ERRORPARAMETER == ret) &&
+    const BOOL_T ok = (CST816T_ERRORPARAMETER == ret) &&
                     (0U == s_stats.read_count)      &&
                     (0U == s_stats.write_count);
     case_report("CASE 25 null-arg reject", ok);
@@ -668,7 +668,7 @@ static void test_case_deinit(void)
     stats_reset();
     cst816t_status_t ret = s_mock_driver.pf_cst816t_deinit(&s_mock_driver);
 
-    const bool ok = (CST816T_OK == ret)                    &&
+    const BOOL_T ok = (CST816T_OK == ret)                    &&
                     (1U == s_stats.iic_deinit_count)       &&
                     (0U == s_stats.write_count)            &&
                     (0U == s_stats.read_count);
@@ -680,7 +680,7 @@ static void test_case_int_callback_registered(void)
     DEBUG_OUT(i, CST816T_LOG_TAG,
               "===== CASE 27: bsp_cst816t_inst populates pp_int_callback "
               "=====");
-    const bool ok = (s_int_cb != NULL);
+    const BOOL_T ok = (s_int_cb != NULL);
     if (ok)
     {
         /**

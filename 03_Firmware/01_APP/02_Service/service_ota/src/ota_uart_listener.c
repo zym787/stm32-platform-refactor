@@ -50,7 +50,7 @@
 
 //******************************** Includes *********************************//
 #include <string.h>
-#include <stdint.h>
+#include "platform_type.h"
 
 #include "osal_wrapper_adapter.h"
 #include "osal_error.h"
@@ -66,8 +66,8 @@
 
 //******************************** Defines **********************************//
 /* Magic-byte sequences shared with the PC-side OTA driver. */
-static const uint8_t MAGIC_START[3] = { 0x11U, 0x22U, 0x33U };
-static const uint8_t MAGIC_APPLY[3] = { 0x77U, 0x88U, 0x99U };
+static const UINT8_T MAGIC_START[3] = { 0x11U, 0x22U, 0x33U };
+static const UINT8_T MAGIC_APPLY[3] = { 0x77U, 0x88U, 0x99U };
 //******************************** Defines **********************************//
 
 //******************************* Variables *********************************//
@@ -78,7 +78,7 @@ static const uint8_t MAGIC_APPLY[3] = { 0x77U, 0x88U, 0x99U };
  *        so the bootloader knows how many bytes to back up before flashing
  *        the new image.
  */
-extern uint32_t                  __app_size__;
+extern UINT32_T                  __app_size__;
 
 /**
  * @brief Ymodem double-buffer: two 1030-byte packet slots ping-pong'd by
@@ -86,7 +86,7 @@ extern uint32_t                  __app_size__;
  *        through Queue_AppDataBuffer + Semaphore_ExtFlashState handshake.
  *        BSS-allocated to avoid pushing 2 KB onto the task stack.
  */
-static uint8_t                   s_ymodem_buf[2][1030];
+static UINT8_T                   s_ymodem_buf[2][1030];
 //******************************* Variables *********************************//
 
 //******************************* Functions *********************************//
@@ -100,8 +100,8 @@ static uint8_t                   s_ymodem_buf[2][1030];
 *
 * @return true if `window` now equals `target`, else false.
 * */
-static bool slide_and_match(uint8_t window[3], uint8_t byte,
-                            const uint8_t target[3])
+static BOOL_T slide_and_match(UINT8_T window[3], UINT8_T byte,
+                            const UINT8_T target[3])
 {
     window[0] = window[1];
     window[1] = window[2];
@@ -114,33 +114,37 @@ static bool slide_and_match(uint8_t window[3], uint8_t byte,
 /**
 * @brief Run one Ymodem download cycle and stamp the OTA flag on success.
 *
-* Called from the YMODEM_ACTIVE state. Returns 0 on success (image staged
-* + ota_flag written), -1 on any failure inside the receive / flush / flag
-* write path. Caller decides whether to re-scan or apply based on result.
+* Called from the YMODEM_ACTIVE state. Returns PLATFORM_OK on success (image
+* staged + ota_flag written), or an error code on any failure inside the
+* receive / flush / flag write path. Caller decides whether to re-scan or
+* apply based on result.
 * */
-static int8_t ota_run_ymodem_session(void)
+static platform_err_t ota_run_ymodem_session(void)
 {
     DEBUG_OUT(i, YMODEM_LOG_TAG, "OTA download starting, awaiting Ymodem");
 
-    const int32_t rx_result = Ymodem_Receive(s_ymodem_buf);
+    /* Ymodem_Receive returns a byte count (a value, not a status): >0 bytes
+       on success, <=0 on abort. Keep it as INT32_T. */
+    const INT32_T rx_result = Ymodem_Receive(s_ymodem_buf);
 
     if (rx_result <= 0)
     {
         DEBUG_OUT(e, YMODEM_LOG_TAG,
                   "Ymodem_Receive returned %d, OTA staging aborted",
                   (int)rx_result);
-        return -1;
+        return PLATFORM_ERR_GENERAL;
     }
 
     /**
     * Drain firmware_upgrade_task's 4 KB sector-aligned coalescing buffer.
     * Without this the final sub-4KB chunk never reaches storage.
     **/
-    if (firmware_upgrade_flush_staged() < 0)
+    platform_err_t flush_ret = firmware_upgrade_flush_staged();
+    if (PLATFORM_IS_ERR(flush_ret))
     {
         DEBUG_OUT(e, YMODEM_LOG_TAG,
                   "Final-sector flush failed, aborting stage");
-        return -1;
+        return flush_ret;
     }
 
     /**
@@ -148,25 +152,26 @@ static int8_t ota_run_ymodem_session(void)
     * state=DOWNLOAD_FINISHED, reads image_size, and applies.
     **/
     ota_flag_t f;
-    if (ota_flag_read(&f) != 0)
+    if (PLATFORM_IS_ERR(ota_flag_read(&f)))
     {
         f.magic = CFG_OTA_FLAG_MAGIC;
     }
-    f.current_app_size = (uint32_t)&__app_size__;
+    f.current_app_size = (UINT32_T)&__app_size__;
     f.state            = CFG_OTA_DOWNLOAD_FINISHED;
-    f.image_size       = (uint32_t)rx_result;
+    f.image_size       = (UINT32_T)rx_result;
 
-    if (ota_flag_write(&f) != 0)
+    platform_err_t write_ret = ota_flag_write(&f);
+    if (PLATFORM_IS_ERR(write_ret))
     {
         DEBUG_OUT(e, YMODEM_LOG_TAG,
                   "ota_flag_write failed, image will NOT apply on boot");
-        return -1;
+        return write_ret;
     }
 
     DEBUG_OUT(i, YMODEM_LOG_TAG,
               "OTA staged: %ld bytes; awaiting apply trigger",
               (long)rx_result);
-    return 0;
+    return PLATFORM_OK;
 }
 
 /**
@@ -180,7 +185,7 @@ void ota_service_task(void *argument)
     (void)argument;
 
     enum { SCAN_START, SCAN_APPLY } scan_state = SCAN_START;
-    uint8_t window[3] = { 0U, 0U, 0U };
+    UINT8_T window[3] = { 0U, 0U, 0U };
 
     DEBUG_OUT(i, YMODEM_LOG_TAG,
               "ota_service_task entered (scanning for start magic)");
@@ -189,7 +194,7 @@ void ota_service_task(void *argument)
 
     for (;;)
     {
-        uint8_t rx_byte = 0U;
+        UINT8_T rx_byte = 0U;
         if (OTA_TRANSPORT_OK !=
             ota_transport_listen_byte_wait(&rx_byte, OSAL_MAX_DELAY))
         {
@@ -216,7 +221,7 @@ void ota_service_task(void *argument)
                 * Ymodem_Receive's first frame_arm sees the transport
                 * idle and arms cleanly.
                 **/
-                if (0 == ota_run_ymodem_session())
+                if (PLATFORM_IS_OK(ota_run_ymodem_session()))
                 {
                     scan_state = SCAN_APPLY;
                     DEBUG_OUT(i, YMODEM_LOG_TAG,

@@ -45,9 +45,10 @@
 #define __FIRMWARE_UPGRADE_H__
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 
 #include "osal_wrapper_adapter.h"
+#include "platform_error.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
@@ -90,9 +91,11 @@ extern osal_sema_handle_t  g_extFlashAckSem;
 *        Must be called from user_init_task_function BEFORE the two upgrade
 *        tasks are spawned. Step 2 is idempotent (no-op on second call).
 *
-* @return  0 on success, -1 on resource creation failure.
+* @return  PLATFORM_OK on success; PLATFORM_ERR_GENERAL if transport/storage
+*          bring-up fails; PLATFORM_ERR_NO_RESOURCE if OS resource creation
+*          fails.
 * */
-int8_t firmware_upgrade_service_init(void);
+platform_err_t firmware_upgrade_service_init(void);
 
 /**
 * @brief Signal "apply the staged image now" — triggers NVIC_SystemReset()
@@ -111,16 +114,16 @@ void firmware_upgrade_signal_apply(void);
 *
 * @param[in]  : None.
 * @param[out] : None.
-* @return  Total bytes successfully written across the whole session
-*          (matches Ymodem_Receive's return on success), or -1 on flush
-*          error.
+* @return  PLATFORM_OK if the staged tail (if any) was written; otherwise the
+*          flush error. The session byte count is intentionally not returned —
+*          the OTA flag's image_size comes from Ymodem_Receive's own count.
 *
 * @note See firmware_upgrade_task.c — the W25Q64 driver's write path
 *       erases the full 4 KB sector on every write call. To avoid
 *       wiping previous chunks in the same sector, packets are
 *       buffered in RAM and flushed only when a full 4 KB lines up.
 * */
-int32_t firmware_upgrade_flush_staged(void);
+platform_err_t firmware_upgrade_flush_staged(void);
 
 /* Task entries, registered in g_user_task_cfg[]. */
 void firmware_upgrade_task(void *argument);

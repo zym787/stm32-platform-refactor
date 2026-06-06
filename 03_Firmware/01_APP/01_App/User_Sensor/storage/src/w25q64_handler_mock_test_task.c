@@ -27,7 +27,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
@@ -80,7 +80,7 @@ static w25q64_os_delay_t             s_mock_w25q64_os_delay;
 static bsp_w25q64_driver_t           s_mock_driver;
 /* flash_handler_private_data_t is opaque (only forward-declared in the
  * handler header).  Allocate enough storage for reasonable expansion. */
-static uint8_t                       s_mock_private_buf[32];
+static UINT8_T                       s_mock_private_buf[32];
 
 /**
  * Per-case capture: every mock invocation lands here so the case body
@@ -89,77 +89,77 @@ static uint8_t                       s_mock_private_buf[32];
 typedef struct
 {
     /* ---- OS Queue counters ---- */
-    uint32_t queue_create_count;
-    uint32_t queue_put_count;
-    uint32_t queue_get_count;
-    uint32_t queue_delete_count;
-    uint32_t last_queue_depth;
-    uint32_t last_queue_item_size;
+    UINT32_T queue_create_count;
+    UINT32_T queue_put_count;
+    UINT32_T queue_get_count;
+    UINT32_T queue_delete_count;
+    UINT32_T last_queue_depth;
+    UINT32_T last_queue_item_size;
 
     /* ---- OS Delay counters ---- */
-    uint32_t os_delay_count;
-    uint32_t last_os_delay_ms;
+    UINT32_T os_delay_count;
+    UINT32_T last_os_delay_ms;
 
     /* ---- SPI counters ---- */
-    uint32_t spi_init_count;
-    uint32_t spi_deinit_count;
-    uint32_t spi_transmit_count;
-    uint32_t spi_read_count;
-    uint32_t cs_low_count;
-    uint32_t cs_high_count;
+    UINT32_T spi_init_count;
+    UINT32_T spi_deinit_count;
+    UINT32_T spi_transmit_count;
+    UINT32_T spi_read_count;
+    UINT32_T cs_low_count;
+    UINT32_T cs_high_count;
 
     /* SPI transaction state (CS-bracketed) */
-    bool     cs_active;
-    bool     cmd_latched;
-    uint8_t  current_cmd;
+    BOOL_T     cs_active;
+    BOOL_T     cmd_latched;
+    UINT8_T  current_cmd;
 
     /* ---- Timebase / delay counters ---- */
-    uint32_t delay_ms_count;
-    uint32_t last_delay_ms;
+    UINT32_T delay_ms_count;
+    UINT32_T last_delay_ms;
 
     /* ---- W25Q64 OS delay counters ---- */
-    uint32_t w25q64_os_delay_count;
+    UINT32_T w25q64_os_delay_count;
 
     /* ---- Driver call counters (wrapped pf_*, used by dispatch tests) ---- */
-    uint32_t drv_init_count;
-    uint32_t drv_deinit_count;
-    uint32_t drv_read_id_count;
-    uint32_t drv_read_data_count;
-    uint32_t drv_write_noerase_count;
-    uint32_t drv_write_erase_count;
-    uint32_t drv_erase_chip_count;
-    uint32_t drv_erase_sector_count;
-    uint32_t drv_sleep_count;
-    uint32_t drv_wakeup_count;
+    UINT32_T drv_init_count;
+    UINT32_T drv_deinit_count;
+    UINT32_T drv_read_id_count;
+    UINT32_T drv_read_data_count;
+    UINT32_T drv_write_noerase_count;
+    UINT32_T drv_write_erase_count;
+    UINT32_T drv_erase_chip_count;
+    UINT32_T drv_erase_sector_count;
+    UINT32_T drv_sleep_count;
+    UINT32_T drv_wakeup_count;
 
     /* Last driver call parameters */
-    uint32_t last_drv_addr;
-    uint32_t last_drv_size;
-    uint8_t  last_drv_data[64];
+    UINT32_T last_drv_addr;
+    UINT32_T last_drv_size;
+    UINT8_T  last_drv_data[64];
 
     /* Callback invocation tracking */
-    uint32_t                callback_fired;
+    UINT32_T                callback_fired;
     flash_handler_status_t  last_callback_status;
     flash_event_t           last_callback_event;
 
     /* ---- Mock queue backing store ---- */
     flash_event_t queue_buf[W25Q64_HDL_MOCK_QUEUE_DEPTH];
-    uint32_t      queue_head;
-    uint32_t      queue_tail;
-    uint32_t      queue_count;
+    UINT32_T      queue_head;
+    UINT32_T      queue_tail;
+    UINT32_T      queue_count;
 
     /* ---- Fault injection ---- */
     flash_handler_status_t force_queue_create_ret;
     flash_handler_status_t force_queue_put_ret;
-    bool                   force_jedec_mismatch;
+    BOOL_T                   force_jedec_mismatch;
 
     /* ---- Fake tick ---- */
-    uint32_t fake_tick_ms;
+    UINT32_T fake_tick_ms;
 } mock_state_t;
 
 static mock_state_t  s_st;
-static uint32_t      s_pass_count;
-static uint32_t      s_fail_count;
+static UINT32_T      s_pass_count;
+static UINT32_T      s_fail_count;
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
@@ -175,8 +175,8 @@ static void state_reset(void)
 /* ======================================================================== */
 
 /* ---- OS Queue mock ------------------------------------------------------- */
-static flash_handler_status_t mock_queue_create(uint32_t const item_num,
-                                                 uint32_t const item_size,
+static flash_handler_status_t mock_queue_create(UINT32_T const item_num,
+                                                 UINT32_T const item_size,
                                                  void **  const queue_handler)
 {
     s_st.queue_create_count++;
@@ -207,7 +207,7 @@ static flash_handler_status_t mock_queue_create(uint32_t const item_num,
 
 static flash_handler_status_t mock_queue_put(void *  const  queue_handler,
                                               void *  const           item,
-                                              uint32_t             timeout)
+                                              UINT32_T             timeout)
 {
     (void)queue_handler;
     (void)timeout;
@@ -229,7 +229,7 @@ static flash_handler_status_t mock_queue_put(void *  const  queue_handler,
 
 static flash_handler_status_t mock_queue_get(void *  const  queue_handler,
                                               void *  const            msg,
-                                              uint32_t             timeout)
+                                              UINT32_T             timeout)
 {
     (void)queue_handler;
     (void)timeout;
@@ -254,7 +254,7 @@ static flash_handler_status_t mock_queue_delete(void * const queue_handler)
 }
 
 /* ---- OS Delay mock ------------------------------------------------------- */
-static flash_handler_status_t mock_os_delay_ms(uint32_t ms)
+static flash_handler_status_t mock_os_delay_ms(UINT32_T ms)
 {
     s_st.os_delay_count++;
     s_st.last_os_delay_ms = ms;
@@ -275,7 +275,7 @@ static w25q64_status_t mock_spi_deinit(void)
     return W25Q64_OK;
 }
 
-static w25q64_status_t mock_spi_write_cs_pin(uint8_t state)
+static w25q64_status_t mock_spi_write_cs_pin(UINT8_T state)
 {
     if (W25Q64_HDL_MOCK_PIN_LOW == state)
     {
@@ -292,8 +292,8 @@ static w25q64_status_t mock_spi_write_cs_pin(uint8_t state)
     return W25Q64_OK;
 }
 
-static w25q64_status_t mock_spi_transmit(uint8_t const *p_data,
-                                          uint32_t       data_length)
+static w25q64_status_t mock_spi_transmit(UINT8_T const *p_data,
+                                          UINT32_T       data_length)
 {
     if ((NULL == p_data) || (0u == data_length))
     {
@@ -310,7 +310,7 @@ static w25q64_status_t mock_spi_transmit(uint8_t const *p_data,
     return W25Q64_OK;
 }
 
-static w25q64_status_t mock_spi_read(uint8_t *p_buffer, uint32_t buffer_length)
+static w25q64_status_t mock_spi_read(UINT8_T *p_buffer, UINT32_T buffer_length)
 {
     if ((NULL == p_buffer) || (0u == buffer_length))
     {
@@ -322,7 +322,7 @@ static w25q64_status_t mock_spi_read(uint8_t *p_buffer, uint32_t buffer_length)
     {
     case W25Q64_CMD_JEDEC_ID:   /* 0x9F */
     {
-        uint8_t id[3];
+        UINT8_T id[3];
         if (s_st.force_jedec_mismatch)
         {
             id[0] = 0xAAu;  id[1] = 0xBBu;  id[2] = 0xCCu;
@@ -333,7 +333,7 @@ static w25q64_status_t mock_spi_read(uint8_t *p_buffer, uint32_t buffer_length)
             id[1] = W25Q64_HDL_MOCK_JEDEC_TYPE;
             id[2] = W25Q64_HDL_MOCK_JEDEC_CAP;
         }
-        for (uint32_t i = 0u; i < buffer_length; i++)
+        for (UINT32_T i = 0u; i < buffer_length; i++)
         {
             p_buffer[i] = id[i % 3u];
         }
@@ -342,9 +342,9 @@ static w25q64_status_t mock_spi_read(uint8_t *p_buffer, uint32_t buffer_length)
 
     case W25Q64_CMD_READ_ID:    /* 0x90 */
     {
-        uint8_t id[2] = { W25Q64_HDL_MOCK_JEDEC_MFR,
+        UINT8_T id[2] = { W25Q64_HDL_MOCK_JEDEC_MFR,
                           W25Q64_HDL_MOCK_DEV_ID };
-        for (uint32_t i = 0u; i < buffer_length; i++)
+        for (UINT32_T i = 0u; i < buffer_length; i++)
         {
             p_buffer[i] = id[i % 2u];
         }
@@ -353,7 +353,7 @@ static w25q64_status_t mock_spi_read(uint8_t *p_buffer, uint32_t buffer_length)
 
     case W25Q64_CMD_READ_REG:   /* 0x05 */
         /* Status register: never busy after init. */
-        for (uint32_t i = 0u; i < buffer_length; i++)
+        for (UINT32_T i = 0u; i < buffer_length; i++)
         {
             p_buffer[i] = 0x00u;
         }
@@ -370,33 +370,33 @@ static w25q64_status_t mock_spi_read(uint8_t *p_buffer, uint32_t buffer_length)
     return W25Q64_OK;
 }
 
-static w25q64_status_t mock_spi_transmit_dma(uint8_t const *p_data,
-                                              uint32_t       data_length)
+static w25q64_status_t mock_spi_transmit_dma(UINT8_T const *p_data,
+                                              UINT32_T       data_length)
 {
     (void)p_data;
     (void)data_length;
     return W25Q64_OK;
 }
 
-static w25q64_status_t mock_spi_wait_dma_complete(uint32_t timeout_ms)
+static w25q64_status_t mock_spi_wait_dma_complete(UINT32_T timeout_ms)
 {
     (void)timeout_ms;
     return W25Q64_OK;
 }
 
-static w25q64_status_t mock_spi_write_dc_pin(uint8_t state)
+static w25q64_status_t mock_spi_write_dc_pin(UINT8_T state)
 {
     (void)state;
     return W25Q64_OK;
 }
 
 /* ---- Timebase mock ------------------------------------------------------- */
-static uint32_t mock_get_tick_ms(void)
+static UINT32_T mock_get_tick_ms(void)
 {
     return s_st.fake_tick_ms;
 }
 
-static void mock_delay_ms(uint32_t ms)
+static void mock_delay_ms(UINT32_T ms)
 {
     s_st.delay_ms_count++;
     s_st.last_delay_ms = ms;
@@ -404,7 +404,7 @@ static void mock_delay_ms(uint32_t ms)
 }
 
 /* ---- W25Q64 OS Delay mock ------------------------------------------------ */
-static void mock_w25q64_os_delay_ms(uint32_t ms)
+static void mock_w25q64_os_delay_ms(UINT32_T ms)
 {
     s_st.w25q64_os_delay_count++;
     s_st.fake_tick_ms += ms;
@@ -414,9 +414,9 @@ static void mock_w25q64_os_delay_ms(uint32_t ms)
 /*  Wrapped driver vtable (for dispatch routing tests)                       */
 /* ======================================================================== */
 static w25q64_status_t wrap_drv_read_data(bsp_w25q64_driver_t *const drv,
-                                           uint32_t                    addr,
-                                           uint8_t             *       p_buf,
-                                           uint32_t                  buf_len)
+                                           UINT32_T                    addr,
+                                           UINT8_T             *       p_buf,
+                                           UINT32_T                  buf_len)
 {
     (void)drv;
     s_st.drv_read_data_count++;
@@ -427,9 +427,9 @@ static w25q64_status_t wrap_drv_read_data(bsp_w25q64_driver_t *const drv,
 }
 
 static w25q64_status_t wrap_drv_write_erase(bsp_w25q64_driver_t *const drv,
-                                             uint32_t                    addr,
-                                             uint8_t           const *  p_data,
-                                             uint32_t                 data_len)
+                                             UINT32_T                    addr,
+                                             UINT8_T           const *  p_data,
+                                             UINT32_T                 data_len)
 {
     (void)drv;
     s_st.drv_write_erase_count++;
@@ -443,9 +443,9 @@ static w25q64_status_t wrap_drv_write_erase(bsp_w25q64_driver_t *const drv,
 }
 
 static w25q64_status_t wrap_drv_write_noerase(bsp_w25q64_driver_t *const drv,
-                                               uint32_t                    addr,
-                                               uint8_t           const *  p_data,
-                                               uint32_t                 data_len)
+                                               UINT32_T                    addr,
+                                               UINT8_T           const *  p_data,
+                                               UINT32_T                 data_len)
 {
     (void)drv;
     s_st.drv_write_noerase_count++;
@@ -466,7 +466,7 @@ static w25q64_status_t wrap_drv_erase_chip(bsp_w25q64_driver_t *const drv)
 }
 
 static w25q64_status_t wrap_drv_erase_sector(bsp_w25q64_driver_t *const drv,
-                                              uint32_t                    addr)
+                                              UINT32_T                    addr)
 {
     (void)drv;
     s_st.drv_erase_sector_count++;
@@ -489,8 +489,8 @@ static w25q64_status_t wrap_drv_wakeup(bsp_w25q64_driver_t *const drv)
 }
 
 static w25q64_status_t wrap_drv_read_id(bsp_w25q64_driver_t *const drv,
-                                         uint8_t             *       p_buf,
-                                         uint32_t                    buf_len)
+                                         UINT8_T             *       p_buf,
+                                         UINT32_T                    buf_len)
 {
     (void)drv;
     s_st.drv_read_id_count++;
@@ -580,7 +580,7 @@ static void mock_handler_instance_init(void)
 /* ======================================================================== */
 /*  Pass / fail helpers                                                     */
 /* ======================================================================== */
-static void case_report(const char *name, bool ok)
+static void case_report(const char *name, BOOL_T ok)
 {
     if (ok)
     {
@@ -733,7 +733,7 @@ static void test_case_inst_null_handler(void)
     flash_handler_status_t ret =
         bsp_w25q64_handler_inst(NULL, &s_mock_input_args);
 
-    bool ok = (FLASH_HANLDER_ERRORPARAMETER == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_ERRORPARAMETER == ret) &&
               (0u == s_st.queue_create_count);
     case_report("CASE 1 inst NULL handler", ok);
 }
@@ -750,7 +750,7 @@ static void test_case_inst_null_args(void)
     flash_handler_status_t ret =
         bsp_w25q64_handler_inst(&s_mock_handler, NULL);
 
-    bool ok = (FLASH_HANLDER_ERRORPARAMETER == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_ERRORPARAMETER == ret) &&
               (0u == s_st.queue_create_count);
     case_report("CASE 2 inst NULL args", ok);
 }
@@ -769,7 +769,7 @@ static void test_case_inst_null_driver(void)
     flash_handler_status_t ret =
         bsp_w25q64_handler_inst(&s_mock_handler, &s_mock_input_args);
 
-    bool ok = (FLASH_HANLDER_ERRORRESOURCE == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_ERRORRESOURCE == ret) &&
               (0u == s_st.queue_create_count);
     case_report("CASE 3 inst NULL driver", ok);
 }
@@ -788,7 +788,7 @@ static void test_case_inst_null_private(void)
     flash_handler_status_t ret =
         bsp_w25q64_handler_inst(&s_mock_handler, &s_mock_input_args);
 
-    bool ok = (FLASH_HANLDER_ERRORRESOURCE == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_ERRORRESOURCE == ret) &&
               (0u == s_st.queue_create_count);
     case_report("CASE 4 inst NULL private data", ok);
 }
@@ -810,7 +810,7 @@ static void test_case_inst_already_inited(void)
     flash_handler_status_t ret2 =
         bsp_w25q64_handler_inst(&s_mock_handler, &s_mock_input_args);
 
-    bool ok = (FLASH_HANLDER_OK == ret1) &&
+    BOOL_T ok = (FLASH_HANLDER_OK == ret1) &&
               (FLASH_HANLDER_ERRORRESOURCE == ret2) &&
               (1u == s_st.queue_create_count) &&
               (s_st.spi_transmit_count >= 1u) &&
@@ -832,7 +832,7 @@ static void test_case_inst_null_os_if(void)
     flash_handler_status_t ret =
         bsp_w25q64_handler_inst(&s_mock_handler, &s_mock_input_args);
 
-    bool ok = (FLASH_HANLDER_ERRORRESOURCE == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_ERRORRESOURCE == ret) &&
               (0u == s_st.queue_create_count);
     case_report("CASE 6 inst NULL os_interface", ok);
 }
@@ -851,7 +851,7 @@ static void test_case_inst_null_spi(void)
     flash_handler_status_t ret =
         bsp_w25q64_handler_inst(&s_mock_handler, &s_mock_input_args);
 
-    bool ok = (FLASH_HANLDER_ERRORRESOURCE == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_ERRORRESOURCE == ret) &&
               (0u == s_st.queue_create_count);
     case_report("CASE 7 inst NULL spi", ok);
 }
@@ -870,7 +870,7 @@ static void test_case_inst_null_timebase(void)
     flash_handler_status_t ret =
         bsp_w25q64_handler_inst(&s_mock_handler, &s_mock_input_args);
 
-    bool ok = (FLASH_HANLDER_ERRORRESOURCE == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_ERRORRESOURCE == ret) &&
               (0u == s_st.queue_create_count);
     case_report("CASE 8 inst NULL timebase", ok);
 }
@@ -889,7 +889,7 @@ static void test_case_inst_null_os_delay(void)
     flash_handler_status_t ret =
         bsp_w25q64_handler_inst(&s_mock_handler, &s_mock_input_args);
 
-    bool ok = (FLASH_HANLDER_ERRORRESOURCE == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_ERRORRESOURCE == ret) &&
               (0u == s_st.queue_create_count);
     case_report("CASE 9 inst NULL w25q64_os_delay", ok);
 }
@@ -908,7 +908,7 @@ static void test_case_inst_null_queue_if(void)
     flash_handler_status_t ret =
         bsp_w25q64_handler_inst(&s_mock_handler, &s_mock_input_args);
 
-    bool ok = (FLASH_HANLDER_ERRORRESOURCE == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_ERRORRESOURCE == ret) &&
               (0u == s_st.queue_create_count);
     case_report("CASE 10 inst NULL queue_if", ok);
 }
@@ -927,7 +927,7 @@ static void test_case_inst_null_delay_if(void)
     flash_handler_status_t ret =
         bsp_w25q64_handler_inst(&s_mock_handler, &s_mock_input_args);
 
-    bool ok = (FLASH_HANLDER_ERRORRESOURCE == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_ERRORRESOURCE == ret) &&
               (0u == s_st.queue_create_count);
     case_report("CASE 11 inst NULL delay_if", ok);
 }
@@ -946,7 +946,7 @@ static void test_case_inst_queue_create_fails(void)
     flash_handler_status_t ret =
         bsp_w25q64_handler_inst(&s_mock_handler, &s_mock_input_args);
 
-    bool ok = (FLASH_HANLDER_ERRORNOMEMORY == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_ERRORNOMEMORY == ret) &&
               (1u == s_st.queue_create_count)       &&
               (0u == s_st.spi_transmit_count);       /* driver not touched */
     case_report("CASE 12 inst queue_create fails", ok);
@@ -966,7 +966,7 @@ static void test_case_inst_driver_init_fails(void)
     flash_handler_status_t ret =
         bsp_w25q64_handler_inst(&s_mock_handler, &s_mock_input_args);
 
-    bool ok = (FLASH_HANLDER_ERRORRESOURCE == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_ERRORRESOURCE == ret) &&
               (1u == s_st.queue_create_count)       &&
               (s_st.spi_read_count >= 1u);
     case_report("CASE 13 inst driver init fails", ok);
@@ -984,7 +984,7 @@ static void test_case_inst_success(void)
     flash_handler_status_t ret =
         bsp_w25q64_handler_inst(&s_mock_handler, &s_mock_input_args);
 
-    bool ok = (FLASH_HANLDER_OK == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_OK == ret) &&
               (1u == s_st.queue_create_count) &&
               (10u == s_st.last_queue_depth) &&
               (sizeof(flash_event_t) == s_st.last_queue_item_size) &&
@@ -1010,7 +1010,7 @@ static void test_case_send_null_event(void)
 
     flash_handler_status_t ret = handler_flash_event_send(NULL);
 
-    bool ok = (FLASH_HANLDER_ERRORPARAMETER == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_ERRORPARAMETER == ret) &&
               (0u == s_st.queue_put_count);
     case_report("CASE 15 send NULL event", ok);
 }
@@ -1026,7 +1026,7 @@ static void test_case_send_not_mounted(void)
     flash_event_t evt = {0};
     flash_handler_status_t ret = handler_flash_event_send(&evt);
 
-    bool ok = (FLASH_HANLDER_ERRORRESOURCE == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_ERRORRESOURCE == ret) &&
               (0u == s_st.queue_put_count);
     case_report("CASE 16 send not mounted", ok);
 }
@@ -1041,7 +1041,7 @@ static void test_case_dispatch_read(void)
     mock_handler_instance_init();
     mock_driver_rewrap(&s_mock_driver);
 
-    uint8_t buf[W25Q64_HDL_MOCK_READ_LEN] = {0};
+    UINT8_T buf[W25Q64_HDL_MOCK_READ_LEN] = {0};
     flash_event_t evt = {
         .addr       = W25Q64_HDL_MOCK_TEST_ADDR,
         .size       = W25Q64_HDL_MOCK_READ_LEN,
@@ -1052,7 +1052,7 @@ static void test_case_dispatch_read(void)
 
     flash_handler_status_t ret = test_dispatch(&s_mock_handler, &evt);
 
-    bool ok = (FLASH_HANLDER_OK == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_OK == ret) &&
               (1u == s_st.drv_read_data_count) &&
               (W25Q64_HDL_MOCK_TEST_ADDR == s_st.last_drv_addr) &&
               (W25Q64_HDL_MOCK_READ_LEN == s_st.last_drv_size);
@@ -1070,10 +1070,10 @@ static void test_case_dispatch_write(void)
     mock_handler_instance_init();
     mock_driver_rewrap(&s_mock_driver);
 
-    uint8_t data[W25Q64_HDL_MOCK_WRITE_LEN];
-    for (uint32_t i = 0u; i < W25Q64_HDL_MOCK_WRITE_LEN; i++)
+    UINT8_T data[W25Q64_HDL_MOCK_WRITE_LEN];
+    for (UINT32_T i = 0u; i < W25Q64_HDL_MOCK_WRITE_LEN; i++)
     {
-        data[i] = (uint8_t)(0xA0u + i);
+        data[i] = (UINT8_T)(0xA0u + i);
     }
 
     flash_event_t evt = {
@@ -1086,7 +1086,7 @@ static void test_case_dispatch_write(void)
 
     flash_handler_status_t ret = test_dispatch(&s_mock_handler, &evt);
 
-    bool ok = (FLASH_HANLDER_OK == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_OK == ret) &&
               (1u == s_st.drv_write_erase_count) &&
               (W25Q64_HDL_MOCK_TEST_ADDR == s_st.last_drv_addr) &&
               (W25Q64_HDL_MOCK_WRITE_LEN == s_st.last_drv_size) &&
@@ -1105,10 +1105,10 @@ static void test_case_dispatch_write_noerase(void)
     mock_handler_instance_init();
     mock_driver_rewrap(&s_mock_driver);
 
-    uint8_t data[W25Q64_HDL_MOCK_WRITE_LEN];
-    for (uint32_t i = 0u; i < W25Q64_HDL_MOCK_WRITE_LEN; i++)
+    UINT8_T data[W25Q64_HDL_MOCK_WRITE_LEN];
+    for (UINT32_T i = 0u; i < W25Q64_HDL_MOCK_WRITE_LEN; i++)
     {
-        data[i] = (uint8_t)(0xB0u + i);
+        data[i] = (UINT8_T)(0xB0u + i);
     }
 
     flash_event_t evt = {
@@ -1121,7 +1121,7 @@ static void test_case_dispatch_write_noerase(void)
 
     flash_handler_status_t ret = test_dispatch(&s_mock_handler, &evt);
 
-    bool ok = (FLASH_HANLDER_OK == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_OK == ret) &&
               (1u == s_st.drv_write_noerase_count) &&
               (W25Q64_HDL_MOCK_TEST_ADDR == s_st.last_drv_addr) &&
               (W25Q64_HDL_MOCK_WRITE_LEN == s_st.last_drv_size) &&
@@ -1147,7 +1147,7 @@ static void test_case_dispatch_erase_chip(void)
 
     flash_handler_status_t ret = test_dispatch(&s_mock_handler, &evt);
 
-    bool ok = (FLASH_HANLDER_OK == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_OK == ret) &&
               (1u == s_st.drv_erase_chip_count);
     case_report("CASE 20 dispatch ERASE_CHIP", ok);
 }
@@ -1171,7 +1171,7 @@ static void test_case_dispatch_erase_sector(void)
 
     flash_handler_status_t ret = test_dispatch(&s_mock_handler, &evt);
 
-    bool ok = (FLASH_HANLDER_OK == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_OK == ret) &&
               (1u == s_st.drv_erase_sector_count) &&
               (W25Q64_HDL_MOCK_SECTOR_ADDR == s_st.last_drv_addr);
     case_report("CASE 21 dispatch ERASE_SECTOR", ok);
@@ -1194,7 +1194,7 @@ static void test_case_dispatch_wakeup(void)
 
     flash_handler_status_t ret = test_dispatch(&s_mock_handler, &evt);
 
-    bool ok = (FLASH_HANLDER_OK == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_OK == ret) &&
               (1u == s_st.drv_wakeup_count);
     case_report("CASE 22 dispatch WAKEUP", ok);
 }
@@ -1216,7 +1216,7 @@ static void test_case_dispatch_sleep(void)
 
     flash_handler_status_t ret = test_dispatch(&s_mock_handler, &evt);
 
-    bool ok = (FLASH_HANLDER_OK == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_OK == ret) &&
               (1u == s_st.drv_sleep_count);
     case_report("CASE 23 dispatch SLEEP", ok);
 }
@@ -1231,7 +1231,7 @@ static void test_case_dispatch_test(void)
     mock_handler_instance_init();
     mock_driver_rewrap(&s_mock_driver);
 
-    uint8_t id_buf[2] = {0};
+    UINT8_T id_buf[2] = {0};
     flash_event_t evt = {
         .data       = id_buf,
         .size       = 2u,
@@ -1241,7 +1241,7 @@ static void test_case_dispatch_test(void)
 
     flash_handler_status_t ret = test_dispatch(&s_mock_handler, &evt);
 
-    bool ok = (FLASH_HANLDER_OK == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_OK == ret) &&
               (1u == s_st.drv_read_id_count) &&
               (0xEFu == id_buf[0]) &&
               (0x16u == id_buf[1]);
@@ -1266,7 +1266,7 @@ static void test_case_dispatch_invalid_type(void)
 
     flash_handler_status_t ret = test_dispatch(&s_mock_handler, &evt);
 
-    bool ok = (FLASH_HANLDER_ERRORUNSUPPORTED == ret);
+    BOOL_T ok = (FLASH_HANLDER_ERRORUNSUPPORTED == ret);
     case_report("CASE 25 dispatch invalid type", ok);
 }
 
@@ -1291,7 +1291,7 @@ static void test_case_dispatch_read_null_data(void)
 
     flash_handler_status_t ret = test_dispatch(&s_mock_handler, &evt);
 
-    bool ok = (FLASH_HANLDER_ERRORPARAMETER == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_ERRORPARAMETER == ret) &&
               (0u == s_st.drv_read_data_count);
     case_report("CASE 26 dispatch READ NULL data", ok);
 }
@@ -1306,7 +1306,7 @@ static void test_case_dispatch_read_zero_size(void)
     mock_handler_instance_init();
     mock_driver_rewrap(&s_mock_driver);
 
-    uint8_t buf[16];
+    UINT8_T buf[16];
     flash_event_t evt = {
         .addr       = W25Q64_HDL_MOCK_TEST_ADDR,
         .size       = 0u,
@@ -1317,7 +1317,7 @@ static void test_case_dispatch_read_zero_size(void)
 
     flash_handler_status_t ret = test_dispatch(&s_mock_handler, &evt);
 
-    bool ok = (FLASH_HANLDER_ERRORPARAMETER == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_ERRORPARAMETER == ret) &&
               (0u == s_st.drv_read_data_count);
     case_report("CASE 27 dispatch READ zero size", ok);
 }
@@ -1343,7 +1343,7 @@ static void test_case_dispatch_write_null_data(void)
 
     flash_handler_status_t ret = test_dispatch(&s_mock_handler, &evt);
 
-    bool ok = (FLASH_HANLDER_ERRORPARAMETER == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_ERRORPARAMETER == ret) &&
               (0u == s_st.drv_write_erase_count);
     case_report("CASE 28 dispatch WRITE NULL data", ok);
 }
@@ -1358,7 +1358,7 @@ static void test_case_dispatch_test_short_buf(void)
     mock_handler_instance_init();
     mock_driver_rewrap(&s_mock_driver);
 
-    uint8_t buf[1];
+    UINT8_T buf[1];
     flash_event_t evt = {
         .data       = buf,
         .size       = 1u,
@@ -1368,7 +1368,7 @@ static void test_case_dispatch_test_short_buf(void)
 
     flash_handler_status_t ret = test_dispatch(&s_mock_handler, &evt);
 
-    bool ok = (FLASH_HANLDER_ERRORPARAMETER == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_ERRORPARAMETER == ret) &&
               (0u == s_st.drv_read_id_count);
     case_report("CASE 29 dispatch TEST short buf", ok);
 }
@@ -1384,7 +1384,7 @@ static void test_case_dispatch_callback(void)
     mock_handler_instance_init();
     mock_driver_rewrap(&s_mock_driver);
 
-    uint8_t buf[W25Q64_HDL_MOCK_READ_LEN];
+    UINT8_T buf[W25Q64_HDL_MOCK_READ_LEN];
     flash_event_t evt = {
         .addr        = W25Q64_HDL_MOCK_TEST_ADDR,
         .size        = W25Q64_HDL_MOCK_READ_LEN,
@@ -1397,7 +1397,7 @@ static void test_case_dispatch_callback(void)
     flash_handler_status_t ret = test_dispatch_with_callback(
                                     &s_mock_handler, &evt);
 
-    bool ok = (FLASH_HANLDER_OK == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_OK == ret) &&
               (1u == s_st.callback_fired) &&
               (FLASH_HANLDER_OK == s_st.last_callback_status);
     case_report("CASE 30 dispatch callback", ok);
@@ -1425,7 +1425,7 @@ static void test_case_dispatch_callback_error(void)
     flash_handler_status_t ret = test_dispatch_with_callback(
                                     &s_mock_handler, &evt);
 
-    bool ok = (FLASH_HANLDER_ERRORPARAMETER == ret) &&
+    BOOL_T ok = (FLASH_HANLDER_ERRORPARAMETER == ret) &&
               (1u == s_st.callback_fired) &&
               (FLASH_HANLDER_ERRORPARAMETER == s_st.last_callback_status);
     case_report("CASE 31 dispatch callback error", ok);
@@ -1441,7 +1441,7 @@ static void test_case_dispatch_null_drv(void)
     flash_event_t evt = { .event_type = FLASH_HANDLER_EVENT_READ };
     flash_handler_status_t ret = test_dispatch(NULL, &evt);
 
-    bool ok = (FLASH_HANLDER_ERRORPARAMETER == ret);
+    BOOL_T ok = (FLASH_HANLDER_ERRORPARAMETER == ret);
     case_report("CASE 32 dispatch NULL handler", ok);
 
     ret = test_dispatch(&s_mock_handler, NULL);

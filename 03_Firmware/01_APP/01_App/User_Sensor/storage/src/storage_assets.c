@@ -42,14 +42,14 @@
 #include "lvgl.h"
 #include "Debug.h"
 
-#include <stdint.h>
+#include "platform_type.h"
 //******************************** Includes *********************************//
 
 //******************************* Variables *********************************//
 /* RAM mirrors filled by Read_LvglData() during bootstrap. */
-static uint8_t s_au8_fen_ram [CFG_LVGL_ASSET_FEN_SIZE];
-static uint8_t s_au8_miao_ram[CFG_LVGL_ASSET_MIAO_SIZE];
-static uint8_t s_au8_time_ram[CFG_LVGL_ASSET_TIME_SIZE];
+static UINT8_T s_au8_fen_ram [CFG_LVGL_ASSET_FEN_SIZE];
+static UINT8_T s_au8_miao_ram[CFG_LVGL_ASSET_MIAO_SIZE];
+static UINT8_T s_au8_time_ram[CFG_LVGL_ASSET_TIME_SIZE];
 
 /**
  * Externally-visible LVGL descriptors that point at the RAM mirrors.
@@ -103,7 +103,7 @@ const lv_img_dsc_t _MDLBG_alpha_240x280_ext = {
     .header.w           = CFG_LVGL_ASSET_MDLBG_W,
     .header.h           = CFG_LVGL_ASSET_MDLBG_H,
     .data_size          = 0,
-    .data               = (const uint8_t *)&s_mdlbg_meta,
+    .data               = (const UINT8_T *)&s_mdlbg_meta,
 };
 
 /* biaopan1 200x200 alpha background — same streaming pattern. */
@@ -122,7 +122,7 @@ const lv_img_dsc_t _biaopan1_200x200_ext = {
     .header.w           = CFG_LVGL_ASSET_BIAOPAN1_W,
     .header.h           = CFG_LVGL_ASSET_BIAOPAN1_H,
     .data_size          = 0,
-    .data               = (const uint8_t *)&s_biaopan1_meta,
+    .data               = (const UINT8_T *)&s_biaopan1_meta,
 };
 
 /* watchdight 1/2/3 walking-step icon frames (60x60 alpha each).  Streamed
@@ -144,7 +144,7 @@ const lv_img_dsc_t _watchdight1_alpha_60x60_ext = {
     .header.w           = CFG_LVGL_ASSET_WATCHDIGHT1_W,
     .header.h           = CFG_LVGL_ASSET_WATCHDIGHT1_H,
     .data_size          = 0,
-    .data               = (const uint8_t *)&s_watchdight1_meta,
+    .data               = (const UINT8_T *)&s_watchdight1_meta,
 };
 
 static const lv_extflash_meta_t s_watchdight2_meta = {
@@ -162,7 +162,7 @@ const lv_img_dsc_t _watchdight2_alpha_60x60_ext = {
     .header.w           = CFG_LVGL_ASSET_WATCHDIGHT2_W,
     .header.h           = CFG_LVGL_ASSET_WATCHDIGHT2_H,
     .data_size          = 0,
-    .data               = (const uint8_t *)&s_watchdight2_meta,
+    .data               = (const UINT8_T *)&s_watchdight2_meta,
 };
 
 static const lv_extflash_meta_t s_watchdight3_meta = {
@@ -180,7 +180,7 @@ const lv_img_dsc_t _watchdight3_alpha_60x60_ext = {
     .header.w           = CFG_LVGL_ASSET_WATCHDIGHT3_W,
     .header.h           = CFG_LVGL_ASSET_WATCHDIGHT3_H,
     .data_size          = 0,
-    .data               = (const uint8_t *)&s_watchdight3_meta,
+    .data               = (const UINT8_T *)&s_watchdight3_meta,
 };
 
 #define DEFINE_EXTFLASH_IMAGE(symbol, cfgPrefix)                         \
@@ -199,7 +199,7 @@ const lv_img_dsc_t _watchdight3_alpha_60x60_ext = {
         .header.w           = cfgPrefix##_W,                             \
         .header.h           = cfgPrefix##_H,                             \
         .data_size          = 0,                                         \
-        .data               = (const uint8_t *)&s##symbol##_meta,        \
+        .data               = (const UINT8_T *)&s##symbol##_meta,        \
     }
 
 DEFINE_EXTFLASH_IMAGE(_sheshidu_alpha_10x10, CFG_LVGL_ASSET_SHESHIDU);
@@ -271,14 +271,14 @@ static ext_flash_status_t lvgl_assets_load_to_ram(void)
 
 ext_flash_status_t storage_assets_bootstrap(void)
 {
-    uint32_t            magic = 0U;
+    UINT32_T            magic = 0U;
     ext_flash_status_t  st;
 
     DEBUG_OUT(i, W25Q64_LOG_TAG, "assets bootstrap: probing magic");
 
     st = Read_LvglData(CFG_LVGL_ASSET_MAGIC_OFFSET,
                        CFG_LVGL_ASSET_MAGIC_SIZE,
-                       (uint8_t *)&magic);
+                       (UINT8_T *)&magic);
     if (EXT_FLASH_OK != st)
     {
         DEBUG_OUT(e, W25Q64_ERR_LOG_TAG,

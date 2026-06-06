@@ -39,7 +39,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
@@ -104,16 +104,16 @@ typedef enum
 typedef struct
 {
     char const *name;
-    bool        ok;
-    int32_t     status;     /* last em7028_handler_status_t observed         */
-    uint32_t    detail;     /* frame count / step-specific counter           */
-    uint32_t    elapsed_ms;
+    BOOL_T        ok;
+    INT32_T     status;     /* last em7028_handler_status_t observed         */
+    UINT32_T    detail;     /* frame count / step-specific counter           */
+    UINT32_T    elapsed_ms;
 } em7028_hal_record_t;
 
 static em7028_hal_record_t s_records[EM7028_HAL_TC_COUNT];
 
-static uint32_t s_pass_count;
-static uint32_t s_fail_count;
+static UINT32_T s_pass_count;
+static UINT32_T s_fail_count;
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
@@ -131,10 +131,10 @@ static uint32_t s_fail_count;
  * */
 static void em7028_hal_record(em7028_hal_tc_idx_t idx,
                               char const         *name,
-                              bool                ok,
-                              int32_t             status,
-                              uint32_t            detail,
-                              uint32_t            elapsed_ms)
+                              BOOL_T                ok,
+                              INT32_T             status,
+                              UINT32_T            detail,
+                              UINT32_T            elapsed_ms)
 {
     s_records[idx].name       = name;
     s_records[idx].ok         = ok;
@@ -171,16 +171,16 @@ static void em7028_hal_record(em7028_hal_tc_idx_t idx,
  *             handler error code returned by bsp_em7028_handler_get_frame
  *             if a frame fails to arrive within EM7028_HAL_FRAME_TIMEOUT_MS.
  * */
-static em7028_handler_status_t em7028_hal_drain_frames(bool      expect_hrs1,
-                                                       bool      expect_hrs2,
-                                                       uint32_t  target,
-                                                       uint32_t *p_alive_hrs1,
-                                                       uint32_t *p_alive_hrs2)
+static em7028_handler_status_t em7028_hal_drain_frames(BOOL_T      expect_hrs1,
+                                                       BOOL_T      expect_hrs2,
+                                                       UINT32_T  target,
+                                                       UINT32_T *p_alive_hrs1,
+                                                       UINT32_T *p_alive_hrs2)
 {
-    uint32_t alive_hrs1 = 0U;
-    uint32_t alive_hrs2 = 0U;
+    UINT32_T alive_hrs1 = 0U;
+    UINT32_T alive_hrs2 = 0U;
 
-    for (uint32_t i = 0U; i < target; i++)
+    for (UINT32_T i = 0U; i < target; i++)
     {
         em7028_ppg_frame_t frame;
         memset(&frame, 0, sizeof(frame));
@@ -250,7 +250,7 @@ static void em7028_hal_print_report(void)
     DEBUG_OUT(i, EM7028_LOG_TAG,
               "============== EM7028 IIC HAL REPORT ==============");
 
-    for (uint32_t i = 0U; i < (uint32_t)EM7028_HAL_TC_COUNT; i++)
+    for (UINT32_T i = 0U; i < (UINT32_T)EM7028_HAL_TC_COUNT; i++)
     {
         if (NULL == s_records[i].name)
         {
@@ -300,11 +300,11 @@ void em7028_iic_hal_test_task(void *argument)
     osal_task_delay(EM7028_HAL_BOOT_WAIT_MS);
 
     em7028_handler_status_t ret = EM7028_HANDLER_OK;
-    uint32_t                t_start = 0U;
-    uint32_t                t_end   = 0U;
-    uint32_t                alive_hrs1 = 0U;
-    uint32_t                alive_hrs2 = 0U;
-    bool                    ok      = false;
+    UINT32_T                t_start = 0U;
+    UINT32_T                t_end   = 0U;
+    UINT32_T                alive_hrs1 = 0U;
+    UINT32_T                alive_hrs2 = 0U;
+    BOOL_T                    ok      = false;
 
     /* ===== CASE 0: BOOT PROBE ============================================
      *
@@ -319,7 +319,7 @@ void em7028_iic_hal_test_task(void *argument)
     t_end   = osal_task_get_tick_count();
     ok      = (EM7028_HANDLER_OK == ret);
     em7028_hal_record(EM7028_HAL_TC_BOOT_PROBE, "BOOT_PROBE",
-                      ok, (int32_t)ret, 0U, t_end - t_start);
+                      ok, (INT32_T)ret, 0U, t_end - t_start);
     if (!ok)
     {
         /**
@@ -337,7 +337,7 @@ void em7028_iic_hal_test_task(void *argument)
     t_end   = osal_task_get_tick_count();
     ok      = (EM7028_HANDLER_OK == ret);
     em7028_hal_record(EM7028_HAL_TC_START_HRS1, "START_HRS1",
-                      ok, (int32_t)ret, 0U, t_end - t_start);
+                      ok, (INT32_T)ret, 0U, t_end - t_start);
     osal_task_delay(EM7028_HAL_GAP_MS);
 
     /* ===== CASE 2: drain HRS1 frames (real I2C bursts) =================== *
@@ -352,7 +352,7 @@ void em7028_iic_hal_test_task(void *argument)
     ok = (EM7028_HANDLER_OK == ret) &&
          (alive_hrs1 >= (EM7028_HAL_FRAME_BURST_COUNT * 70U / 100U));
     em7028_hal_record(EM7028_HAL_TC_DRAIN_HRS1, "DRAIN_HRS1",
-                      ok, (int32_t)ret, alive_hrs1, t_end - t_start);
+                      ok, (INT32_T)ret, alive_hrs1, t_end - t_start);
     osal_task_delay(EM7028_HAL_GAP_MS);
 
     /* ===== CASE 3: STOP =================================================== */
@@ -361,7 +361,7 @@ void em7028_iic_hal_test_task(void *argument)
     t_end   = osal_task_get_tick_count();
     ok      = (EM7028_HANDLER_OK == ret);
     em7028_hal_record(EM7028_HAL_TC_STOP_HRS1, "STOP_HRS1",
-                      ok, (int32_t)ret, 0U, t_end - t_start);
+                      ok, (INT32_T)ret, 0U, t_end - t_start);
     osal_task_delay(EM7028_HAL_GAP_MS);
 
     /* ===== CASE 4: RECONFIGURE (HRS1 + HRS2) ============================== *
@@ -385,7 +385,7 @@ void em7028_iic_hal_test_task(void *argument)
     t_end   = osal_task_get_tick_count();
     ok      = (EM7028_HANDLER_OK == ret);
     em7028_hal_record(EM7028_HAL_TC_RECONFIGURE, "RECONFIGURE",
-                      ok, (int32_t)ret, 0U, t_end - t_start);
+                      ok, (INT32_T)ret, 0U, t_end - t_start);
     osal_task_delay(EM7028_HAL_GAP_MS);
 
     /* ===== CASE 5: START (after reconfigure) ============================== */
@@ -394,7 +394,7 @@ void em7028_iic_hal_test_task(void *argument)
     t_end   = osal_task_get_tick_count();
     ok      = (EM7028_HANDLER_OK == ret);
     em7028_hal_record(EM7028_HAL_TC_START_BOTH, "START_BOTH",
-                      ok, (int32_t)ret, 0U, t_end - t_start);
+                      ok, (INT32_T)ret, 0U, t_end - t_start);
     osal_task_delay(EM7028_HAL_GAP_MS);
 
     /* ===== CASE 6: drain HRS1+HRS2 frames ================================ *
@@ -413,7 +413,7 @@ void em7028_iic_hal_test_task(void *argument)
          (alive_hrs1 >= (EM7028_HAL_FRAME_BURST_COUNT * 70U / 100U)) &&
          (alive_hrs2 >= 1U);
     em7028_hal_record(EM7028_HAL_TC_DRAIN_BOTH, "DRAIN_BOTH",
-                      ok, (int32_t)ret, alive_hrs1, t_end - t_start);
+                      ok, (INT32_T)ret, alive_hrs1, t_end - t_start);
     DEBUG_OUT(i, EM7028_LOG_TAG,
               "  HRS1=%u/%u HRS2=%u/%u",
               (unsigned)alive_hrs1, (unsigned)EM7028_HAL_FRAME_BURST_COUNT,
@@ -426,7 +426,7 @@ void em7028_iic_hal_test_task(void *argument)
     t_end   = osal_task_get_tick_count();
     ok      = (EM7028_HANDLER_OK == ret);
     em7028_hal_record(EM7028_HAL_TC_STOP_BOTH, "STOP_BOTH",
-                      ok, (int32_t)ret, 0U, t_end - t_start);
+                      ok, (INT32_T)ret, 0U, t_end - t_start);
 
     /* ===== Final report ================================================== */
     em7028_hal_print_report();

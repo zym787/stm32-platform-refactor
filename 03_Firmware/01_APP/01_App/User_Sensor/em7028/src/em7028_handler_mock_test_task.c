@@ -31,7 +31,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
@@ -58,13 +58,13 @@
 /* ---- Mock queue backing ----------------------------------------------- */
 typedef struct
 {
-    bool     in_use;
-    uint32_t item_size;
-    uint32_t depth;
-    uint32_t head;
-    uint32_t tail;
-    uint32_t count;
-    uint8_t  buf[EM7028_HDL_MOCK_QUEUE_BUF_SIZE];
+    BOOL_T     in_use;
+    UINT32_T item_size;
+    UINT32_T depth;
+    UINT32_T head;
+    UINT32_T tail;
+    UINT32_T count;
+    UINT8_T  buf[EM7028_HDL_MOCK_QUEUE_BUF_SIZE];
 } mock_queue_t;
 
 #define EM7028_HDL_MOCK_MAX_QUEUES                    2U
@@ -74,43 +74,43 @@ static mock_queue_t s_mock_queues[EM7028_HDL_MOCK_MAX_QUEUES];
 typedef struct
 {
     /* OS-queue counters */
-    uint32_t queue_create_count;
-    uint32_t queue_put_count;
-    uint32_t queue_get_count;
-    uint32_t queue_delete_count;
-    uint32_t last_create_depth;
-    uint32_t last_create_item_size;
+    UINT32_T queue_create_count;
+    UINT32_T queue_put_count;
+    UINT32_T queue_get_count;
+    UINT32_T queue_delete_count;
+    UINT32_T last_create_depth;
+    UINT32_T last_create_item_size;
     void    *cmd_queue_handle;
     void    *frame_queue_handle;
 
     /* IIC counters (used during driver auto-init) */
-    uint32_t iic_init_count;
-    uint32_t iic_deinit_count;
-    uint32_t iic_write_count;
-    uint32_t iic_read_count;
+    UINT32_T iic_init_count;
+    UINT32_T iic_deinit_count;
+    UINT32_T iic_write_count;
+    UINT32_T iic_read_count;
 
     /* Timebase / delay counters */
-    uint32_t fake_tick_ms;
-    uint32_t delay_ms_count;
-    uint32_t delay_us_count;
-    uint32_t os_delay_count;
+    UINT32_T fake_tick_ms;
+    UINT32_T delay_ms_count;
+    UINT32_T delay_us_count;
+    UINT32_T os_delay_count;
 
     /* Wrapped driver counters (re-applied after inst) */
-    uint32_t drv_init_count;
-    uint32_t drv_deinit_count;
-    uint32_t drv_start_count;
-    uint32_t drv_stop_count;
-    uint32_t drv_soft_reset_count;
-    uint32_t drv_read_id_count;
-    uint32_t drv_apply_config_count;
-    uint32_t drv_read_frame_count;
+    UINT32_T drv_init_count;
+    UINT32_T drv_deinit_count;
+    UINT32_T drv_start_count;
+    UINT32_T drv_stop_count;
+    UINT32_T drv_soft_reset_count;
+    UINT32_T drv_read_id_count;
+    UINT32_T drv_apply_config_count;
+    UINT32_T drv_read_frame_count;
 
     /* Last apply_config arg captured */
     em7028_config_t last_apply_cfg;
 
     /* Fault injection */
     em7028_handler_status_t force_create_ret;
-    uint32_t                create_fail_on_call;   /* 0 = never; N = Nth   */
+    UINT32_T                create_fail_on_call;   /* 0 = never; N = Nth   */
     em7028_status_t         force_read_frame_ret;
 } mock_state_t;
 
@@ -119,7 +119,7 @@ static mock_state_t s_st;
 /* ---- Mock interface instances ----------------------------------------- */
 static bsp_em7028_handler_t          s_mock_handler;
 static bsp_em7028_driver_t           s_mock_driver;
-static uint8_t  s_mock_priv_buf[EM7028_HDL_MOCK_PRIV_BUF_SIZE];
+static UINT8_T  s_mock_priv_buf[EM7028_HDL_MOCK_PRIV_BUF_SIZE];
 
 static em7028_handler_input_args_t   s_mock_args;
 static em7028_handler_os_interface_t s_mock_os_if;
@@ -131,10 +131,10 @@ static em7028_os_delay_interface_t   s_mock_os_delay;
 
 /* Local-mirror state for dispatch tests (the handler's own is_active is
  * inside the opaque private struct and not visible from this TU).        */
-static bool s_test_is_active = false;
+static BOOL_T s_test_is_active = false;
 
-static uint32_t s_pass_count;
-static uint32_t s_fail_count;
+static UINT32_T s_pass_count;
+static UINT32_T s_fail_count;
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
@@ -170,8 +170,8 @@ static void mock_queues_reset(void)
  *             slot pointer as the "handle" so put / get can route back.
  *             Honours create_fail_on_call fault injection.
  * */
-static em7028_handler_status_t mock_queue_create(uint32_t const item_num,
-                                                  uint32_t const item_size,
+static em7028_handler_status_t mock_queue_create(UINT32_T const item_num,
+                                                  UINT32_T const item_size,
                                                   void   ** const  p_handle)
 {
     s_st.queue_create_count++;
@@ -190,7 +190,7 @@ static em7028_handler_status_t mock_queue_create(uint32_t const item_num,
 
     /* Find a free slot in the pool. */
     mock_queue_t *q = NULL;
-    for (uint32_t i = 0U; i < EM7028_HDL_MOCK_MAX_QUEUES; i++)
+    for (UINT32_T i = 0U; i < EM7028_HDL_MOCK_MAX_QUEUES; i++)
     {
         if (!s_mock_queues[i].in_use)
         {
@@ -243,7 +243,7 @@ static em7028_handler_status_t mock_queue_create(uint32_t const item_num,
  * */
 static em7028_handler_status_t mock_queue_put(void   * const queue_handler,
                                                void  * const          item,
-                                               uint32_t            timeout)
+                                               UINT32_T            timeout)
 {
     (void)timeout;
     s_st.queue_put_count++;
@@ -269,7 +269,7 @@ static em7028_handler_status_t mock_queue_put(void   * const queue_handler,
  * */
 static em7028_handler_status_t mock_queue_get(void   * const queue_handler,
                                                void  * const           msg,
-                                               uint32_t            timeout)
+                                               UINT32_T            timeout)
 {
     (void)timeout;
     s_st.queue_get_count++;
@@ -315,12 +315,12 @@ static em7028_status_t mock_iic_deinit(void *hi2c)
 }
 
 static em7028_status_t mock_iic_mem_write(void    *i2c,
-                                          uint16_t des_addr,
-                                          uint16_t mem_addr,
-                                          uint16_t mem_size,
-                                          uint8_t *p_data,
-                                          uint16_t size,
-                                          uint32_t timeout)
+                                          UINT16_T des_addr,
+                                          UINT16_T mem_addr,
+                                          UINT16_T mem_size,
+                                          UINT8_T *p_data,
+                                          UINT16_T size,
+                                          UINT32_T timeout)
 {
     (void)i2c; (void)des_addr; (void)mem_addr; (void)mem_size;
     (void)p_data; (void)size; (void)timeout;
@@ -329,12 +329,12 @@ static em7028_status_t mock_iic_mem_write(void    *i2c,
 }
 
 static em7028_status_t mock_iic_mem_read(void    *i2c,
-                                         uint16_t des_addr,
-                                         uint16_t mem_addr,
-                                         uint16_t mem_size,
-                                         uint8_t *p_data,
-                                         uint16_t size,
-                                         uint32_t timeout)
+                                         UINT16_T des_addr,
+                                         UINT16_T mem_addr,
+                                         UINT16_T mem_size,
+                                         UINT8_T *p_data,
+                                         UINT16_T size,
+                                         UINT32_T timeout)
 {
     (void)i2c; (void)des_addr; (void)mem_size; (void)timeout;
     s_st.iic_read_count++;
@@ -358,26 +358,26 @@ static em7028_status_t mock_iic_mem_read(void    *i2c,
 /* ======================================================================== */
 /*  Timebase / delay / OS-delay mocks                                       */
 /* ======================================================================== */
-static uint32_t mock_get_tick_count(void)
+static UINT32_T mock_get_tick_count(void)
 {
     return s_st.fake_tick_ms;
 }
 
 static void mock_delay_init(void) { /* no-op */ }
 
-static void mock_delay_ms(uint32_t const ms)
+static void mock_delay_ms(UINT32_T const ms)
 {
     s_st.delay_ms_count++;
     s_st.fake_tick_ms += ms;
 }
 
-static void mock_delay_us(uint32_t const us)
+static void mock_delay_us(UINT32_T const us)
 {
     (void)us;
     s_st.delay_us_count++;
 }
 
-static void mock_rtos_delay(uint32_t const ms)
+static void mock_rtos_delay(UINT32_T const ms)
 {
     s_st.os_delay_count++;
     s_st.fake_tick_ms += ms;
@@ -405,7 +405,7 @@ static em7028_status_t wrap_drv_soft_reset(struct bsp_em7028_driver *const self)
     return EM7028_OK;
 }
 static em7028_status_t wrap_drv_read_id(struct bsp_em7028_driver *const self,
-                                         uint8_t                  *const id)
+                                         UINT8_T                  *const id)
 {
     (void)self;
     s_st.drv_read_id_count++;
@@ -451,8 +451,8 @@ static em7028_status_t wrap_drv_read_frame(
     {
         memset(frame, 0, sizeof(*frame));
         frame->timestamp_ms = s_st.fake_tick_ms;
-        frame->hrs1_pixel[0] = (uint16_t)s_st.drv_read_frame_count;
-        frame->hrs1_sum      = (uint32_t)s_st.drv_read_frame_count;
+        frame->hrs1_pixel[0] = (UINT16_T)s_st.drv_read_frame_count;
+        frame->hrs1_sum      = (UINT32_T)s_st.drv_read_frame_count;
     }
     return EM7028_OK;
 }
@@ -601,7 +601,7 @@ static void test_sample_tick(bsp_em7028_handler_t * const handler)
 /* ======================================================================== */
 /*  Pass / fail helpers                                                     */
 /* ======================================================================== */
-static void case_report(const char *name, bool ok)
+static void case_report(const char *name, BOOL_T ok)
 {
     if (ok)
     {
@@ -640,7 +640,7 @@ static void test_case_inst_null_handler(void)
 
     em7028_handler_status_t ret = bsp_em7028_handler_inst(NULL, &s_mock_args);
 
-    bool ok = (EM7028_HANDLER_ERRORPARAMETER == ret) &&
+    BOOL_T ok = (EM7028_HANDLER_ERRORPARAMETER == ret) &&
               (0U == s_st.queue_create_count);
     case_report("CASE 1 inst NULL handler", ok);
 }
@@ -655,7 +655,7 @@ static void test_case_inst_null_args(void)
 
     em7028_handler_status_t ret = bsp_em7028_handler_inst(&s_mock_handler, NULL);
 
-    bool ok = (EM7028_HANDLER_ERRORPARAMETER == ret) &&
+    BOOL_T ok = (EM7028_HANDLER_ERRORPARAMETER == ret) &&
               (0U == s_st.queue_create_count);
     case_report("CASE 2 inst NULL args", ok);
 }
@@ -673,7 +673,7 @@ static void test_case_inst_null_driver(void)
     em7028_handler_status_t ret =
         bsp_em7028_handler_inst(&s_mock_handler, &s_mock_args);
 
-    bool ok = (EM7028_HANDLER_ERRORRESOURCE == ret) &&
+    BOOL_T ok = (EM7028_HANDLER_ERRORRESOURCE == ret) &&
               (0U == s_st.queue_create_count);
     case_report("CASE 3 inst NULL driver", ok);
 }
@@ -691,7 +691,7 @@ static void test_case_inst_null_private(void)
     em7028_handler_status_t ret =
         bsp_em7028_handler_inst(&s_mock_handler, &s_mock_args);
 
-    bool ok = (EM7028_HANDLER_ERRORRESOURCE == ret) &&
+    BOOL_T ok = (EM7028_HANDLER_ERRORRESOURCE == ret) &&
               (0U == s_st.queue_create_count);
     case_report("CASE 4 inst NULL private", ok);
 }
@@ -708,7 +708,7 @@ static void test_case_inst_null_os_if(void)
     em7028_handler_status_t ret =
         bsp_em7028_handler_inst(&s_mock_handler, &s_mock_args);
 
-    bool ok = (EM7028_HANDLER_ERRORRESOURCE == ret) &&
+    BOOL_T ok = (EM7028_HANDLER_ERRORRESOURCE == ret) &&
               (0U == s_st.queue_create_count);
     case_report("CASE 5 inst NULL os_if", ok);
 }
@@ -725,7 +725,7 @@ static void test_case_inst_null_iic(void)
     em7028_handler_status_t ret =
         bsp_em7028_handler_inst(&s_mock_handler, &s_mock_args);
 
-    bool ok = (EM7028_HANDLER_ERRORRESOURCE == ret) &&
+    BOOL_T ok = (EM7028_HANDLER_ERRORRESOURCE == ret) &&
               (0U == s_st.queue_create_count);
     case_report("CASE 6 inst NULL iic", ok);
 }
@@ -743,7 +743,7 @@ static void test_case_inst_null_timebase(void)
     em7028_handler_status_t ret =
         bsp_em7028_handler_inst(&s_mock_handler, &s_mock_args);
 
-    bool ok = (EM7028_HANDLER_ERRORRESOURCE == ret) &&
+    BOOL_T ok = (EM7028_HANDLER_ERRORRESOURCE == ret) &&
               (0U == s_st.queue_create_count);
     case_report("CASE 7 inst NULL timebase", ok);
 }
@@ -761,7 +761,7 @@ static void test_case_inst_null_delay(void)
     em7028_handler_status_t ret =
         bsp_em7028_handler_inst(&s_mock_handler, &s_mock_args);
 
-    bool ok = (EM7028_HANDLER_ERRORRESOURCE == ret) &&
+    BOOL_T ok = (EM7028_HANDLER_ERRORRESOURCE == ret) &&
               (0U == s_st.queue_create_count);
     case_report("CASE 8 inst NULL delay", ok);
 }
@@ -779,7 +779,7 @@ static void test_case_inst_null_queue_if(void)
     em7028_handler_status_t ret =
         bsp_em7028_handler_inst(&s_mock_handler, &s_mock_args);
 
-    bool ok = (EM7028_HANDLER_ERRORRESOURCE == ret) &&
+    BOOL_T ok = (EM7028_HANDLER_ERRORRESOURCE == ret) &&
               (0U == s_st.queue_create_count);
     case_report("CASE 9 inst NULL queue_if", ok);
 }
@@ -797,7 +797,7 @@ static void test_case_inst_cmd_queue_create_fails(void)
     em7028_handler_status_t ret =
         bsp_em7028_handler_inst(&s_mock_handler, &s_mock_args);
 
-    bool ok = (EM7028_HANDLER_ERRORNOMEMORY == ret) &&
+    BOOL_T ok = (EM7028_HANDLER_ERRORNOMEMORY == ret) &&
               (1U == s_st.queue_create_count) &&
               (0U == s_st.iic_init_count);
     case_report("CASE 10 inst cmd queue_create fail", ok);
@@ -816,7 +816,7 @@ static void test_case_inst_frame_queue_create_fails(void)
     em7028_handler_status_t ret =
         bsp_em7028_handler_inst(&s_mock_handler, &s_mock_args);
 
-    bool ok = (EM7028_HANDLER_ERRORNOMEMORY == ret) &&
+    BOOL_T ok = (EM7028_HANDLER_ERRORNOMEMORY == ret) &&
               (2U == s_st.queue_create_count) &&
               (0U == s_st.iic_init_count);
     case_report("CASE 11 inst frame queue_create fail", ok);
@@ -875,7 +875,7 @@ static void test_case_get_frame_uninstalled(void)
 /* ======================================================================== */
 /*  Test cases -- successful inst (consumes one driver PIMPL slot)          */
 /* ======================================================================== */
-static bool g_inst_success = false;   /* shared with downstream cases      */
+static BOOL_T g_inst_success = false;   /* shared with downstream cases      */
 
 static void test_case_inst_success(void)
 {
@@ -895,7 +895,7 @@ static void test_case_inst_success(void)
      *   - iic_init=1 from driver auto-init
      *   - iic_read>=1 (at least the ID_REG probe)
      *   - iic_write>=6 (SOFT_RESET + 5 cfg writes)                      */
-    bool ok = (EM7028_HANDLER_OK == ret) &&
+    BOOL_T ok = (EM7028_HANDLER_OK == ret) &&
               (2U == s_st.queue_create_count) &&
               (NULL != s_mock_handler.p_cmd_queue) &&
               (NULL != s_mock_handler.p_frame_queue) &&
@@ -932,7 +932,7 @@ static void test_case_inst_already_inited(void)
     em7028_handler_status_t ret =
         bsp_em7028_handler_inst(&s_mock_handler, &s_mock_args);
 
-    bool ok = (EM7028_HANDLER_ERRORRESOURCE == ret) &&
+    BOOL_T ok = (EM7028_HANDLER_ERRORRESOURCE == ret) &&
               (0U == s_st.queue_create_count) &&
               (0U == s_st.iic_init_count);
     case_report("CASE 18 already inited", ok);
@@ -952,7 +952,7 @@ static void test_case_dispatch_start(void)
     em7028_handler_event_t event = {.event_type = EM7028_HANDLER_EVENT_START};
     test_process_event(&s_mock_handler, &event);
 
-    bool ok = (1U == s_st.drv_start_count) &&
+    BOOL_T ok = (1U == s_st.drv_start_count) &&
               (0U == s_st.drv_stop_count) &&
               (0U == s_st.drv_apply_config_count) &&
               (0U == s_st.drv_deinit_count) &&
@@ -971,7 +971,7 @@ static void test_case_dispatch_stop(void)
     em7028_handler_event_t event = {.event_type = EM7028_HANDLER_EVENT_STOP};
     test_process_event(&s_mock_handler, &event);
 
-    bool ok = (0U == s_st.drv_start_count) &&
+    BOOL_T ok = (0U == s_st.drv_start_count) &&
               (1U == s_st.drv_stop_count) &&
               (false == s_test_is_active);
     case_report("CASE 20 dispatch STOP", ok);
@@ -1001,7 +1001,7 @@ static void test_case_dispatch_reconfigure_active(void)
     };
     test_process_event(&s_mock_handler, &event);
 
-    bool ok = (1U == s_st.drv_apply_config_count) &&
+    BOOL_T ok = (1U == s_st.drv_apply_config_count) &&
               (1U == s_st.drv_start_count) &&
               (EM7028_HRS1_FREQ_327K_12_5MS == s_st.last_apply_cfg.hrs1_freq) &&
               (0x40u == s_st.last_apply_cfg.led_current);
@@ -1022,7 +1022,7 @@ static void test_case_dispatch_reconfigure_idle(void)
     };
     test_process_event(&s_mock_handler, &event);
 
-    bool ok = (1U == s_st.drv_apply_config_count) &&
+    BOOL_T ok = (1U == s_st.drv_apply_config_count) &&
               (0U == s_st.drv_start_count);
     case_report("CASE 22 dispatch RECONFIGURE idle", ok);
 }
@@ -1038,7 +1038,7 @@ static void test_case_dispatch_deinit(void)
     em7028_handler_event_t event = {.event_type = EM7028_HANDLER_EVENT_DEINIT};
     test_process_event(&s_mock_handler, &event);
 
-    bool ok = (1U == s_st.drv_deinit_count) &&
+    BOOL_T ok = (1U == s_st.drv_deinit_count) &&
               (false == s_test_is_active);
     case_report("CASE 23 dispatch DEINIT", ok);
 }
@@ -1057,7 +1057,7 @@ static void test_case_sample_tick_active(void)
 
     test_sample_tick(&s_mock_handler);
 
-    bool ok = (1U == s_st.drv_read_frame_count) &&
+    BOOL_T ok = (1U == s_st.drv_read_frame_count) &&
               (1U == s_st.queue_put_count);
     case_report("CASE 24 sample tick active", ok);
 }
@@ -1072,7 +1072,7 @@ static void test_case_sample_tick_idle(void)
 
     test_sample_tick(&s_mock_handler);
 
-    bool ok = (0U == s_st.drv_read_frame_count) &&
+    BOOL_T ok = (0U == s_st.drv_read_frame_count) &&
               (0U == s_st.queue_put_count);
     case_report("CASE 25 sample tick idle", ok);
 }
@@ -1095,7 +1095,7 @@ static void test_case_frame_queue_round_trip(void)
         s_mock_os_queue.pf_os_queue_get(s_mock_handler.p_frame_queue,
                                         &pulled, 0U);
 
-    bool ok = (1U == s_st.drv_read_frame_count) &&
+    BOOL_T ok = (1U == s_st.drv_read_frame_count) &&
               (1U == s_st.queue_put_count) &&
               (EM7028_HANDLER_OK == qret) &&
               (pulled.hrs1_pixel[0] != 0U) &&
@@ -1123,17 +1123,17 @@ static void test_case_frame_queue_drop_on_full(void)
     state_reset();   /* zero the counters AFTER drain                     */
 
     /* Push EM7028_HDL_MOCK_FRAME_DEPTH frames -- queue should accept all. */
-    for (uint32_t i = 0U; i < EM7028_HDL_MOCK_FRAME_DEPTH; i++)
+    for (UINT32_T i = 0U; i < EM7028_HDL_MOCK_FRAME_DEPTH; i++)
     {
         test_sample_tick(&s_mock_handler);
     }
-    const uint32_t puts_before_overflow = s_st.queue_put_count;
+    const UINT32_T puts_before_overflow = s_st.queue_put_count;
 
     /* One more tick -- queue is full, the producer must NOT block but
      * the put should fail and we just drop the frame.                  */
     test_sample_tick(&s_mock_handler);
 
-    bool ok = (EM7028_HDL_MOCK_FRAME_DEPTH     == puts_before_overflow) &&
+    BOOL_T ok = (EM7028_HDL_MOCK_FRAME_DEPTH     == puts_before_overflow) &&
               (EM7028_HDL_MOCK_FRAME_DEPTH + 1 == s_st.queue_put_count) &&
               (EM7028_HDL_MOCK_FRAME_DEPTH + 1 == s_st.drv_read_frame_count);
     case_report("CASE 27 frame queue drop-on-full", ok);

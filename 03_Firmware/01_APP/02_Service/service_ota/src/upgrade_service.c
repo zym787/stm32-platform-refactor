@@ -25,6 +25,7 @@
 
 //******************************** Includes *********************************//
 #include <string.h>
+#include "platform_type.h"
 
 #include "upgrade_service.h"
 
@@ -32,11 +33,11 @@
 //******************************** Includes *********************************//
 
 //******************************* Functions *********************************//
-int8_t ota_flag_read(ota_flag_t *out)
+platform_err_t ota_flag_read(ota_flag_t *out)
 {
     if (out == NULL)
     {
-        return -1;
+        return PLATFORM_ERR_PARAM;
     }
 
     /**
@@ -45,38 +46,38 @@ int8_t ota_flag_read(ota_flag_t *out)
     **/
     memcpy(out, (const void *)CFG_OTA_FLAG_ADDRESS, sizeof(*out));
 
+    /* Blank/garbage magic means the flag was never written — surface it as
+     * "not initialised" so the caller can seed a fresh struct. */
     if (out->magic != CFG_OTA_FLAG_MAGIC)
     {
-        return -1;
+        return PLATFORM_ERR_NOT_INITIALIZED;
     }
-    return 0;
+    return PLATFORM_OK;
 }
 
-int8_t ota_flag_write(const ota_flag_t *in)
+platform_err_t ota_flag_write(const ota_flag_t *in)
 {
     if (in == NULL)
     {
-        return -1;
+        return PLATFORM_ERR_PARAM;
     }
 
     /**
     * Sector-2 holds the OTA flag (see cfg_ota.h). Both erase and program
     * go through the MCU IFlash port, which owns the __disable_irq() critical
-    * section and the read-back verify. Keep semantics out of this file.
+    * section and the read-back verify. Keep semantics out of this file —
+    * propagate the port's platform_err_t straight through.
     **/
-    if (PLATFORM_IS_ERR(mcu_iflash_erase_sector(CFG_OTA_FLAG_SECTOR)))
+    platform_err_t er = mcu_iflash_erase_sector(CFG_OTA_FLAG_SECTOR);
+    if (PLATFORM_IS_ERR(er))
     {
-        return -1;
+        return er;
     }
 
-    const uint32_t n_words = sizeof(*in) / sizeof(uint32_t);
+    const UINT32_T n_words = sizeof(*in) / sizeof(UINT32_T);
 
-    /* MCU IFlash port now returns platform_err_t; keep ota_flag_write's
-     * own int8_t 0/-1 contract by converting at this boundary. */
-    return PLATFORM_IS_OK(mcu_iflash_program_words(CFG_OTA_FLAG_ADDRESS,
-                                                   (const uint32_t *)in,
-                                                   n_words))
-               ? 0
-               : -1;
+    return mcu_iflash_program_words(CFG_OTA_FLAG_ADDRESS,
+                                    (const UINT32_T *)in,
+                                    n_words);
 }
 //******************************* Functions *********************************//

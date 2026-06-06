@@ -45,6 +45,13 @@ ARM CMSIS / 硬件        ← 寄存器级
 | `03_Platform/platform_bsp/` + `04_Impl/impl_bsp/` | 使用适配器模式的传感器/外设驱动（详见下文）。Wrapper API 在 platform，具体 driver/handler/adapter 在 impl。 |
 | `03_Platform/platform_mcu/` + `04_Impl/impl_mcu/` | 芯片级 port 层：`MCU_Core_IIC/SPI/GPIO/Systick/DWT/UART` 总线与时钟、`MCU_Core_Watchdog/`（`mcu_watchdog_refresh()`）、`MCU_Core_IFlash/`（`mcu_iflash_erase_sector + program_words`，函数体内 `__disable_irq()` 包裹整段防 F411 单 bank flash 取指死锁）。所有寄存器级触碰都收在此层，service / APP 不直接调 HAL。同时支持硬件 I2C（HAL）和软件 I2C 位操作（SCL=PB14，SDA=PB15）。 |
 | `03_Platform/platform_middleware/` + `04_Impl/impl_middleware/` | 当前 middleware 接口层为空，占位给 v5；EasyLogger、LetterShell、Ymodem、LVGL v8.3、heart_rate_algo 在 `04_Impl/impl_middleware/`。 |
+| `03_Platform/platform_common/`（+ `04_Impl/impl_borad/`） | 跨层公共词汇：`platform_type.h`（全大写 `_T` 定宽类型 `UINT8_T`/`INT32_T`/`FLOAT32_T`/`BOOL_T`/`SIZE_T`…，底层映射 `impl_borad/board_types.h`）、`platform_error.h`（`platform_err_t` + `PLATFORM_IS_OK/ERR`）、`platform_def.h`（`ARRAY_SIZE`/`PLATFORM_UNUSED`/`PLATFORM_MIN/MAX`/`PLATFORM_ALIGN`）。换工具链/板只改 `board_types.h`。 |
+
+### 类型与错误码约定（platform_common）
+
+- **错误码**：可失败函数返回 `platform_err_t`，调用方用 `PLATFORM_IS_OK/ERR` 判定——不要返回裸 `0/-1` 或新造状态码。例外：service 对外的 `ota_transport_status_t`/`ota_storage_status_t`/`ext_flash_status_t` 三个边界枚举保留，adapter 内 `translate()` 与 `platform_err_t` 互转（值映射，禁止强转）。
+- **定宽类型**：`01_App` / `02_Service` 用 `platform_type.h` 的全大写 `_T` 词汇（`UINT8_T`/`INT32_T`/`BOOL_T`/`SIZE_T`/`FLOAT32_T`…），不直接 `#include <stdint.h>`；纯文本仍用 `char`。
+- **分层现状**：`_T` 词汇目前只在 `01_App`/`02_Service` 落地；`03_Platform` impl / `04_Impl` / `00_Config` 仍用 raw stdint（分层迁移未回填）。改下层时沿用该层现状，勿混用。
 
 ### BSP 适配器模式（`03_Platform/platform_bsp/` + `04_Impl/impl_bsp/`）
 
@@ -379,4 +386,4 @@ APP `user_init` 看到 `0x33` 或 `0x44` 都 auto-confirm 写 `0x00`；若 IWDG 
 | `Core/Inc/stm32f4xx_hal_conf.h` | 编译哪些 ST HAL 模块 |
 | `STM32F411XX_FLASH.ld` | 内存映射、段放置 |
 | `Core/Inc/main.h` | 引脚定义、全局包含 |
-| `03_Platform/platform_mcu/MCU_Core_IIC/inc/i2c_port.h` | I2C 总线类型（硬件/软件）、互斥锁超时 |
+| `03_Platform/platform_mcu/MCU_Core_IIC/inc/i2c_port.h` | I2C 总线索引枚举、互斥锁超时（硬件/软件描述符已下沉到 `04_Impl/impl_mcu/MCU_Core_IIC/src/i2c_port.c`，头文件 MCU 无关） |

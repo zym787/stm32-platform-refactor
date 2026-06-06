@@ -33,6 +33,7 @@
 
 //******************************** Includes *********************************//
 #include <string.h>
+#include "platform_type.h"
 #include <stdbool.h>
 
 #include "osal_wrapper_adapter.h"
@@ -79,21 +80,21 @@ osal_sema_handle_t  g_extFlashAckSem = NULL;
    g_otaDataQueue serially; the flush call from ota_service_task only
    runs AFTER Ymodem_Receive returns, by which point this task has parked
    on the queue) so no mutex is needed. */
-static uint8_t   s_sector_buf[UPGRADE_SECTOR_BUF_SIZE];
-static uint32_t  s_sector_buf_used   = 0U;
-static uint32_t  s_session_bytes_out = 0U;
+static UINT8_T   s_sector_buf[UPGRADE_SECTOR_BUF_SIZE];
+static UINT32_T  s_sector_buf_used   = 0U;
+static UINT32_T  s_session_bytes_out = 0U;
 /* OTA-partition write cursor; advances per flushed sector. File-scope so
    firmware_upgrade_flush_staged() (called from ota_service_task) can
    reach it after firmware_upgrade_task has parked on g_otaDataQueue. */
-static uint32_t  s_ota_write_offset  = 0U;
+static UINT32_T  s_ota_write_offset  = 0U;
 /* Sticky "this session is poisoned" flag — flipped on the first
    ota_storage_write failure. Once set, firmware_upgrade_flush_staged()
-   returns -1 immediately so ota_run_ymodem_session() bails out before
+   returns an error immediately so ota_run_ymodem_session() bails out before
    stamping the ota_flag. Cleared on FILE_INFO at the start of the next
    session. Without this, a write failure mid-stream would leave a 4 KB
    gap in the staged image but the bytes-out counter would still match
    the declared image size — bootloader would decrypt a corrupted blob. */
-static bool      s_session_poisoned   = false;
+static BOOL_T      s_session_poisoned   = false;
 //******************************* Variables *********************************//
 
 //******************************* Functions *********************************//
@@ -103,7 +104,7 @@ static bool      s_session_poisoned   = false;
 *        frame queue) are created by ota_transport_init separately.
 *        Idempotent.
 * */
-static int8_t firmware_upgrade_resources_init(void)
+static platform_err_t firmware_upgrade_resources_init(void)
 {
     if (NULL == g_otaDataQueue)
     {
@@ -111,7 +112,7 @@ static int8_t firmware_upgrade_resources_init(void)
                                               UPGRADE_QUEUE_DATA_DEPTH,
                                               sizeof(Ymodem_RxContext_t *)))
         {
-            return -1;
+            return PLATFORM_ERR_NO_RESOURCE;
         }
     }
 
@@ -123,14 +124,14 @@ static int8_t firmware_upgrade_resources_init(void)
         **/
         if (OSAL_SUCCESS != osal_sema_init(&g_extFlashAckSem, 0))
         {
-            return -1;
+            return PLATFORM_ERR_NO_RESOURCE;
         }
     }
 
-    return 0;
+    return PLATFORM_OK;
 }
 
-int8_t firmware_upgrade_service_init(void)
+platform_err_t firmware_upgrade_service_init(void)
 {
     /**
     * Post-OTA verification: bootloader leaves state=CHECK_START before
@@ -147,7 +148,7 @@ int8_t firmware_upgrade_service_init(void)
     * service init (bootloader rollback will recover).
     **/
     ota_flag_t ota_f;
-    if (ota_flag_read(&ota_f) == 0 &&
+    if (PLATFORM_IS_OK(ota_flag_read(&ota_f)) &&
         (ota_f.state == CFG_OTA_APP_CHECK_START ||
          ota_f.state == CFG_OTA_APP_CHECKING))
     {
@@ -155,7 +156,7 @@ int8_t firmware_upgrade_service_init(void)
                   "post-OTA first boot (state=0x%02X): auto-confirm",
                   (unsigned)ota_f.state);
         ota_f.state = CFG_OTA_NO_APP_UPDATE;
-        if (ota_flag_write(&ota_f) != 0)
+        if (PLATFORM_IS_ERR(ota_flag_write(&ota_f)))
         {
             DEBUG_OUT(e, USER_INIT_ERR_LOG_TAG,
                       "post-OTA confirm write failed (IWDG will roll back)");
@@ -171,29 +172,29 @@ int8_t firmware_upgrade_service_init(void)
     if (OTA_TRANSPORT_OK != ota_transport_init())
     {
         DEBUG_OUT(e, USER_INIT_ERR_LOG_TAG, "ota_transport_init failed");
-        return -1;
+        return PLATFORM_ERR_GENERAL;
     }
     if (OTA_STORAGE_OK != ota_storage_init())
     {
         DEBUG_OUT(e, USER_INIT_ERR_LOG_TAG, "ota_storage_init failed");
-        return -1;
+        return PLATFORM_ERR_GENERAL;
     }
     return firmware_upgrade_resources_init();
 }
 
-int32_t firmware_upgrade_flush_staged(void)
+platform_err_t firmware_upgrade_flush_staged(void)
 {
     if (s_session_poisoned)
     {
         /* A prior ota_storage_write failed; refuse to seal the session so
            ota_run_ymodem_session sees the error and skips the ota_flag write. */
-        return -1;
+        return PLATFORM_ERR_GENERAL;
     }
 
     if (0U == s_sector_buf_used)
     {
         /* Already aligned — nothing left to flush. */
-        return (int32_t)s_session_bytes_out;
+        return PLATFORM_OK;
     }
 
     /**
@@ -214,7 +215,7 @@ int32_t firmware_upgrade_flush_staged(void)
                   "OTA storage final sector flush failed at offset=%lu",
                   (unsigned long)s_ota_write_offset);
         s_sector_buf_used = 0U;
-        return -1;
+        return PLATFORM_ERR_GENERAL;
     }
 
     /**
@@ -227,7 +228,7 @@ int32_t firmware_upgrade_flush_staged(void)
     s_sector_buf_used    = 0U;
     s_ota_write_offset  += UPGRADE_SECTOR_BUF_SIZE;
 
-    return (int32_t)s_session_bytes_out;
+    return PLATFORM_OK;
 }
 
 /**
@@ -286,14 +287,14 @@ void firmware_upgrade_task(void *argument)
             * calls firmware_upgrade_flush_staged at session end to
             * drain the final partial sector.
             **/
-            uint32_t        bytes = (uint32_t)ctx->packet_length;
-            const uint8_t  *src   = ctx->packet_data + PACKET_HEADER;
+            UINT32_T        bytes = (UINT32_T)ctx->packet_length;
+            const UINT8_T  *src   = ctx->packet_data + PACKET_HEADER;
 
             while (bytes > 0U)
             {
-                const uint32_t cap  = UPGRADE_SECTOR_BUF_SIZE -
+                const UINT32_T cap  = UPGRADE_SECTOR_BUF_SIZE -
                                        s_sector_buf_used;
-                const uint32_t take = (bytes < cap) ? bytes : cap;
+                const UINT32_T take = (bytes < cap) ? bytes : cap;
 
                 memcpy(&s_sector_buf[s_sector_buf_used], src, take);
                 s_sector_buf_used += take;

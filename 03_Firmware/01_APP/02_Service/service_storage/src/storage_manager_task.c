@@ -46,7 +46,7 @@
 #include "Debug.h"
 
 #include <stddef.h>
-#include <stdint.h>
+#include "platform_type.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
@@ -73,9 +73,9 @@ typedef enum
 
 typedef struct
 {
-    uint32_t                addr;        /* offset within LVGL sub-region   */
-    uint32_t                size;
-    uint8_t                *buf;         /* read: dst, write: src           */
+    UINT32_T                addr;        /* offset within LVGL sub-region   */
+    UINT32_T                size;
+    UINT8_T                *buf;         /* read: dst, write: src           */
     storage_op_t              op;
     platform_err_t   last_status;
 } storage_request_t;
@@ -124,11 +124,11 @@ static ext_flash_status_t translate_status(platform_err_t st)
  * @brief Common blocking dispatch: parameter check, take mutex, publish
  *        request, signal event, wait for completion.
  */
-static ext_flash_status_t lvgl_blocking_dispatch(uint32_t      addr,
-                                                 uint32_t      size,
-                                                 uint8_t      *buf,
+static ext_flash_status_t lvgl_blocking_dispatch(UINT32_T      addr,
+                                                 UINT32_T      size,
+                                                 UINT8_T      *buf,
                                                  storage_op_t    op,
-                                                 uint32_t   event_bit)
+                                                 UINT32_T   event_bit)
 {
     if ((NULL == buf) || (0U == size))
     {
@@ -209,22 +209,22 @@ ext_flash_status_t storage_manager_resources_init(void)
     return EXT_FLASH_OK;
 }
 
-ext_flash_status_t Read_LvglData(uint32_t  addr,
-                                 uint32_t  size,
-                                 uint8_t  *out_buf)
+ext_flash_status_t Read_LvglData(UINT32_T  addr,
+                                 UINT32_T  size,
+                                 UINT8_T  *out_buf)
 {
     return lvgl_blocking_dispatch(addr, size, out_buf,
                                   STORAGE_OP_LVGL_READ, EVENT_LVGL_R);
 }
 
-ext_flash_status_t Write_LvglData(uint32_t        addr,
-                                  uint32_t        size,
-                                  const uint8_t  *in_buf)
+ext_flash_status_t Write_LvglData(UINT32_T        addr,
+                                  UINT32_T        size,
+                                  const UINT8_T  *in_buf)
 {
     /* The wrapper's pf_externflash_write needs a non-const pointer; the
      * underlying SPI write path only reads from this buffer, and the API
      * is blocking, so casting away const is safe here. */
-    return lvgl_blocking_dispatch(addr, size, (uint8_t *)in_buf,
+    return lvgl_blocking_dispatch(addr, size, (UINT8_T *)in_buf,
                                   STORAGE_OP_LVGL_WRITE, EVENT_LVGL_W);
 }
 
@@ -233,9 +233,9 @@ ext_flash_status_t Write_LvglData(uint32_t        addr,
  *        range check uses the OTA sub-region size and the physical address
  *        computed in storage_manager_task uses MEMORY_OTA_START_ADDRESS.
  */
-static ext_flash_status_t ota_blocking_dispatch(uint32_t      addr,
-                                                uint32_t      size,
-                                                uint8_t      *buf,
+static ext_flash_status_t ota_blocking_dispatch(UINT32_T      addr,
+                                                UINT32_T      size,
+                                                UINT8_T      *buf,
                                                 storage_op_t  op)
 {
     if ((NULL == buf) || (0U == size))
@@ -277,20 +277,20 @@ static ext_flash_status_t ota_blocking_dispatch(uint32_t      addr,
     return ret;
 }
 
-ext_flash_status_t Read_OtaData(uint32_t  addr,
-                                uint32_t  size,
-                                uint8_t  *out_buf)
+ext_flash_status_t Read_OtaData(UINT32_T  addr,
+                                UINT32_T  size,
+                                UINT8_T  *out_buf)
 {
     return ota_blocking_dispatch(addr, size, out_buf, STORAGE_OP_OTA_READ);
 }
 
-ext_flash_status_t Write_OtaData(uint32_t        addr,
-                                 uint32_t        size,
-                                 const uint8_t  *in_buf)
+ext_flash_status_t Write_OtaData(UINT32_T        addr,
+                                 UINT32_T        size,
+                                 const UINT8_T  *in_buf)
 {
     /* externflash_drv_write needs a non-const pointer; SPI path only reads
        from the buffer, and the wrapper is blocking, so casting is safe. */
-    return ota_blocking_dispatch(addr, size, (uint8_t *)in_buf,
+    return ota_blocking_dispatch(addr, size, (UINT8_T *)in_buf,
                                  STORAGE_OP_OTA_WRITE);
 }
 
@@ -302,11 +302,11 @@ ext_flash_status_t Write_OtaData(uint32_t        addr,
  *        cannot accidentally write past the 4-KB block.  storage_manager_task
  *        rebases s_pending.addr to MEMORY_CALIB_START_ADDRESS at dispatch.
  */
-static ext_flash_status_t calib_blocking_dispatch(uint32_t      addr,
-                                                  uint32_t      size,
-                                                  uint8_t      *buf,
+static ext_flash_status_t calib_blocking_dispatch(UINT32_T      addr,
+                                                  UINT32_T      size,
+                                                  UINT8_T      *buf,
                                                   storage_op_t  op,
-                                                  uint32_t  event_bit)
+                                                  UINT32_T  event_bit)
 {
     if ((NULL == buf) || (0U == size))
     {
@@ -347,22 +347,22 @@ static ext_flash_status_t calib_blocking_dispatch(uint32_t      addr,
     return ret;
 }
 
-ext_flash_status_t Read_CalibData(uint32_t  addr,
-                                  uint32_t  size,
-                                  uint8_t  *out_buf)
+ext_flash_status_t Read_CalibData(UINT32_T  addr,
+                                  UINT32_T  size,
+                                  UINT8_T  *out_buf)
 {
     return calib_blocking_dispatch(addr, size, out_buf,
                                    STORAGE_OP_CALIB_READ, EVENT_CALIB_R);
 }
 
-ext_flash_status_t Write_CalibData(uint32_t        addr,
-                                   uint32_t        size,
-                                   const uint8_t  *in_buf)
+ext_flash_status_t Write_CalibData(UINT32_T        addr,
+                                   UINT32_T        size,
+                                   const UINT8_T  *in_buf)
 {
     /* externflash_drv_write needs a non-const pointer; the underlying SPI
      * write path only reads from this buffer, and the API is blocking, so
      * casting away const is safe here. */
-    return calib_blocking_dispatch(addr, size, (uint8_t *)in_buf,
+    return calib_blocking_dispatch(addr, size, (UINT8_T *)in_buf,
                                    STORAGE_OP_CALIB_WRITE, EVENT_CALIB_W);
 }
 
@@ -374,8 +374,8 @@ void storage_manager_task(void *argument)
 
     for (;;)
     {
-        uint32_t bits_set = 0U;
-        int32_t  wait_ret = osal_event_group_wait_bits(s_evgrp,
+        UINT32_T bits_set = 0U;
+        INT32_T  wait_ret = osal_event_group_wait_bits(s_evgrp,
                                                        STORAGE_EVENT_MASK_ALL,
                                                        true,    /* clear   */
                                                        false,   /* any bit */
@@ -389,7 +389,7 @@ void storage_manager_task(void *argument)
         }
 
         platform_err_t  st       = PLATFORM_ERR_GENERAL;
-        bool                     handled  = false;
+        BOOL_T                     handled  = false;
 
         /**
         * Two address bases live on the same W25Q64; pick the base from the
@@ -398,7 +398,7 @@ void storage_manager_task(void *argument)
         **/
         if (0U != (bits_set & EVENT_LVGL_R))
         {
-            const uint32_t addr_phy = MEMORY_LVGL_START_ADDRESS +
+            const UINT32_T addr_phy = MEMORY_LVGL_START_ADDRESS +
                                       s_pending.addr;
             st = externflash_drv_read(addr_phy, s_pending.buf, s_pending.size,
                                       on_done_cb, NULL);
@@ -406,7 +406,7 @@ void storage_manager_task(void *argument)
         }
         else if (0U != (bits_set & EVENT_LVGL_W))
         {
-            const uint32_t addr_phy = MEMORY_LVGL_START_ADDRESS +
+            const UINT32_T addr_phy = MEMORY_LVGL_START_ADDRESS +
                                       s_pending.addr;
             st = externflash_drv_write(addr_phy, s_pending.buf, s_pending.size,
                                        on_done_cb, NULL);
@@ -414,7 +414,7 @@ void storage_manager_task(void *argument)
         }
         else if (0U != (bits_set & EVENT_CALIB_R))
         {
-            const uint32_t addr_phy = MEMORY_CALIB_START_ADDRESS +
+            const UINT32_T addr_phy = MEMORY_CALIB_START_ADDRESS +
                                       s_pending.addr;
             st = externflash_drv_read(addr_phy, s_pending.buf, s_pending.size,
                                       on_done_cb, NULL);
@@ -422,7 +422,7 @@ void storage_manager_task(void *argument)
         }
         else if (0U != (bits_set & EVENT_CALIB_W))
         {
-            const uint32_t addr_phy = MEMORY_CALIB_START_ADDRESS +
+            const UINT32_T addr_phy = MEMORY_CALIB_START_ADDRESS +
                                       s_pending.addr;
             st = externflash_drv_write(addr_phy, s_pending.buf, s_pending.size,
                                        on_done_cb, NULL);
@@ -436,7 +436,7 @@ void storage_manager_task(void *argument)
             * externflash_drv_write auto-erases sectors, which is enough
             * for the upgrade write path.
             **/
-            const uint32_t addr_phy = MEMORY_OTA_START_ADDRESS +
+            const UINT32_T addr_phy = MEMORY_OTA_START_ADDRESS +
                                       s_pending.addr;
             if (STORAGE_OP_OTA_READ == s_pending.op)
             {

@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -33,6 +33,7 @@
 #include "user_task_reso_config.h"
 #include "bsp_st7789_driver.h"
 #include "bsp_st7789_reg.h"
+#include "platform_def.h"
 #include "Debug.h"
 
 //******************************** Includes *********************************//
@@ -77,13 +78,13 @@ static const st7789_panel_config_t s_mock_panel = {
 
 /* Only log a pin when its level actually changes; spamming every CS toggle
  * inside a tight command sequence drowns the interesting data. */
-static uint8_t s_last_cs       = ST7789_MOCK_PIN_UNKNOWN;
-static uint8_t s_last_dc       = ST7789_MOCK_PIN_UNKNOWN;
-static uint8_t s_last_rst      = ST7789_MOCK_PIN_UNKNOWN;
+static UINT8_T s_last_cs       = ST7789_MOCK_PIN_UNKNOWN;
+static UINT8_T s_last_dc       = ST7789_MOCK_PIN_UNKNOWN;
+static UINT8_T s_last_rst      = ST7789_MOCK_PIN_UNKNOWN;
 
 /* Monotonic fake tick advanced by every mock delay so pf_get_tick_ms stays
  * coherent with the driver's view of elapsed time. */
-static uint32_t s_fake_tick_ms = 0U;
+static UINT32_T s_fake_tick_ms = 0U;
 
 /**
  * Per-case statistics captured by the SPI mock callbacks.  Each case
@@ -93,22 +94,22 @@ static uint32_t s_fake_tick_ms = 0U;
  */
 typedef struct
 {
-    uint32_t tx_count;        /* pf_spi_transmit (blocking) invocations  */
-    uint32_t tx_dma_count;    /* pf_spi_transmit_dma invocations         */
-    uint32_t wait_dma_count;  /* pf_spi_wait_dma_complete invocations    */
-    uint32_t last_tx_dma_len; /* data_length of most recent DMA transfer */
-    uint8_t  last_cs;
-    uint8_t  last_dc;
+    UINT32_T tx_count;        /* pf_spi_transmit (blocking) invocations  */
+    UINT32_T tx_dma_count;    /* pf_spi_transmit_dma invocations         */
+    UINT32_T wait_dma_count;  /* pf_spi_wait_dma_complete invocations    */
+    UINT32_T last_tx_dma_len; /* data_length of most recent DMA transfer */
+    UINT8_T  last_cs;
+    UINT8_T  last_dc;
 } mock_stats_t;
 
 static mock_stats_t s_stats;
-static uint32_t     s_pass_count;
-static uint32_t     s_fail_count;
+static UINT32_T     s_pass_count;
+static UINT32_T     s_fail_count;
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
-static void mock_hex_dump(const char *label, const uint8_t *p_data,
-                          uint32_t data_length)
+static void mock_hex_dump(const char *label, const UINT8_T *p_data,
+                          UINT32_T data_length)
 {
     if ((NULL == p_data) || (0U == data_length))
     {
@@ -118,13 +119,13 @@ static void mock_hex_dump(const char *label, const uint8_t *p_data,
 
     char     buf[3U * ST7789_MOCK_MAX_DUMP_BYTES + 8U];
     int      pos  = 0;
-    uint32_t dump = (data_length > ST7789_MOCK_MAX_DUMP_BYTES)
+    UINT32_T dump = (data_length > ST7789_MOCK_MAX_DUMP_BYTES)
                         ? ST7789_MOCK_MAX_DUMP_BYTES
                         : data_length;
 
-    for (uint32_t idx = 0U; idx < dump; ++idx)
+    for (UINT32_T idx = 0U; idx < dump; ++idx)
     {
-        int written = snprintf(&buf[pos], sizeof(buf) - (size_t)pos, "%02X ",
+        int written = snprintf(&buf[pos], sizeof(buf) - (SIZE_T)pos, "%02X ",
                                p_data[idx]);
         if (written <= 0)
         {
@@ -134,7 +135,7 @@ static void mock_hex_dump(const char *label, const uint8_t *p_data,
     }
     if (data_length > dump)
     {
-        snprintf(&buf[pos], sizeof(buf) - (size_t)pos, "...");
+        snprintf(&buf[pos], sizeof(buf) - (SIZE_T)pos, "...");
     }
 
     DEBUG_OUT(i, ST7789_MOCK_LOG_TAG, "%s len=%u : %s", label,
@@ -154,16 +155,16 @@ static st7789_status_t mock_spi_deinit(void)
     return ST7789_OK;
 }
 
-static st7789_status_t mock_spi_transmit(uint8_t const *p_data,
-                                         uint32_t       data_length)
+static st7789_status_t mock_spi_transmit(UINT8_T const *p_data,
+                                         UINT32_T       data_length)
 {
     s_stats.tx_count++;
     mock_hex_dump("TX", p_data, data_length);
     return ST7789_OK;
 }
 
-static st7789_status_t mock_spi_transmit_dma(uint8_t const *p_data,
-                                             uint32_t       data_length)
+static st7789_status_t mock_spi_transmit_dma(UINT8_T const *p_data,
+                                             UINT32_T       data_length)
 {
     s_stats.tx_dma_count++;
     s_stats.last_tx_dma_len = data_length;
@@ -171,7 +172,7 @@ static st7789_status_t mock_spi_transmit_dma(uint8_t const *p_data,
     return ST7789_OK;
 }
 
-static st7789_status_t mock_spi_wait_dma_complete(uint32_t timeout_ms)
+static st7789_status_t mock_spi_wait_dma_complete(UINT32_T timeout_ms)
 {
     s_stats.wait_dma_count++;
     DEBUG_OUT(i, ST7789_MOCK_LOG_TAG, "wait_dma_complete timeout=%u ms",
@@ -179,7 +180,7 @@ static st7789_status_t mock_spi_wait_dma_complete(uint32_t timeout_ms)
     return ST7789_OK;
 }
 
-static st7789_status_t mock_spi_write_cs_pin(uint8_t state)
+static st7789_status_t mock_spi_write_cs_pin(UINT8_T state)
 {
     s_stats.last_cs = state;
     if (state != s_last_cs)
@@ -190,7 +191,7 @@ static st7789_status_t mock_spi_write_cs_pin(uint8_t state)
     return ST7789_OK;
 }
 
-static st7789_status_t mock_spi_write_dc_pin(uint8_t state)
+static st7789_status_t mock_spi_write_dc_pin(UINT8_T state)
 {
     s_stats.last_dc = state;
     if (state != s_last_dc)
@@ -202,7 +203,7 @@ static st7789_status_t mock_spi_write_dc_pin(uint8_t state)
     return ST7789_OK;
 }
 
-static st7789_status_t mock_spi_write_rst_pin(uint8_t state)
+static st7789_status_t mock_spi_write_rst_pin(UINT8_T state)
 {
     if (state != s_last_rst)
     {
@@ -213,18 +214,18 @@ static st7789_status_t mock_spi_write_rst_pin(uint8_t state)
 }
 
 /* ---- Timebase / OS mock -------------------------------------------------- */
-static uint32_t mock_tb_get_tick_ms(void)
+static UINT32_T mock_tb_get_tick_ms(void)
 {
     return s_fake_tick_ms;
 }
 
-static void mock_tb_delay_ms(uint32_t ms)
+static void mock_tb_delay_ms(UINT32_T ms)
 {
     DEBUG_OUT(i, ST7789_MOCK_LOG_TAG, "delay %u ms (busy)", (unsigned)ms);
     s_fake_tick_ms += ms;
 }
 
-static void mock_os_delay_ms(uint32_t ms)
+static void mock_os_delay_ms(UINT32_T ms)
 {
     DEBUG_OUT(i, ST7789_MOCK_LOG_TAG, "delay %u ms (os)", (unsigned)ms);
     s_fake_tick_ms += ms;
@@ -262,7 +263,7 @@ static void stats_reset(void)
     s_stats.last_dc         = ST7789_MOCK_PIN_UNKNOWN;
 }
 
-static void case_report(const char *name, bool ok)
+static void case_report(const char *name, BOOL_T ok)
 {
     if (ok)
     {
@@ -299,7 +300,7 @@ static void test_case_init(void)
 
     /* Init sends many commands; exact count is fragile across datasheet
      * tweaks, so only assert ret and the CS returned HIGH. */
-    const bool ok =
+    const BOOL_T ok =
         (ST7789_OK == ret) && (ST7789_MOCK_PIN_HIGH == s_stats.last_cs);
     case_report("CASE 1 init", ok);
 }
@@ -308,8 +309,8 @@ static void test_case_addr_window_full(void)
 {
     /* Full-panel fill: 240 x 320 px = 76800 px x 2 B = 153600 B.
      * 153600 / 512 = 300 full tiles, zero remainder. */
-    const uint32_t expected_tiles = (uint32_t)ST7789_MOCK_PANEL_WIDTH *
-                                    (uint32_t)ST7789_MOCK_PANEL_HEIGHT * 2U /
+    const UINT32_T expected_tiles = (UINT32_T)ST7789_MOCK_PANEL_WIDTH *
+                                    (UINT32_T)ST7789_MOCK_PANEL_HEIGHT * 2U /
                                     ST7789_MOCK_TILE_BYTES;
 
     DEBUG_OUT(i, ST7789_MOCK_LOG_TAG,
@@ -321,10 +322,10 @@ static void test_case_addr_window_full(void)
               (unsigned)expected_tiles);
     stats_reset();
     st7789_status_t ret = s_mock_driver.pf_st7789_fill_region(
-        &s_mock_driver, 0U, 0U, (uint16_t)(ST7789_MOCK_PANEL_WIDTH - 1U),
-        (uint16_t)(ST7789_MOCK_PANEL_HEIGHT - 1U), BLACK);
+        &s_mock_driver, 0U, 0U, (UINT16_T)(ST7789_MOCK_PANEL_WIDTH - 1U),
+        (UINT16_T)(ST7789_MOCK_PANEL_HEIGHT - 1U), BLACK);
 
-    const bool ok = (ST7789_OK == ret) && (5U == s_stats.tx_count) &&
+    const BOOL_T ok = (ST7789_OK == ret) && (5U == s_stats.tx_count) &&
                     (expected_tiles == s_stats.tx_dma_count) &&
                     (expected_tiles == s_stats.wait_dma_count) &&
                     (ST7789_MOCK_TILE_BYTES == s_stats.last_tx_dma_len) &&
@@ -335,10 +336,10 @@ static void test_case_addr_window_full(void)
 static void test_case_addr_window_sub(void)
 {
     /* 100 x 100 px = 20000 B = 39 full tiles (19968 B) + 1 partial (32 B). */
-    const uint32_t total_bytes = 100U * 100U * 2U;
-    const uint32_t expected_tiles =
+    const UINT32_T total_bytes = 100U * 100U * 2U;
+    const UINT32_T expected_tiles =
         (total_bytes + ST7789_MOCK_TILE_BYTES - 1U) / ST7789_MOCK_TILE_BYTES;
-    const uint32_t expected_tail = total_bytes % ST7789_MOCK_TILE_BYTES;
+    const UINT32_T expected_tail = total_bytes % ST7789_MOCK_TILE_BYTES;
 
     DEBUG_OUT(i, ST7789_MOCK_LOG_TAG,
               "===== CASE 3: fill_region(10,20,109,119,BLACK) sub-rect =====");
@@ -350,7 +351,7 @@ static void test_case_addr_window_sub(void)
     st7789_status_t ret = s_mock_driver.pf_st7789_fill_region(
         &s_mock_driver, 10U, 20U, 109U, 119U, BLACK);
 
-    const bool ok = (ST7789_OK == ret) && (5U == s_stats.tx_count) &&
+    const BOOL_T ok = (ST7789_OK == ret) && (5U == s_stats.tx_count) &&
                     (expected_tiles == s_stats.tx_dma_count) &&
                     (expected_tiles == s_stats.wait_dma_count) &&
                     (expected_tail == s_stats.last_tx_dma_len) &&
@@ -369,7 +370,7 @@ static void test_case_addr_window_out_of_range(void)
         &s_mock_driver, 0U, 0U, ST7789_MOCK_PANEL_WIDTH,
         ST7789_MOCK_PANEL_HEIGHT, BLACK);
 
-    const bool ok = (ST7789_ERRORPARAMETER == ret) &&
+    const BOOL_T ok = (ST7789_ERRORPARAMETER == ret) &&
                     (0U == s_stats.tx_count) && (0U == s_stats.tx_dma_count);
     case_report("CASE 4 out-of-range reject", ok);
 }
@@ -384,7 +385,7 @@ static void test_case_addr_window_inverted(void)
     st7789_status_t ret = s_mock_driver.pf_st7789_fill_region(
         &s_mock_driver, 100U, 100U, 50U, 50U, BLACK);
 
-    const bool ok = (ST7789_ERRORPARAMETER == ret) &&
+    const BOOL_T ok = (ST7789_ERRORPARAMETER == ret) &&
                     (0U == s_stats.tx_count) && (0U == s_stats.tx_dma_count);
     case_report("CASE 5 inverted reject", ok);
 }
@@ -402,7 +403,7 @@ static void test_case_draw_pixel(void)
 
     /* set_addr_window emits 5 blocking TX (CASET cmd+data, RASET cmd+data,
      * RAMWR cmd) and draw_pixel then emits 1 more for the 2-byte pixel. */
-    const bool ok = (ST7789_OK == ret) && (6U == s_stats.tx_count) &&
+    const BOOL_T ok = (ST7789_OK == ret) && (6U == s_stats.tx_count) &&
                     (0U == s_stats.tx_dma_count) &&
                     (ST7789_MOCK_PIN_HIGH == s_stats.last_cs);
     case_report("CASE 6 draw_pixel", ok);
@@ -420,7 +421,7 @@ static void test_case_invert_colors(void)
     st7789_status_t ret_off =
         s_mock_driver.pf_invert_colors(&s_mock_driver, 0U);
 
-    const bool ok = (ST7789_OK == ret_on) && (ST7789_OK == ret_off) &&
+    const BOOL_T ok = (ST7789_OK == ret_on) && (ST7789_OK == ret_off) &&
                     (2U == s_stats.tx_count) && (0U == s_stats.tx_dma_count) &&
                     (ST7789_MOCK_PIN_HIGH == s_stats.last_cs);
     case_report("CASE 7 invert_colors", ok);
@@ -428,7 +429,7 @@ static void test_case_invert_colors(void)
 
 static void test_case_draw_filled_rectangle(void)
 {
-    const uint32_t total_bytes = 10U * 10U * 2U;
+    const UINT32_T total_bytes = 10U * 10U * 2U;
 
     DEBUG_OUT(i, ST7789_MOCK_LOG_TAG,
               "===== CASE 8: draw_filled_rectangle(29,39,20,30) =====");
@@ -440,7 +441,7 @@ static void test_case_draw_filled_rectangle(void)
     st7789_status_t ret = s_mock_driver.pf_st7789_draw_filled_rectangle(
         &s_mock_driver, 29U, 39U, 20U, 30U, GREEN);
 
-    const bool ok = (ST7789_OK == ret) && (5U == s_stats.tx_count) &&
+    const BOOL_T ok = (ST7789_OK == ret) && (5U == s_stats.tx_count) &&
                     (1U == s_stats.tx_dma_count) &&
                     (1U == s_stats.wait_dma_count) &&
                     (total_bytes == s_stats.last_tx_dma_len) &&
@@ -459,7 +460,7 @@ static void test_case_draw_circle(void)
     st7789_status_t ret = s_mock_driver.pf_st7789_draw_circle(
         &s_mock_driver, 120U, 160U, 12U, BLUE);
 
-    const bool ok = (ST7789_OK == ret) && (s_stats.tx_count > 0U) &&
+    const BOOL_T ok = (ST7789_OK == ret) && (s_stats.tx_count > 0U) &&
                     (0U == s_stats.tx_dma_count) &&
                     (ST7789_MOCK_PIN_HIGH == s_stats.last_cs);
     case_report("CASE 9 draw_circle", ok);
@@ -477,7 +478,7 @@ static void test_case_draw_filled_triangle(void)
     st7789_status_t ret = s_mock_driver.pf_st7789_draw_filled_triangle(
         &s_mock_driver, 80U, 80U, 60U, 110U, 100U, 110U, RED);
 
-    const bool ok = (ST7789_OK == ret) && (s_stats.tx_dma_count > 0U) &&
+    const BOOL_T ok = (ST7789_OK == ret) && (s_stats.tx_dma_count > 0U) &&
                     (s_stats.wait_dma_count == s_stats.tx_dma_count) &&
                     (ST7789_MOCK_PIN_HIGH == s_stats.last_cs);
     case_report("CASE 10 draw_filled_triangle", ok);
@@ -494,7 +495,7 @@ static void test_case_draw_filled_circle(void)
     st7789_status_t ret = s_mock_driver.pf_st7789_draw_filled_circle(
         &s_mock_driver, 120U, 160U, 12U, YELLOW);
 
-    const bool ok = (ST7789_OK == ret) && (s_stats.tx_dma_count > 0U) &&
+    const BOOL_T ok = (ST7789_OK == ret) && (s_stats.tx_dma_count > 0U) &&
                     (s_stats.wait_dma_count == s_stats.tx_dma_count) &&
                     (ST7789_MOCK_PIN_HIGH == s_stats.last_cs);
     case_report("CASE 11 draw_filled_circle", ok);
@@ -502,13 +503,13 @@ static void test_case_draw_filled_circle(void)
 
 static void test_case_draw_image(void)
 {
-    static const uint16_t image_4x4[16] = {
+    static const UINT16_T image_4x4[16] = {
         RED, GREEN, BLUE, WHITE,
         GREEN, BLUE, WHITE, RED,
         BLUE, WHITE, RED, GREEN,
         WHITE, RED, GREEN, BLUE,
     };
-    const uint32_t expected_bytes = (uint32_t)sizeof(image_4x4);
+    const UINT32_T expected_bytes = (UINT32_T)sizeof(image_4x4);
 
     DEBUG_OUT(i, ST7789_MOCK_LOG_TAG,
               "===== CASE 12: draw_image(30,40,4x4) =====");
@@ -520,7 +521,7 @@ static void test_case_draw_image(void)
     st7789_status_t ret = s_mock_driver.pf_st7789_draw_image(
         &s_mock_driver, 30U, 40U, 4U, 4U, image_4x4);
 
-    const bool ok = (ST7789_OK == ret) && (5U == s_stats.tx_count) &&
+    const BOOL_T ok = (ST7789_OK == ret) && (5U == s_stats.tx_count) &&
                     (1U == s_stats.tx_dma_count) &&
                     (1U == s_stats.wait_dma_count) &&
                     (expected_bytes == s_stats.last_tx_dma_len) &&
@@ -530,7 +531,7 @@ static void test_case_draw_image(void)
 
 static void test_case_draw_char(void)
 {
-    const uint32_t expected_bytes =
+    const UINT32_T expected_bytes =
         ST7789_MOCK_FONT_WIDTH * ST7789_MOCK_FONT_HEIGHT * 2U;
 
     DEBUG_OUT(i, ST7789_MOCK_LOG_TAG,
@@ -543,7 +544,7 @@ static void test_case_draw_char(void)
     st7789_status_t ret = s_mock_driver.pf_st7789_draw_char(
         &s_mock_driver, 10U, 20U, 'A', YELLOW, BLACK);
 
-    const bool ok = (ST7789_OK == ret) && (5U == s_stats.tx_count) &&
+    const BOOL_T ok = (ST7789_OK == ret) && (5U == s_stats.tx_count) &&
                     (1U == s_stats.tx_dma_count) &&
                     (1U == s_stats.wait_dma_count) &&
                     (expected_bytes == s_stats.last_tx_dma_len) &&
@@ -554,9 +555,9 @@ static void test_case_draw_char(void)
 static void test_case_draw_string(void)
 {
     static const char test_str[] = "OK";
-    const uint32_t expected_chars =
-        (uint32_t)(sizeof(test_str) / sizeof(test_str[0])) - 1U;
-    const uint32_t expected_bytes =
+    const UINT32_T expected_chars =
+        (UINT32_T)ARRAY_SIZE(test_str) - 1U;
+    const UINT32_T expected_bytes =
         ST7789_MOCK_FONT_WIDTH * ST7789_MOCK_FONT_HEIGHT * 2U;
 
     DEBUG_OUT(i, ST7789_MOCK_LOG_TAG,
@@ -571,7 +572,7 @@ static void test_case_draw_string(void)
     st7789_status_t ret = s_mock_driver.pf_st7789_draw_string(
         &s_mock_driver, 10U, 40U, test_str, CYAN, BLACK);
 
-    const bool ok = (ST7789_OK == ret) &&
+    const BOOL_T ok = (ST7789_OK == ret) &&
                     ((expected_chars * 5U) == s_stats.tx_count) &&
                     (expected_chars == s_stats.tx_dma_count) &&
                     (expected_chars == s_stats.wait_dma_count) &&

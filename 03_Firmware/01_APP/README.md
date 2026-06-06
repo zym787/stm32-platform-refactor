@@ -150,7 +150,7 @@ RTT Viewer / SWO Viewer（日志输出）
 | `STM32F411XX_FLASH.ld` | APP 链接脚本：RAM 121KB + RTT_RAM 7KB + APP Flash 464KB |
 | `Core/Src/system_stm32f4xx.c` | APP vector table offset（`0x0000C000`） |
 | `Core/Inc/main.h` | 引脚定义、全局 include |
-| `03_Platform/platform_mcu/MCU_Core_IIC/inc/i2c_port.h` | I2C 类型切换（HW/SW）、互斥锁超时 |
+| `03_Platform/platform_mcu/MCU_Core_IIC/inc/i2c_port.h` | I2C 总线索引枚举、互斥锁超时（HW/SW 描述符在 `04_Impl/.../i2c_port.c`） |
 | `00_Config/inc/cfg_storage.h` | W25Q64 LVGL/OTA 分区、资源 offset/size、magic |
 | `00_Config/inc/cfg_ota.h` | OTA flag 结构、状态字、内部 flag 地址 |
 | `05_Debug_Tool/Debug_Log/inc/Debug.h` | 日志 tag 定义、过滤、RTT/ITM 路由 |

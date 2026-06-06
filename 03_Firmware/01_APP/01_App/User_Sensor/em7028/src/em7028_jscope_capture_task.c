@@ -54,7 +54,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
@@ -110,35 +110,35 @@ wp_ppg_frame_t    g_em7028_scope_ring[EM7028_SCOPE_RING_DEPTH];
  * (debugger / DMA snoop) reading idx then ring[idx-1] always sees a
  * complete frame.
  */
-volatile uint32_t g_em7028_scope_w_idx;
+volatile UINT32_T g_em7028_scope_w_idx;
 
 /** Sticky frame counter -- never wraps within a session, suitable as
  *  the x-axis when plotting from J-Scope.                               */
-volatile uint32_t g_em7028_scope_frame_cnt;
+volatile UINT32_T g_em7028_scope_frame_cnt;
 
 /** Non-OK heart_rate_drv_get_req counter -- non-zero growth signals
  *  handler-side starvation or I2C errors.                               */
-volatile uint32_t g_em7028_scope_drop_cnt;
+volatile UINT32_T g_em7028_scope_drop_cnt;
 
 /* ---- Latest-sample scalar mirrors (subscribe these in J-Scope) ----- */
-volatile uint32_t g_em7028_scope_ts_ms;
-volatile uint16_t g_em7028_scope_hrs1_p[WP_HEART_RATE_PIXEL_NUM];
-volatile uint16_t g_em7028_scope_hrs2_p[WP_HEART_RATE_PIXEL_NUM];
-volatile uint32_t g_em7028_scope_hrs1_sum;
-volatile uint32_t g_em7028_scope_hrs2_sum;
+volatile UINT32_T g_em7028_scope_ts_ms;
+volatile UINT16_T g_em7028_scope_hrs1_p[WP_HEART_RATE_PIXEL_NUM];
+volatile UINT16_T g_em7028_scope_hrs2_p[WP_HEART_RATE_PIXEL_NUM];
+volatile UINT32_T g_em7028_scope_hrs1_sum;
+volatile UINT32_T g_em7028_scope_hrs2_sum;
 
 /**
  * One-shot register readback captured AFTER start. Useful when one
  * channel reads zero -- compares the chip-side state against the
  * driver's cached_cfg to localise whether the write made it through.
  */
-volatile uint8_t  g_em7028_scope_reg_id;
-volatile uint8_t  g_em7028_scope_reg_hrs_cfg;
-volatile uint8_t  g_em7028_scope_reg_hrs1_ctrl;
-volatile uint8_t  g_em7028_scope_reg_hrs2_ctrl;
-volatile uint8_t  g_em7028_scope_reg_hrs2_gain;
-volatile uint8_t  g_em7028_scope_reg_led_crt;
-volatile uint8_t  g_em7028_scope_reg_dump_ok;
+volatile UINT8_T  g_em7028_scope_reg_id;
+volatile UINT8_T  g_em7028_scope_reg_hrs_cfg;
+volatile UINT8_T  g_em7028_scope_reg_hrs1_ctrl;
+volatile UINT8_T  g_em7028_scope_reg_hrs2_ctrl;
+volatile UINT8_T  g_em7028_scope_reg_hrs2_gain;
+volatile UINT8_T  g_em7028_scope_reg_led_crt;
+volatile UINT8_T  g_em7028_scope_reg_dump_ok;
 
 /**
  * Capture cfg -- 40 Hz, 14-bit ADC, HRS1 only.
@@ -183,7 +183,7 @@ static void em7028_scope_publish(wp_ppg_frame_t const *const p_frame)
      * preceding slot a coherent snapshot regardless of when the
      * halt happens.
      **/
-    uint32_t idx = g_em7028_scope_w_idx;
+    UINT32_T idx = g_em7028_scope_w_idx;
     if (idx >= EM7028_SCOPE_RING_DEPTH)
     {
         idx = 0U;
@@ -196,7 +196,7 @@ static void em7028_scope_publish(wp_ppg_frame_t const *const p_frame)
      * peers) yields a live waveform without any host-side scripting.
      **/
     g_em7028_scope_ts_ms = p_frame->timestamp_ms;
-    for (uint32_t i = 0U; i < (uint32_t)WP_HEART_RATE_PIXEL_NUM; i++)
+    for (UINT32_T i = 0U; i < (UINT32_T)WP_HEART_RATE_PIXEL_NUM; i++)
     {
         g_em7028_scope_hrs1_p[i] = p_frame->hrs1_pixel[i];
         g_em7028_scope_hrs2_p[i] = p_frame->hrs2_pixel[i];
@@ -221,13 +221,13 @@ static void em7028_scope_publish(wp_ppg_frame_t const *const p_frame)
  *
  * @return     EM7028_OK on success, otherwise the I2C error code.
  * */
-static em7028_status_t em7028_scope_read_reg(uint8_t reg, uint8_t *p_val)
+static em7028_status_t em7028_scope_read_reg(UINT8_T reg, UINT8_T *p_val)
 {
     em7028_iic_driver_interface_t *p_iic = em7028_input_arg.p_iic_interface;
 
     return p_iic->pf_iic_mem_read(p_iic->hi2c,
-                                  (uint16_t)((EM7028_ADDR << 1) | 1U),
-                                  (uint16_t)reg,
+                                  (UINT16_T)((EM7028_ADDR << 1) | 1U),
+                                  (UINT16_T)reg,
                                   EM7028_SCOPE_I2C_MEM_SIZE_8BIT,
                                   p_val,
                                   1U,
@@ -248,8 +248,8 @@ static em7028_status_t em7028_scope_read_reg(uint8_t reg, uint8_t *p_val)
  * */
 static void em7028_scope_dump_regs(void)
 {
-    uint8_t v = 0U;
-    bool    ok = true;
+    UINT8_T v = 0U;
+    BOOL_T    ok = true;
 
     if (EM7028_OK != em7028_scope_read_reg(ID_REG, &v))         { ok = false; }
     g_em7028_scope_reg_id        = v;
@@ -416,7 +416,7 @@ void em7028_jscope_capture_task(void *argument)
 
         /* RTT heartbeat -- one line per second at 40 Hz. */
         if (0U == (g_em7028_scope_frame_cnt %
-                   (uint32_t)EM7028_SCOPE_LOG_EVERY_N_FRAMES))
+                   (UINT32_T)EM7028_SCOPE_LOG_EVERY_N_FRAMES))
         {
             DEBUG_OUT(i, EM7028_LOG_TAG,
                       "scope #%u ts=%u hrs1=%u hrs2=%u drops=%u",

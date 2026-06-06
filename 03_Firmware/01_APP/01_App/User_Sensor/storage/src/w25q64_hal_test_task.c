@@ -40,7 +40,7 @@
  *****************************************************************************/
 
 //******************************** Includes *********************************//
-#include <stdint.h>
+#include "platform_type.h"
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
@@ -85,9 +85,9 @@
 typedef struct
 {
     const char              *  name;
-    bool                         ok;
+    BOOL_T                         ok;
     platform_err_t  status;
-    uint32_t             elapsed_ms;
+    UINT32_T             elapsed_ms;
 } hal_test_record_t;
 
 typedef enum
@@ -110,8 +110,8 @@ static volatile platform_err_t s_last_status =
                                             PLATFORM_ERR_RESERVED;
 
 /** Buffers used across the test sequence. */
-static uint8_t  s_write_buf[W25Q64_HAL_TEST_PATTERN_LEN];
-static uint8_t  s_read_buf [W25Q64_HAL_TEST_PATTERN_LEN];
+static UINT8_T  s_write_buf[W25Q64_HAL_TEST_PATTERN_LEN];
+static UINT8_T  s_read_buf [W25Q64_HAL_TEST_PATTERN_LEN];
 
 static hal_test_record_t s_records[HAL_TC_COUNT];
 //******************************* Declaring *********************************//
@@ -153,9 +153,9 @@ static void w25q64_hal_event_done_cb(wp_externflash_result_t *result)
  *
  * @return PLATFORM_OK on success, error code otherwise.
  * */
-static platform_err_t w25q64_hal_wait_done(uint32_t timeout_ms)
+static platform_err_t w25q64_hal_wait_done(UINT32_T timeout_ms)
 {
-    int32_t take_ret = osal_sema_take(s_done_sema,
+    INT32_T take_ret = osal_sema_take(s_done_sema,
                                       (osal_tick_type_t)timeout_ms);
     if (OSAL_SUCCESS != take_ret)
     {
@@ -179,12 +179,12 @@ static void w25q64_hal_reset_latch(void)
  * @brief  Fill the write buffer with a deterministic pattern that catches
  *         both bit-flips and byte-mis-ordering errors.
  * */
-static void w25q64_hal_fill_pattern(uint8_t *p_buf, uint32_t len)
+static void w25q64_hal_fill_pattern(UINT8_T *p_buf, UINT32_T len)
 {
     /* Pattern: i ^ 0xA5 -- distinct per byte, exercises every bit. */
-    for (uint32_t i = 0U; i < len; i++)
+    for (UINT32_T i = 0U; i < len; i++)
     {
-        p_buf[i] = (uint8_t)((i & 0xFFU) ^ 0xA5U);
+        p_buf[i] = (UINT8_T)((i & 0xFFU) ^ 0xA5U);
     }
 }
 
@@ -193,11 +193,11 @@ static void w25q64_hal_fill_pattern(uint8_t *p_buf, uint32_t len)
  *
  * @return true on full match, false otherwise.
  * */
-static bool w25q64_hal_buf_equal(uint8_t const *a, uint8_t const *b,
-                                 uint32_t       len)
+static BOOL_T w25q64_hal_buf_equal(UINT8_T const *a, UINT8_T const *b,
+                                 UINT32_T       len)
 {
     /* memcmp would do, but inline-loop logs the first mismatch index. */
-    for (uint32_t i = 0U; i < len; i++)
+    for (UINT32_T i = 0U; i < len; i++)
     {
         if (a[i] != b[i])
         {
@@ -215,10 +215,10 @@ static bool w25q64_hal_buf_equal(uint8_t const *a, uint8_t const *b,
  *
  * @return true on full match, false otherwise.
  * */
-static bool w25q64_hal_buf_all_eq(uint8_t const *buf, uint32_t len,
-                                  uint8_t        expected)
+static BOOL_T w25q64_hal_buf_all_eq(UINT8_T const *buf, UINT32_T len,
+                                  UINT8_T        expected)
 {
-    for (uint32_t i = 0U; i < len; i++)
+    for (UINT32_T i = 0U; i < len; i++)
     {
         if (buf[i] != expected)
         {
@@ -236,9 +236,9 @@ static bool w25q64_hal_buf_all_eq(uint8_t const *buf, uint32_t len,
  * */
 static void w25q64_hal_record(hal_tc_idx_t            idx,
                               const char            *name,
-                              bool                     ok,
+                              BOOL_T                     ok,
                               platform_err_t status,
-                              uint32_t        elapsed_ms)
+                              UINT32_T        elapsed_ms)
 {
     s_records[idx].name       = name;
     s_records[idx].ok         = ok;
@@ -261,13 +261,13 @@ static void w25q64_hal_print_report(void)
      * status code and wall-clock time, followed by the totals line.  All
      * rows go to the W25Q64 RTT terminal so they are easy to extract.
      */
-    uint32_t pass = 0U;
-    uint32_t fail = 0U;
+    UINT32_T pass = 0U;
+    UINT32_T fail = 0U;
 
     DEBUG_OUT(i, W25Q64_HAL_TEST_LOG_TAG,
               "============== W25Q64 WRAPPER HAL REPORT ==============");
 
-    for (uint32_t i = 0U; i < (uint32_t)HAL_TC_COUNT; i++)
+    for (UINT32_T i = 0U; i < (UINT32_T)HAL_TC_COUNT; i++)
     {
         if (NULL == s_records[i].name)
         {
@@ -320,7 +320,7 @@ void w25q64_hal_test_task(void *argument)
      * Counting semaphore with max=1, init=0 -- behaves as a binary
      * completion flag for the request/response pattern.
      */
-    int32_t sema_ret = osal_sema_init(&s_done_sema, 0U);
+    INT32_T sema_ret = osal_sema_init(&s_done_sema, 0U);
     if (OSAL_SUCCESS != sema_ret)
     {
         DEBUG_OUT(e, W25Q64_HAL_TEST_ERR_LOG_TAG,
@@ -342,9 +342,9 @@ void w25q64_hal_test_task(void *argument)
     externflash_drv_init();
 
     platform_err_t ret      = PLATFORM_OK;
-    uint32_t                t_start  = 0U;
-    uint32_t                t_end    = 0U;
-    bool                    ok       = false;
+    UINT32_T                t_start  = 0U;
+    UINT32_T                t_end    = 0U;
+    BOOL_T                    ok       = false;
 
     /* ===== CASE 0: WAKEUP (boot probe) ================================== */
     /**
@@ -386,7 +386,7 @@ void w25q64_hal_test_task(void *argument)
     t_start = osal_task_get_tick_count();
     ret     = externflash_drv_write(W25Q64_HAL_TEST_ADDR,
                                     s_write_buf,
-                                    (uint32_t)sizeof(s_write_buf),
+                                    (UINT32_T)sizeof(s_write_buf),
                                     w25q64_hal_event_done_cb, NULL);
     if (PLATFORM_OK == ret)
     {
@@ -403,7 +403,7 @@ void w25q64_hal_test_task(void *argument)
     t_start = osal_task_get_tick_count();
     ret     = externflash_drv_read(W25Q64_HAL_TEST_ADDR,
                                    s_read_buf,
-                                   (uint32_t)sizeof(s_read_buf),
+                                   (UINT32_T)sizeof(s_read_buf),
                                    w25q64_hal_event_done_cb, NULL);
     if (PLATFORM_OK == ret)
     {
@@ -412,7 +412,7 @@ void w25q64_hal_test_task(void *argument)
     t_end   = osal_task_get_tick_count();
     ok = (PLATFORM_OK == ret) &&
          w25q64_hal_buf_equal(s_read_buf, s_write_buf,
-                              (uint32_t)sizeof(s_read_buf));
+                              (UINT32_T)sizeof(s_read_buf));
     w25q64_hal_record(HAL_TC_READ_VERIFY, "READ_VERIFY",
                       ok, ret, t_end - t_start);
     osal_task_delay(W25Q64_HAL_GAP_MS);
@@ -437,7 +437,7 @@ void w25q64_hal_test_task(void *argument)
     t_start = osal_task_get_tick_count();
     ret     = externflash_drv_read(W25Q64_HAL_TEST_ADDR,
                                    s_read_buf,
-                                   (uint32_t)sizeof(s_read_buf),
+                                   (UINT32_T)sizeof(s_read_buf),
                                    w25q64_hal_event_done_cb, NULL);
     if (PLATFORM_OK == ret)
     {
@@ -446,7 +446,7 @@ void w25q64_hal_test_task(void *argument)
     t_end   = osal_task_get_tick_count();
     ok = (PLATFORM_OK == ret) &&
          w25q64_hal_buf_all_eq(s_read_buf,
-                               (uint32_t)sizeof(s_read_buf), 0xFFU);
+                               (UINT32_T)sizeof(s_read_buf), 0xFFU);
     w25q64_hal_record(HAL_TC_READ_BLANK, "READ_BLANK",
                       ok, ret, t_end - t_start);
     osal_task_delay(W25Q64_HAL_GAP_MS);
