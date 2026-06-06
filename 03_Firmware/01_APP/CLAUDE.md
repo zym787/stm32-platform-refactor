@@ -13,6 +13,10 @@ make mem-report     # 内存占用报告（Tools/mem_report.py，含 link region
 make OPT=-O2        # 覆盖优化等级（Makefile 当前默认 -Og）
 make ota-image      # 单独触发 OTA 镜像生成（默认 all 已包含）
 
+make download       # JFlash CLI 自动烧 build/helloworld.hex 进 APP 槽 (0x0800C000)；-auto -exit 全自动：连接→擦→写→校验→关窗口，无需手点
+                    # 无固件时自动 clean + make -j16 并行重建（走 all，含 mem-report）再烧；已有固件则直接烧、不重编
+                    # 想烧"当前代码最新版"：先 make -j16，或用 VSCode "download" 任务（build→flash 串联）
+
 make pack-assets    # 仅打包 LVGL 资源 → build/assets.bin（不动 firmware）
 make flash-assets   # pack + JFlash CLI 烧 W25Q64 LVGL 分区（详见 "外部 Flash 资源" 节）
 ```

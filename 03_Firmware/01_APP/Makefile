@@ -604,6 +604,8 @@ ASSETS_SRCS    := $(wildcard $(ASSETS_DIR)/*.c) \
                   $(ASSETS_EXT_DIR)/_MDLBG_alpha_240x280.c \
                   $(ASSETS_EXT_DIR)/_biaopan1_200x200.c
 JFLASH_PRJ     := Tools/segger/jflash/411_w25q64.jflash
+# Internal-flash project for the APP image (DataFileSAddr = 0x0800C000, APP slot).
+JFLASH_FW_PRJ  := Tools/segger/jflash/stm32f411ce.jflash
 # Absolute path is used because SEGGER's installer doesn't add JFlash.exe to
 # Windows PATH.  Override with `make flash-assets JFLASH_EXE=...` if installed
 # elsewhere (or set the env var globally).
@@ -627,12 +629,36 @@ flash-assets: $(ASSETS_BIN)
 	 "$(JFLASH_EXE)" -openprj"$$PRJ" -open"$$BIN",0x90000000 -auto -exit
 
 #######################################
+# download APP firmware to internal flash (STM32F411 APP slot)
+#######################################
+# Programs build/$(TARGET).hex into the internal-flash APP slot (0x0800C000) via
+# JFlash CLI.  The .hex carries its own load address, so no ",0xADDR" is needed
+# (unlike flash-assets which programs a raw .bin).  `-auto -exit` runs headless:
+# auto-connect, erase, program, verify, then close the JFlash window — no clicking.
+#
+# No .hex prerequisite on purpose: a prereq would build single-threaded.  Instead,
+# if the firmware is missing we run a PARALLEL rebuild (clean + `make -j$(DL_JOBS)`,
+# same path as the "build" task → includes mem-report) and only then flash.  If the
+# firmware already exists, download just flashes it untouched (use the "download"
+# task / `make -j16 && make download` when you want to rebuild current code first).
+DL_JOBS ?= 16
+download:
+	@if [ ! -f "$(BUILD_DIR)/$(TARGET).hex" ]; then \
+	   echo "  >> no firmware ($(BUILD_DIR)/$(TARGET).hex) — parallel rebuild first"; \
+	   $(MAKE) clean && $(MAKE) -j$(DL_JOBS) || exit 1; \
+	 fi; \
+	 PRJ=$$(wslpath -w "$(JFLASH_FW_PRJ)"            2>/dev/null || echo "$(JFLASH_FW_PRJ)"); \
+	 HEX=$$(wslpath -w "$(BUILD_DIR)/$(TARGET).hex" 2>/dev/null || echo "$(BUILD_DIR)/$(TARGET).hex"); \
+	 echo "  JFlash: program $$HEX into APP slot via $$PRJ"; \
+	 "$(JFLASH_EXE)" -openprj"$$PRJ" -open"$$HEX" -auto -exit
+
+#######################################
 # clean up
 #######################################
 clean:
 	-$(RM_DIR)
 
-.PHONY: all build-core clean mem-report pack-assets flash-assets ota-image
+.PHONY: all build-core clean mem-report pack-assets flash-assets download ota-image
 
 #######################################
 # dependencies

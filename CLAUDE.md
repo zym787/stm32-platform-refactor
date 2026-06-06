@@ -57,8 +57,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # 改固件代码（业务逻辑、新任务、新外设）
-cd 03_Firmware/01_APP && make
-# JFlash 烧 build/helloworld.hex 到 STM32 内部 Flash
+cd 03_Firmware/01_APP && make download
+# make download = 并行编 + JFlash CLI 自动烧 build/helloworld.hex 进内部 Flash（-auto -exit）
+# 只想编不烧：cd 03_Firmware/01_APP && make
 
 # 改 LVGL 资源图（无需重烧固件）
 cd 03_Firmware/01_APP && make flash-assets

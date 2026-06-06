@@ -46,29 +46,35 @@
             }
         },
         {
+            // One-shot: parallel build (with mem-report) first via dependsOn,
+            // then `make download` flashes the fresh hex (-auto, window stays open).
             "type": "shell",
             "label": "download",
-            "command": "openocd",
+            "command": "make",
             "args": [
-                "-f",
-                "./Tools/interface/jlink.cfg",
-                "-f",
-                "./Tools/target/stm32f4x.cfg",
-                "-c",
-                "program ./build/helloworld.elf verify reset exit"
+                "download"
+            ],
+            "dependsOn": [
+                "build"
             ],
             "problemMatcher": [
                 "$gcc"
-            ]
+            ],
+            "group": {
+                "kind": "build"
+            }
         },
         {
+            // Same as download but forces a clean rebuild first.
             "type": "shell",
             "label": "rebuild & download",
-            "dependsOn": [
-                "rebuild",
+            "command": "make",
+            "args": [
                 "download"
             ],
-            "dependsOrder": "sequence",
+            "dependsOn": [
+                "rebuild"
+            ],
             "problemMatcher": [
                 "$gcc"
             ]

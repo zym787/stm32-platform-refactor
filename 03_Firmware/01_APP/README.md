@@ -37,6 +37,7 @@
 ```bash
 # === 改固件代码 ===
 make                # 完整构建 -> build/helloworld.{elf,hex,bin,mxxx}
+make download       # 并行编 + JFlash CLI 自动烧 .hex 进内部 Flash APP 槽 (0x0800C000)，-auto -exit
 make clean          # 清理 build/
 make mem-report     # 内存占用报告（Tools/mem_report.py）
 make OPT=-O2        # 指定优化等级（默认 Makefile 当前为 -Og）
@@ -302,9 +303,8 @@ APP `user_init` 看到 `0x33` 或 `0x44` 都 auto-confirm；若 IWDG 在约 6s �
 
 ```bash
 cd 03_Firmware/01_APP
-make                                  # build/helloworld.{hex,mxxx}
-# 首次量产：
-#   JFlash 烧 01_APP/build/helloworld.hex      到 0x0800C000
+make download                         # 编 + JFlash 自动烧 01_APP/build/helloworld.hex 到 0x0800C000
+# 首次量产还需烧 Bootloader：
 #   JFlash 烧 00_Bootloader/build/bootloader.hex 到 0x08000000
 # 之后升级：
 #   PC 端 UART1 工具发 3 字节 "11 22 33" -> 立刻 Ymodem 发 build/helloworld.mxxx

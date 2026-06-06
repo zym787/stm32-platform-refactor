@@ -47,6 +47,46 @@
             "group": {
                 "kind": "build"
             }
+        },
+        {
+            // One-shot: parallel build (with mem-report) first via dependsOn,
+            // then `make download` flashes the fresh hex (-auto, window stays open).
+            "type": "shell",
+            "label": "download",
+            "command": "make",
+            "args": [
+                "download"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/01_APP"
+            },
+            "dependsOn": [
+                "build"
+            ],
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build"
+            }
+        },
+        {
+            // Same as download but forces a clean rebuild first.
+            "type": "shell",
+            "label": "rebuild & download",
+            "command": "make",
+            "args": [
+                "download"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/01_APP"
+            },
+            "dependsOn": [
+                "rebuild"
+            ],
+            "problemMatcher": [
+                "$gcc"
+            ]
         }
     ]
 }

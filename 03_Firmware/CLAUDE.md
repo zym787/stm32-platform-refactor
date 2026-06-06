@@ -63,6 +63,7 @@ cd 01_APP && make -j16
 cd 01_APP && make clean
 cd 01_APP && make mem-report
 cd 01_APP && make ota-image         # 单独触发 OTA 镜像生成（默认 all 已包含）
+cd 01_APP && make download          # JFlash 自动烧 APP 槽 (0x0800C000)；无固件则自动 clean+make -j16 并行重建再烧；-auto -exit 全自动、烧完关窗口
 cd 01_APP && make OPT=-O2
 
 # 外部 Flash LVGL 资源（不动 firmware）
@@ -76,7 +77,7 @@ cd 01_APP && make flash-assets      # JFlash CLI + 自定义 .FLM 烧 W25Q64 LVG
 
 **先烧 APP，再烧 Bootloader**（用户验证过的流程）：
 
-1. JFlash 烧 `01_APP/build/helloworld.hex`（自动落到 `0x0800C000+`）
+1. 烧 APP：`cd 01_APP && make download`（编 + JFlash 自动烧 `helloworld.hex` 到 `0x0800C000+`），或手动 JFlash 烧 `01_APP/build/helloworld.hex`
 2. JFlash 烧 `00_Bootloader/build/bootloader.hex`（自动落到 `0x08000000+`）
 3. 上电 → Bootloader 进 `OTA_StateManager` 主循环 → 读内部 Flash `0x08008000` 的 ota_flag → 多数情况下 state=0x00（NO_APP_UPDATE）直接 `jump_to_app()` → APP 起来
 
