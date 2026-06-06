@@ -10,7 +10,7 @@
  *         unified platform_err_t interface.
  *
  * Processing flow:
- *   Select bus by core_spi_bus_t index; dispatch to hard or soft driver.
+ *   Select bus by mcu_spi_bus_t index; dispatch to hard or soft driver.
  *
  * @version V1.0 2026-4-15
  *
@@ -21,21 +21,47 @@
 //******************************** Includes *********************************//
 #include "spi_port.h"
 
+/* HAL handles, CS pin defines, soft-SPI driver and the OSAL mutex type live
+ * here in the implementation, not in the public port header, so upper layers
+ * including spi_port.h stay MCU-agnostic. */
+#include "main.h"
+#include "spi.h"
+#include "spi_hal.h"
+#include "osal_mutex.h"
 //******************************** Includes *********************************//
 
 //******************************** Defines **********************************//
+/* Hardware vs software SPI selector for each bus descriptor. */
+typedef enum
+{
+    MCU_SPI_HARDWARE = 0,
+    MCU_SPI_SOFTWARE = 1
+} spi_port_type_t;
 
+/* Per-bus descriptor: binds a logical mcu_spi_bus_t to its HAL handle /
+ * CS pin / mutex (hardware) or bit-bang instance (software). */
+typedef struct
+{
+    spi_port_type_t      mcu_spi_state;
+    spi_bus_t            soft_spi_bus_inst;
+#ifdef HAL_SPI_MODULE_ENABLED
+    SPI_HandleTypeDef   *hard_spi_handle;
+    GPIO_TypeDef        *hard_spi_cs_port;
+    uint16_t             hard_spi_cs_pin;
+    osal_mutex_handle_t  os_mutexid;
+#endif
+} spi_port_t;
 //******************************** Defines **********************************//
 
 //******************************* Declaring *********************************//
-static spi_port_t spi_port[CORE_SPI_BUS_MAX] =
+static spi_port_t spi_port[MCU_SPI_BUS_MAX] =
 {
     /* BUS_1: ST7789 display on SPI1 (hardware).  CS / DC / RST GPIOs are
      * still driven directly from the integration layer for now (HAL GPIO
      * abstraction is deferred); the SPI bus itself routes through the
      * MCU port mutex + HAL_SPI_Transmit / HAL_SPI_Transmit_DMA. */
-    [CORE_SPI_BUS_1] = {
-        .core_spi_state   = HARDWARE_SPI,
+    [MCU_SPI_BUS_1] = {
+        .mcu_spi_state   = MCU_SPI_HARDWARE,
         .hard_spi_handle  = &hspi1,
         .hard_spi_cs_port = NULL,
         .hard_spi_cs_pin  = 0u,
@@ -44,11 +70,11 @@ static spi_port_t spi_port[CORE_SPI_BUS_MAX] =
 
     /* BUS_2: W25Q64 NOR flash on SPI2 (hardware).  CS line (PB13) is
      * exclusive to the flash, so it is registered here and driven
-     * through core_hard_spi_cs_select / core_hard_spi_cs_deselect
+     * through mcu_hard_spi_cs_select / mcu_hard_spi_cs_deselect
      * rather than from the integration layer.  Pin macros come from
      * CubeMX (Core/Inc/main.h, FLASH_SPI2_CS_*). */
-    [CORE_SPI_BUS_2] = {
-        .core_spi_state   = HARDWARE_SPI,
+    [MCU_SPI_BUS_2] = {
+        .mcu_spi_state   = MCU_SPI_HARDWARE,
         .hard_spi_handle  = &hspi2,
         .hard_spi_cs_port = FLASH_SPI2_CS_GPIO_Port,
         .hard_spi_cs_pin  = FLASH_SPI2_CS_Pin,
@@ -58,14 +84,14 @@ static spi_port_t spi_port[CORE_SPI_BUS_MAX] =
 //******************************* Declaring *********************************//
 
 //******************************* Functions *********************************//
-platform_err_t core_spi_port_init(core_spi_bus_t bus)
+platform_err_t mcu_spi_port_init(mcu_spi_bus_t bus)
 {
-    if (bus >= CORE_SPI_BUS_MAX)
+    if (bus >= MCU_SPI_BUS_MAX)
     {
-        return PLATFORM_ERR_GENERAL;
+        return PLATFORM_ERR_PARAM;
     }
 
-    if (spi_port[bus].core_spi_state != HARDWARE_SPI)
+    if (spi_port[bus].mcu_spi_state != MCU_SPI_HARDWARE)
     {
         spi_init(&spi_port[bus].soft_spi_bus_inst);
         return PLATFORM_OK;
@@ -82,11 +108,11 @@ platform_err_t core_spi_port_init(core_spi_bus_t bus)
 #ifdef HAL_SPI_MODULE_ENABLED
 /* ---------- Hardware SPI CS control ---------- */
 
-platform_err_t core_hard_spi_cs_select(core_spi_bus_t bus)
+platform_err_t mcu_hard_spi_cs_select(mcu_spi_bus_t bus)
 {
-    if (bus >= CORE_SPI_BUS_MAX)
+    if (bus >= MCU_SPI_BUS_MAX)
     {
-        return PLATFORM_ERR_GENERAL;
+        return PLATFORM_ERR_PARAM;
     }
 
     HAL_GPIO_WritePin(spi_port[bus].hard_spi_cs_port,
@@ -95,11 +121,11 @@ platform_err_t core_hard_spi_cs_select(core_spi_bus_t bus)
     return PLATFORM_OK;
 }
 
-platform_err_t core_hard_spi_cs_deselect(core_spi_bus_t bus)
+platform_err_t mcu_hard_spi_cs_deselect(mcu_spi_bus_t bus)
 {
-    if (bus >= CORE_SPI_BUS_MAX)
+    if (bus >= MCU_SPI_BUS_MAX)
     {
-        return PLATFORM_ERR_GENERAL;
+        return PLATFORM_ERR_PARAM;
     }
 
     HAL_GPIO_WritePin(spi_port[bus].hard_spi_cs_port,
@@ -110,14 +136,14 @@ platform_err_t core_hard_spi_cs_deselect(core_spi_bus_t bus)
 
 /* ---------- Hardware SPI bus primitives ---------- */
 
-platform_err_t core_hard_spi_transmit(core_spi_bus_t bus,
+platform_err_t mcu_hard_spi_transmit(mcu_spi_bus_t bus,
                                               uint8_t *data,
                                               uint16_t  size,
                                               uint32_t  timeout)
 {
-    if (bus >= CORE_SPI_BUS_MAX || NULL == data)
+    if (bus >= MCU_SPI_BUS_MAX || NULL == data)
     {
-        return PLATFORM_ERR_GENERAL;
+        return PLATFORM_ERR_PARAM;
     }
 
     if (osal_mutex_take(spi_port[bus].os_mutexid,
@@ -134,14 +160,14 @@ platform_err_t core_hard_spi_transmit(core_spi_bus_t bus,
     return (ret == HAL_OK) ? PLATFORM_OK : PLATFORM_ERR_GENERAL;
 }
 
-platform_err_t core_hard_spi_receive(core_spi_bus_t bus,
+platform_err_t mcu_hard_spi_receive(mcu_spi_bus_t bus,
                                              uint8_t *data,
                                              uint16_t  size,
                                              uint32_t  timeout)
 {
-    if (bus >= CORE_SPI_BUS_MAX || NULL == data)
+    if (bus >= MCU_SPI_BUS_MAX || NULL == data)
     {
-        return PLATFORM_ERR_GENERAL;
+        return PLATFORM_ERR_PARAM;
     }
 
     if (osal_mutex_take(spi_port[bus].os_mutexid,
@@ -158,15 +184,15 @@ platform_err_t core_hard_spi_receive(core_spi_bus_t bus,
     return (ret == HAL_OK) ? PLATFORM_OK : PLATFORM_ERR_GENERAL;
 }
 
-platform_err_t core_hard_spi_transmit_receive(core_spi_bus_t bus,
+platform_err_t mcu_hard_spi_transmit_receive(mcu_spi_bus_t bus,
                                                        uint8_t *tx_data,
                                                        uint8_t *rx_data,
                                                        uint16_t   size,
                                                        uint32_t timeout)
 {
-    if (bus >= CORE_SPI_BUS_MAX || NULL == tx_data || NULL == rx_data)
+    if (bus >= MCU_SPI_BUS_MAX || NULL == tx_data || NULL == rx_data)
     {
-        return PLATFORM_ERR_GENERAL;
+        return PLATFORM_ERR_PARAM;
     }
 
     if (osal_mutex_take(spi_port[bus].os_mutexid,
@@ -183,17 +209,17 @@ platform_err_t core_hard_spi_transmit_receive(core_spi_bus_t bus,
     return (ret == HAL_OK) ? PLATFORM_OK : PLATFORM_ERR_GENERAL;
 }
 
-platform_err_t core_hard_spi_transmit_dma(core_spi_bus_t bus,
+platform_err_t mcu_hard_spi_transmit_dma(mcu_spi_bus_t bus,
                                                    uint8_t *data,
                                                    uint16_t  size)
 {
-    if (bus >= CORE_SPI_BUS_MAX || NULL == data)
+    if (bus >= MCU_SPI_BUS_MAX || NULL == data)
     {
-        return PLATFORM_ERR_GENERAL;
+        return PLATFORM_ERR_PARAM;
     }
 
     /* DMA transfer is non-blocking; take mutex here, caller releases via
-       core_hard_spi_dma_complete() or the DMA-complete callback. */
+       mcu_hard_spi_dma_complete() or the DMA-complete callback. */
     if (osal_mutex_take(spi_port[bus].os_mutexid, OSAL_MAX_DELAY) != 0)
     {
         return PLATFORM_ERR_TIMEOUT;
@@ -211,13 +237,13 @@ platform_err_t core_hard_spi_transmit_dma(core_spi_bus_t bus,
     return PLATFORM_OK;
 }
 
-platform_err_t core_hard_spi_receive_dma(core_spi_bus_t bus,
+platform_err_t mcu_hard_spi_receive_dma(mcu_spi_bus_t bus,
                                                   uint8_t *data,
                                                   uint16_t  size)
 {
-    if (bus >= CORE_SPI_BUS_MAX || NULL == data)
+    if (bus >= MCU_SPI_BUS_MAX || NULL == data)
     {
-        return PLATFORM_ERR_GENERAL;
+        return PLATFORM_ERR_PARAM;
     }
 
     if (osal_mutex_take(spi_port[bus].os_mutexid, OSAL_MAX_DELAY) != 0)
@@ -237,9 +263,9 @@ platform_err_t core_hard_spi_receive_dma(core_spi_bus_t bus,
     return PLATFORM_OK;
 }
 
-void core_hard_spi_dma_complete(core_spi_bus_t bus)
+void mcu_hard_spi_dma_complete(mcu_spi_bus_t bus)
 {
-    if (bus >= CORE_SPI_BUS_MAX)
+    if (bus >= MCU_SPI_BUS_MAX)
     {
         return;
     }
@@ -256,18 +282,18 @@ void core_hard_spi_dma_complete(core_spi_bus_t bus)
  *
  * @return PLATFORM_OK on completion, PLATFORM_ERR_TIMEOUT if the peripheral
  *         did not idle in time (mutex is still released so the bus can
- *         recover), PLATFORM_ERR_GENERAL on bad arguments.
+ *         recover), PLATFORM_ERR_PARAM on bad arguments.
  *
  * @note   Polls HAL_SPI_GetState() instead of the DMA TC flag so that the
  *         CR2_TXDMAEN clear and shift-register drain inside the HAL TxCplt
  *         callback are guaranteed before the caller releases CS.
  */
-platform_err_t core_hard_spi_wait_complete(core_spi_bus_t bus,
+platform_err_t mcu_hard_spi_wait_complete(mcu_spi_bus_t bus,
                                               uint32_t       timeout)
 {
-    if (bus >= CORE_SPI_BUS_MAX)
+    if (bus >= MCU_SPI_BUS_MAX)
     {
-        return PLATFORM_ERR_GENERAL;
+        return PLATFORM_ERR_PARAM;
     }
 
     /**
@@ -293,57 +319,57 @@ platform_err_t core_hard_spi_wait_complete(core_spi_bus_t bus,
 
 /* ---------- Software SPI bus primitives ---------- */
 
-platform_err_t core_soft_spi_cs_select(core_spi_bus_t bus)
+platform_err_t mcu_soft_spi_cs_select(mcu_spi_bus_t bus)
 {
-    if (bus >= CORE_SPI_BUS_MAX)
+    if (bus >= MCU_SPI_BUS_MAX)
     {
-        return PLATFORM_ERR_GENERAL;
+        return PLATFORM_ERR_PARAM;
     }
 
     spi_cs_select(&spi_port[bus].soft_spi_bus_inst);
     return PLATFORM_OK;
 }
 
-platform_err_t core_soft_spi_cs_deselect(core_spi_bus_t bus)
+platform_err_t mcu_soft_spi_cs_deselect(mcu_spi_bus_t bus)
 {
-    if (bus >= CORE_SPI_BUS_MAX)
+    if (bus >= MCU_SPI_BUS_MAX)
     {
-        return PLATFORM_ERR_GENERAL;
+        return PLATFORM_ERR_PARAM;
     }
 
     spi_cs_deselect(&spi_port[bus].soft_spi_bus_inst);
     return PLATFORM_OK;
 }
 
-platform_err_t core_soft_spi_write_byte(core_spi_bus_t bus, uint8_t byte)
+platform_err_t mcu_soft_spi_write_byte(mcu_spi_bus_t bus, uint8_t byte)
 {
-    if (bus >= CORE_SPI_BUS_MAX)
+    if (bus >= MCU_SPI_BUS_MAX)
     {
-        return PLATFORM_ERR_GENERAL;
+        return PLATFORM_ERR_PARAM;
     }
 
     spi_write_byte(&spi_port[bus].soft_spi_bus_inst, byte);
     return PLATFORM_OK;
 }
 
-platform_err_t core_soft_spi_read_byte(core_spi_bus_t bus, uint8_t *byte)
+platform_err_t mcu_soft_spi_read_byte(mcu_spi_bus_t bus, uint8_t *byte)
 {
-    if (bus >= CORE_SPI_BUS_MAX || NULL == byte)
+    if (bus >= MCU_SPI_BUS_MAX || NULL == byte)
     {
-        return PLATFORM_ERR_GENERAL;
+        return PLATFORM_ERR_PARAM;
     }
 
     *byte = spi_read_byte(&spi_port[bus].soft_spi_bus_inst);
     return PLATFORM_OK;
 }
 
-platform_err_t core_soft_spi_readwrite_byte(core_spi_bus_t bus,
+platform_err_t mcu_soft_spi_readwrite_byte(mcu_spi_bus_t bus,
                                                     uint8_t  tx_byte,
                                                     uint8_t *rx_byte)
 {
-    if (bus >= CORE_SPI_BUS_MAX || NULL == rx_byte)
+    if (bus >= MCU_SPI_BUS_MAX || NULL == rx_byte)
     {
-        return PLATFORM_ERR_GENERAL;
+        return PLATFORM_ERR_PARAM;
     }
 
     *rx_byte = spi_readwrite_byte(&spi_port[bus].soft_spi_bus_inst, tx_byte);

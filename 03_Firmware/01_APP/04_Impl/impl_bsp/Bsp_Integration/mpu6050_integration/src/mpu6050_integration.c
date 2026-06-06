@@ -31,6 +31,7 @@
 #include "osal_wrapper_adapter.h"
 
 #include "i2c_port.h"
+#include "i2c.h"            /* hi2c3 handle — board wiring token */
 #include "systick_port.h"
 #include "dwt_port.h"
 
@@ -66,7 +67,7 @@ mpuxxxx_status_t iic_driver_deinit(void const *const iic_bus)
 
 /**
  * @brief  Blocking I2C memory read through the MCU port abstraction.
- *         Routes to SENSOR_HARDWARE_I2C_MEM_READ (CORE_I2C_BUS_2).
+ *         Routes to SENSOR_HARDWARE_I2C_MEM_READ (MCU_I2C_BUS_2).
  *
  * @param[in]  hi2c         : Bus handle (unused).
  * @param[in]  dst_address  : 7-bit slave address shifted left by 1.
@@ -101,7 +102,7 @@ mpuxxxx_status_t iic_mem_read(void *hi2c,
 
 /**
  * @brief  Blocking I2C memory write through the MCU port abstraction.
- *         Routes to SENSOR_HARDWARE_I2C_MEM_WRITE (CORE_I2C_BUS_2).
+ *         Routes to SENSOR_HARDWARE_I2C_MEM_WRITE (MCU_I2C_BUS_2).
  *
  * @param[in] hi2c         : Bus handle (unused).
  * @param[in] dst_address  : 7-bit slave address shifted left by 1.
@@ -143,7 +144,7 @@ mpuxxxx_status_t iic_mem_write(void *hi2c,
 
 /**
  * @brief  Non-blocking DMA I2C memory read through the MCU port abstraction.
- *         Routes to SENSOR_HARDWARE_I2C_MEM_READ_DMA (CORE_I2C_BUS_2).
+ *         Routes to SENSOR_HARDWARE_I2C_MEM_READ_DMA (MCU_I2C_BUS_2).
  *         Blocks internally on a semaphore inside the I2C abstraction until
  *         the DMA transfer completes or times out.
  *

@@ -4,7 +4,7 @@
  * @par dependencies
  * - w25q64_integration.h
  * - bsp_w25q64_handler.h
- * - spi_port.h            (MCU-platform SPI bus abstraction, CORE_SPI_BUS_2)
+ * - spi_port.h            (MCU-platform SPI bus abstraction, MCU_SPI_BUS_2)
  * - systick_port.h        (MCU-port ms timebase)
  * - osal_wrapper_adapter.h
  * - osal_error.h
@@ -18,7 +18,7 @@
  * wires them into w25q64_input_arg, consumed by flash_handler_thread()
  * at startup.
  *
- * All bus access goes through the MCU SPI port layer (CORE_SPI_BUS_2);
+ * All bus access goes through the MCU SPI port layer (MCU_SPI_BUS_2);
  * this file no longer touches HAL directly.  Bus mutex, CS toggling and
  * peripheral handle are owned by spi_port.c -- pin macros (PB13 CS,
  * PB10 SCK, PB14 MISO, PB15 MOSI) live in Core/Inc/main.h.
@@ -45,14 +45,14 @@
 
 //******************************* Functions *********************************//
 
-/* ---- SPI bus (delegated to MCU SPI port, CORE_SPI_BUS_2) ---------------- */
+/* ---- SPI bus (delegated to MCU SPI port, MCU_SPI_BUS_2) ---------------- */
 
 /**
  * @brief  SPI init hook (no-op).
  *
  * @par
  *  SPI2 is brought up by CubeMX-generated MX_SPI2_Init() and the bus
- *  mutex is created by core_spi_port_init(CORE_SPI_BUS_2) during
+ *  mutex is created by mcu_spi_port_init(MCU_SPI_BUS_2) during
  *  user_init.  Nothing flash-specific remains for this hook to do.
  *
  * @return W25Q64_OK
@@ -174,7 +174,7 @@ static w25q64_status_t w25q64_spi_wait_dma_complete(uint32_t timeout_ms)
 static w25q64_status_t w25q64_spi_write_cs_pin(uint8_t state)
 {
     /**
-     * The CS GPIO (PB13) is registered on CORE_SPI_BUS_2; let the port
+     * The CS GPIO (PB13) is registered on MCU_SPI_BUS_2; let the port
      * layer route the call so we don't hard-couple to HAL here.
      **/
     platform_err_t ret = (0U != state)

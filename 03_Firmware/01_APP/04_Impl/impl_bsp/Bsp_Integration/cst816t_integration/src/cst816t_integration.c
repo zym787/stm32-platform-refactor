@@ -21,7 +21,7 @@
  * @version V2.0 2026-04-26
  * @version V3.0 2026-04-26
  * @upgrade 2.0: I2C path now goes through TOUCH_HARDWARE_I2C_* macros
- *               (CORE_I2C_BUS_2 / hi2c1) instead of HAL_I2C_Mem_* directly.
+ *               (MCU_I2C_BUS_2 / hi2c1) instead of HAL_I2C_Mem_* directly.
  * @upgrade 3.0: Tick path now goes through core_systick_get_ms — no more
  *               direct HAL_GetTick in this layer.
  *
@@ -33,6 +33,7 @@
 #include "cst816t_integration.h"
 
 #include "i2c_port.h"
+#include "i2c.h"            /* hi2c1 handle — board wiring token */
 #include "systick_port.h"
 
 #include "osal_wrapper_adapter.h"

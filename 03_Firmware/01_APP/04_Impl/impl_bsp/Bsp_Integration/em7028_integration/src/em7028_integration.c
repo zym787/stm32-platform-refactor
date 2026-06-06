@@ -3,7 +3,7 @@
  *
  * @par dependencies
  * - em7028_integration.h
- * - i2c_port.h        (MCU-port I2C abstraction, CORE_I2C_BUS_1 sensor bus)
+ * - i2c_port.h        (MCU-port I2C abstraction, MCU_I2C_BUS_1 sensor bus)
  * - systick_port.h    (MCU-port ms timebase)
  * - dwt_port.h        (MCU-port us busy-wait)
  * - osal_wrapper_adapter.h
@@ -17,7 +17,7 @@
  * Provides concrete implementations for the five interfaces the handler
  * (and the driver underneath it) consume:
  *   - em7028_iic_driver_interface_t  : HAL-style mem read/write on the
- *     shared sensor I2C bus (CORE_I2C_BUS_1, hardware I2C3).
+ *     shared sensor I2C bus (MCU_I2C_BUS_1, hardware I2C3).
  *   - em7028_timebase_interface_t           : monotonic ms tick from systick_port.
  *   - em7028_delay_interface_t       : busy-wait us/ms via DWT for the
  *     5 ms boot delay the driver issues before the soft-reset probe.
@@ -38,6 +38,7 @@
 #include "em7028_integration.h"
 
 #include "i2c_port.h"
+#include "i2c.h"            /* hi2c3 handle — board wiring token */
 #include "systick_port.h"
 #include "dwt_port.h"
 
@@ -49,21 +50,21 @@
 //******************************** Defines **********************************//
 /* Non-NULL token mounted into em7028_iic_driver_interface_t::hi2c so the
  * driver's NULL-guard accepts the interface. The actual HAL handle is
- * resolved inside the MCU I2C port layer via CORE_I2C_BUS_1, so this
+ * resolved inside the MCU I2C port layer via MCU_I2C_BUS_1, so this
  * pointer value is never dereferenced here.                                */
 #define EM7028_INT_I2C_BUS_TOKEN            ((void *)&hi2c3)
 //******************************** Defines **********************************//
 
 //******************************* Functions *********************************//
 
-/* ---- I2C interface (hardware, common sensor bus / CORE_I2C_BUS_1) ------- */
+/* ---- I2C interface (hardware, common sensor bus / MCU_I2C_BUS_1) ------- */
 
 /**
  * @brief  I2C bus init hook.
  *
  *         The shared sensor I2C bus is brought up by CubeMX-generated
  *         MX_I2C3_Init() before the scheduler starts and the bus mutex
- *         is created by core_i2c_port_init(CORE_I2C_BUS_1) in user_init,
+ *         is created by mcu_i2c_port_init(MCU_I2C_BUS_1) in user_init,
  *         so there is nothing EM7028-specific to do here.
  *
  * @param[in] hi2c : Mounted hi2c token (unused -- routed by macro).
@@ -93,7 +94,7 @@ static em7028_status_t em7028_int_iic_deinit(void *hi2c)
  * @brief  Blocking I2C memory write through the MCU sensor-bus port layer.
  *
  * @param[in] hi2c     : Bus token (unused -- routed by SENSOR_HARDWARE_I2C
- *                       macros to CORE_I2C_BUS_1).
+ *                       macros to MCU_I2C_BUS_1).
  * @param[in] des_addr : 7-bit slave address shifted left by 1 (W frame).
  * @param[in] mem_addr : Internal register address.
  * @param[in] mem_size : Register address byte count (always 1 for EM7028).

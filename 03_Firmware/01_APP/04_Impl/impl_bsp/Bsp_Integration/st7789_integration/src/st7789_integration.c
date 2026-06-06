@@ -25,7 +25,7 @@
  * @version V2.0 2026-04-26
  * @version V3.0 2026-04-26
  * @upgrade 2.0: SPI path now goes through DISPLAY_HARDWARE_SPI_* macros
- *               (CORE_SPI_BUS_1 / hspi1) instead of HAL_SPI_* directly.
+ *               (MCU_SPI_BUS_1 / hspi1) instead of HAL_SPI_* directly.
  * @upgrade 3.0: GPIO CS/DC/RST now route through DISPLAY_GPIO_WRITE_*
  *               macros (gpio_port.h) — no more direct HAL_GPIO_WritePin.
  *
@@ -167,7 +167,7 @@ static st7789_status_t st7789_spi_wait_dma_complete(uint32_t timeout_ms)
  */
 static st7789_status_t st7789_spi_write_cs_pin(uint8_t state)
 {
-    DISPLAY_GPIO_WRITE_CS((0U != state) ? CORE_GPIO_SET : CORE_GPIO_RESET);
+    DISPLAY_GPIO_WRITE_CS((0U != state) ? MCU_GPIO_SET : MCU_GPIO_RESET);
     return ST7789_OK;
 }
 
@@ -180,7 +180,7 @@ static st7789_status_t st7789_spi_write_cs_pin(uint8_t state)
  */
 static st7789_status_t st7789_spi_write_dc_pin(uint8_t state)
 {
-    DISPLAY_GPIO_WRITE_DC((0U != state) ? CORE_GPIO_SET : CORE_GPIO_RESET);
+    DISPLAY_GPIO_WRITE_DC((0U != state) ? MCU_GPIO_SET : MCU_GPIO_RESET);
     return ST7789_OK;
 }
 
@@ -193,7 +193,7 @@ static st7789_status_t st7789_spi_write_dc_pin(uint8_t state)
  */
 static st7789_status_t st7789_spi_write_rst_pin(uint8_t state)
 {
-    DISPLAY_GPIO_WRITE_RST((0U != state) ? CORE_GPIO_SET : CORE_GPIO_RESET);
+    DISPLAY_GPIO_WRITE_RST((0U != state) ? MCU_GPIO_SET : MCU_GPIO_RESET);
     return ST7789_OK;
 }
 

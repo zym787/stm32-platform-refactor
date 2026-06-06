@@ -12,7 +12,7 @@
  * implementations into em7028_input_arg, which is passed as the task
  * argument to em7028_handler_thread() at startup.
  *
- * The EM7028 sits on the shared sensor I2C bus (CORE_I2C_BUS_1) together
+ * The EM7028 sits on the shared sensor I2C bus (MCU_I2C_BUS_1) together
  * with MPU6050 and AHT21; bus arbitration is owned by the MCU I2C port
  * layer's bus mutex, so this integration only provides the leaf-level
  * mem read/write trampolines.

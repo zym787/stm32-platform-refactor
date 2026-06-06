@@ -40,7 +40,7 @@
 static aht21_status_t iic_init_myown(void *bus)
 {
     (void)bus;
-    // platform_err_t ret = core_i2c_port_init(CORE_I2C_BUS_1);
+    // platform_err_t ret = mcu_i2c_port_init(MCU_I2C_BUS_1);
     // return (ret == PLATFORM_OK) ? AHT21_OK : AHT21_ERROR;
     return AHT21_OK;
 }

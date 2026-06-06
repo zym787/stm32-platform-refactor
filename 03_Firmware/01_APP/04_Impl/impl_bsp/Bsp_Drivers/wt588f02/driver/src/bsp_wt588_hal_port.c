@@ -119,9 +119,9 @@ static void wt588_hal_gpio_deinit(void)
  */
 static bool wt588_hal_busy_is_busy(void)
 {
-    core_gpio_pin_state_t state;
+    mcu_gpio_pin_state_t state;
     AUDIO_GPIO_READ_BUSY(&state);
-    return (CORE_GPIO_SET == state);
+    return (MCU_GPIO_SET == state);
 }
 
 /* ========================================================================= */
