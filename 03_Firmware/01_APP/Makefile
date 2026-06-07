@@ -33,14 +33,21 @@ OPT = -Og
 # Build path
 BUILD_DIR = build
 BUILD_LOG = $(BUILD_DIR)/build.log
-UV ?= $(shell command -v uv 2>/dev/null || command -v uv.exe 2>/dev/null || echo uv)
+# `uv` (uv.exe on Windows) is on PATH on both hosts; override with `make UV=...`.
+# Avoid `$(shell command -v ...)` here — under cmd.exe (native-Windows GnuWin32
+# make) that POSIX builtin is unavailable, and an MSYS `which` path isn't
+# runnable from a cmd recipe anyway.
+UV ?= uv
 
 # Force unbuffered Python stdout/stderr for the report scripts. Under VSCode's
 # task runner stdout is a pipe (not a TTY), so Python block-buffers and dumps
 # the whole mem-report in one late flush at process exit — the "terminal will
 # be reused, press any key to close" banner then races ahead of the tail and
 # the output looks truncated. Unbuffered output streams it fully before exit.
-PY_UNBUF = PYTHONUNBUFFERED=1
+#
+# Exported (not prefixed as `VAR=val cmd`) so it reaches the recipe regardless
+# of the recipe shell — `VAR=val cmd` is sh-only and breaks under cmd.exe.
+export PYTHONUNBUFFERED := 1
 
 # Cross-platform directory removal command
 ifeq ($(OS),Windows_NT)
@@ -509,7 +516,7 @@ LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BU
 
 # default action: build all
 all: | $(BUILD_DIR)
-	@cd Tools && $(PY_UNBUF) $(UV) run build_summary.py --make-exe "$(MAKE)" --build-dir "../$(BUILD_DIR)" --target "build-core"
+	@cd Tools && $(UV) run build_summary.py --make-exe "$(MAKE)" --build-dir "../$(BUILD_DIR)" --target "build-core"
 
 build-core: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin mem-report ota-image
 
@@ -561,7 +568,7 @@ MEM_REPORT_EXTRA_ARGS :=
 endif
 
 mem-report: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
-	@cd Tools && $(PY_UNBUF) $(UV) run mem_report.py --elf "../$(BUILD_DIR)/$(TARGET).elf" --ld "../$(LDSCRIPT)" --size-tool "$(SZ)" $(MEM_REPORT_EXTRA_ARGS)
+	@cd Tools && $(UV) run mem_report.py --elf "../$(BUILD_DIR)/$(TARGET).elf" --ld "../$(LDSCRIPT)" --size-tool "$(SZ)" $(MEM_REPORT_EXTRA_ARGS)
 
 #######################################
 # OTA image packaging
@@ -606,27 +613,28 @@ ASSETS_SRCS    := $(wildcard $(ASSETS_DIR)/*.c) \
 JFLASH_PRJ     := Tools/segger/jflash/411_w25q64.jflash
 # Internal-flash project for the APP image (DataFileSAddr = 0x0800C000, APP slot).
 JFLASH_FW_PRJ  := Tools/segger/jflash/stm32f411ce.jflash
-# Absolute path is used because SEGGER's installer doesn't add JFlash.exe to
-# Windows PATH.  Override with `make flash-assets JFLASH_EXE=...` if installed
-# elsewhere (or set the env var globally).
-JFLASH_EXE     ?= /mnt/c/Program Files/SEGGER/JLink_V934b/JFlash.exe
+# JFlash binary location + host-specific path conversion are handled inside
+# Tools/flash.py (native Windows / WSL / Linux).  Leave JFLASH_EXE empty to let
+# it auto-detect; override per-invocation with `make download JFLASH_EXE=...`.
+# Exported (not passed as a CLI arg) so an empty value never reaches the recipe
+# as an empty `""` token — GnuWin32 make 3.81 mis-tokenizes that into an empty
+# CreateProcess command (e=87).  flash.py reads JFLASH_EXE from the environment.
+JFLASH_EXE     ?=
+export JFLASH_EXE
 
 pack-assets: $(ASSETS_BIN)
 
+# Single logical command line (no sh `\`-continuation) so it runs unchanged
+# under both sh and cmd.exe — GnuWin32 make hands cmd.exe a backslash-continued
+# recipe verbatim, which cmd cannot parse.
 $(ASSETS_BIN): Tools/pack_assets.py $(ASSETS_CFG) $(ASSETS_LV_CONF) $(ASSETS_SRCS) | $(BUILD_DIR)
-	@cd Tools && $(UV) run --no-project pack_assets.py \
-	    --config        "../$(ASSETS_CFG)" \
-	    --lv-conf       "../$(ASSETS_LV_CONF)" \
-	    --image-dir     "../$(ASSETS_DIR)" \
-	    --ext-image-dir "../$(ASSETS_EXT_DIR)" \
-	    --font-dir      "../$(ASSETS_FONT_DIR)" \
-	    --output        "../$@"
+	@cd Tools && $(UV) run --no-project pack_assets.py --config "../$(ASSETS_CFG)" --lv-conf "../$(ASSETS_LV_CONF)" --image-dir "../$(ASSETS_DIR)" --ext-image-dir "../$(ASSETS_EXT_DIR)" --font-dir "../$(ASSETS_FONT_DIR)" --output "../$@"
 
+# flash.py locates JFlash, converts $< to the form the (Windows) JFlash wants,
+# and programs the raw .bin at the JLink address remapped to the W25Q64 LVGL
+# partition by the custom .FLM.
 flash-assets: $(ASSETS_BIN)
-	@PRJ=$$(wslpath -w "$(JFLASH_PRJ)" 2>/dev/null || echo "$(JFLASH_PRJ)"); \
-	 BIN=$$(wslpath -w "$<"            2>/dev/null || echo "$<"); \
-	 echo "  JFlash: program $$BIN @ 0x90000000 via $$PRJ"; \
-	 "$(JFLASH_EXE)" -openprj"$$PRJ" -open"$$BIN",0x90000000 -auto -exit
+	@cd Tools && $(UV) run flash.py assets --bin "../$(ASSETS_BIN)" --addr 0x90000000 --jflash-prj "../$(JFLASH_PRJ)"
 
 #######################################
 # download APP firmware to internal flash (STM32F411 APP slot)
@@ -642,15 +650,14 @@ flash-assets: $(ASSETS_BIN)
 # firmware already exists, download just flashes it untouched (use the "download"
 # task / `make -j16 && make download` when you want to rebuild current code first).
 DL_JOBS ?= 16
+# Alias $(MAKE) under a different name: a recipe line that literally contains
+# the token `$(MAKE)` is treated by make as a recursive-make line and force-run
+# even under -n/-q/-t (the "+" rule).  GnuWin32 make 3.81's forced-exec path
+# then trips the CreateProcess(NULL,"") e=87 bug.  Referencing $(MAKE_EXE)
+# instead passes the same make path as plain text without the recursion flag.
+MAKE_EXE := $(MAKE)
 download:
-	@if [ ! -f "$(BUILD_DIR)/$(TARGET).hex" ]; then \
-	   echo "  >> no firmware ($(BUILD_DIR)/$(TARGET).hex) — parallel rebuild first"; \
-	   $(MAKE) clean && $(MAKE) -j$(DL_JOBS) || exit 1; \
-	 fi; \
-	 PRJ=$$(wslpath -w "$(JFLASH_FW_PRJ)"            2>/dev/null || echo "$(JFLASH_FW_PRJ)"); \
-	 HEX=$$(wslpath -w "$(BUILD_DIR)/$(TARGET).hex" 2>/dev/null || echo "$(BUILD_DIR)/$(TARGET).hex"); \
-	 echo "  JFlash: program $$HEX into APP slot via $$PRJ"; \
-	 "$(JFLASH_EXE)" -openprj"$$PRJ" -open"$$HEX" -auto -exit
+	@cd Tools && $(UV) run flash.py download --build-dir "../$(BUILD_DIR)" --target "$(TARGET)" --jflash-prj "../$(JFLASH_FW_PRJ)" --make "$(MAKE_EXE)" --app-dir ".." --jobs $(DL_JOBS)
 
 #######################################
 # clean up
